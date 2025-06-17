@@ -1,0 +1,168 @@
+# 🛡️ Next.js ErrorGoldResolve Framework
+
+## "Pledging Precision, Predictability, and Professionalism in Every Resolution."
+
+---
+
+## 🎯 PLEDGE
+
+We, the maintainers of Next.js applications, solemnly commit to a **gold standard of error resolution**—where **no fix is guesswork**, and every resolution deepens our understanding.  
+We do not console.log our way through production problems.  
+We do not patch over hydration errors without knowing why.  
+We do not push blindly after build-time panics.
+
+Instead, we:
+
+- **Trace with purpose**
+- **Isolate with intelligence**
+- **Patch with permanence**
+- **Document with clarity**
+
+We treat errors as opportunities to **harden our systems**, **educate our teams**, and **build reputation-proof code**.
+
+> This is not a bug hunt.  
+> This is **ErrorGoldResolve**.
+
+---
+
+## ⚙️ FRAMEWORK OVERVIEW
+
+| Layer | Principle | Goal |
+|-------|-----------|------|
+| **Foundation** | Error Anatomy | Decompose every error into actionable dimensions |
+| **Protocol** | Five-Step Resolve | Follow a structured process: Identify → Understand → Resolve → Document → Prevent |
+| **Toolchain** | Stack-Aware Methods | Tailor fixes to the full Next.js + React + TypeScript + CI/CD pipeline |
+| **Memory** | Historical Logging | Persist every meaningful fix for long-term team reuse |
+| **Behavior** | Calm & Curious | Default to investigative precision over patch urgency |
+
+---
+
+## 📘 ERROR RESOLVE PROTOCOL
+
+### 1. 🔍 IDENTIFY
+
+| Code | Action |
+|------|--------|
+| `e1.1` | Capture full logs from `next dev`, browser console, and network tab |
+| `e1.2` | Reproduce error consistently; isolate route/component |
+| `e1.3` | Snapshot: affected components, hooks, env vars, configs |
+| `e1.4` | Classify: build-time, runtime, SSR, hydration, or API layer |
+
+---
+
+### 2. 🧠 UNDERSTAND
+
+| Code | Action |
+|------|--------|
+| `e2.1` | Rewrite the error message in your own words |
+| `e2.2` | Map out dependent files and state/data flow |
+| `e2.3` | Cross-check with official docs / GitHub issues |
+| `e2.4` | Build a minimal reproduction in isolation (sandbox or CodeSandbox) |
+
+---
+
+### 3. 🛠️ RESOLVE
+
+| Code | Action |
+|------|--------|
+| `e3.1` | Fix surgically—address root cause, not symptom |
+| `e3.2` | Pin versions (`package.json`, `resolutions`) if version mismatch caused error |
+| `e3.3` | Validate fix via full `next build` and `start`, not just `dev` |
+| `e3.4` | Revert any unrelated file changes before commit |
+| `e3.5` | Write a test that fails before your fix, passes after |
+
+---
+
+### 4. 🧾 DOCUMENT
+
+| Code | Action |
+|------|--------|
+| `e4.1` | Log patch in `docs/errors/README.md` |
+| `e4.2` | Include error message, cause, file list, final fix, and lesson learned |
+| `e4.3` | Commit with tag: `[errfix]` + title |
+| `e4.4` | Optional: video/gif of repro for team onboarding and memory training |
+
+---
+
+### 5. 🔐 PREVENT
+
+| Code | Action |
+|------|--------|
+| `e5.1` | Add `ErrorBoundary` or fallback logic |
+| `e5.2` | Strengthen types with stricter interfaces and guards |
+| `e5.3` | Add test case (unit or E2E) to detect reversion |
+| `e5.4` | Improve file structure, state design, or server/client contract to remove fragile patterns |
+
+---
+
+## 🧬 STACK AWARENESS
+
+This framework is pre-integrated with your **Next.js + React + TypeScript** environment:
+
+- ✅ **App Router & Pages Router**
+- ✅ **React 18 Suspense & Hydration**
+- ✅ **TailwindCSS purge + JIT errors**
+- ✅ **Server Actions, Edge Functions**
+- ✅ **Vercel edge/serverless runtime**
+- ✅ **TypeScript strictness**
+- ✅ **Auth.js, Prisma, Supabase, Stripe**
+
+---
+
+## 🗃️ ERROR LOGGING DIRECTORY STRUCTURE
+
+```bash
+/docs/errors/
+├── build/
+│   └── missing-module.md
+├── hydration/
+│   └── dom-mismatch-effect.md
+├── api/
+│   └── unhandled-edge-exception.md
+├── types/
+│   └── narrowing-crash.md
+├── config/
+│   └── env-schema-mismatch.md
+└── README.md  # Live registry of error cases
+
+📑 ERROR PATCH TEMPLATE
+
+# Error: Hydration mismatch on <ProfileCard>
+
+**Scope**: components/ProfileCard.tsx  
+**Caused by**: SSR renders fewer list items than client due to useEffect delay
+
+### Solution
+- Added `useClientOnly` wrapper
+- Ensured list length is static pre-hydration
+
+### Files Modified
+- hooks/useClientOnly.ts
+- components/ProfileCard.tsx
+
+### References
+- https://nextjs.org/docs/messages/react-hydration-error
+- https://github.com/vercel/next.js/issues/27957
+
+### Fix Status: ✅ Passed local + CI tests
+
+🏁 BEHAVIOR UNDER ERROR STRESS
+❌ Don't panic.
+
+❌ Don't just reload.
+
+✅ Read deeply.
+
+✅ Reproduce minimally.
+
+✅ Commit meaningfully.
+
+✅ Teach others after fix.
+
+If you can't teach the error you fixed,
+you haven't fully fixed it.
+
+
+🧭 FINAL PRINCIPLE
+“We don’t just fix bugs.
+We trace roots, write history, and elevate trust.”
