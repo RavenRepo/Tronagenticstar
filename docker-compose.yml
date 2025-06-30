@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  orchestrator:
+    build:
+      context: ./services/orchestrator-py
+    ports:
+      - "8000:8000"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      REGISTRY_BACKEND: redis
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+  neo4j:
+    image: neo4j:5.19-community
+    environment:
+      - NEO4J_AUTH=none
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+  otel-collector:
+    image: otel/opentelemetry-collector:0.95.0
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./otel-config.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+  codecraft:
+    build:
+      context: ./services/codecraft-py
+    environment:
+      AGENT_ID: codecraft-01
+      ORCHESTRATOR_URL: http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - default 
