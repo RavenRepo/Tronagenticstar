@@ -1,0 +1,1 @@
+{"root":["./src/agent.ts","./src/agentfactory.ts","./src/agentregistry.ts","./src/chiefarchitect.ts","./src/concreteagents.ts","./src/errorgold.ts","./src/example.ts","./src/frameworkrouter.ts","./src/index.ts","./src/memorybank.ts","./src/types.ts"],"version":"5.8.3"}

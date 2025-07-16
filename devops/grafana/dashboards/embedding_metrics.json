@@ -1,0 +1,26 @@
+{
+  "uid": "embedding-metrics",
+  "title": "Embedding Service Metrics",
+  "schemaVersion": 30,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Embedding Requests (5m)",
+      "gridPos": {"h":4,"w":6,"x":0,"y":0},
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(increase(embedding_requests_total[1m]))", "legendFormat": "requests"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 Embedding Duration",
+      "gridPos": {"h":8,"w":12,"x":6,"y":0},
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(embedding_request_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p95 latency"}
+      ]
+    }
+  ]
+} 

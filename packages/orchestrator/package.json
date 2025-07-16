@@ -1,0 +1,26 @@
+{
+  "name": "@venvagents/orchestrator",
+  "version": "0.0.1",
+  "description": "Core orchestration runtime (ChiefArchitect, FrameworkRouter, Agent base)",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "lint": "eslint src --ext .ts",
+    "dev": "tsc -b --watch",
+    "test": "vitest run"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "eventemitter3": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.2",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitest/coverage-v8": "^0.34.6",
+    "vitest": "^1.5.1"
+  }
+} 

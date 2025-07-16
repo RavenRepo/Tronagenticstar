@@ -1,0 +1,35 @@
+name: Sync Docs on Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  update-docs:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node (for markdown manipulation)
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Run doc-sync script
+        run: |
+          echo "::group::Doc sync stub"
+          echo "This placeholder will parse PR labels and patch docs/activeFocus.md and docs/status.md accordingly."
+          echo "Future implementation will live under scripts/doc_sync.mjs."
+          echo "::endgroup::"
+
+      - name: Commit & push if changes
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add docs/activeFocus.md docs/status.md
+            git commit -m "chore(docs): auto-sync sprint status from PR #${{ github.event.pull_request.number }}"
+            git push
+          fi 

@@ -1,0 +1,26 @@
+{
+  "uid": "error-overview",
+  "title": "Error Rates Overview",
+  "schemaVersion": 30,
+  "version": 1,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Agent Errors per Minute",
+      "gridPos": {"h":8,"w":12,"x":0,"y":0},
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "rate(agent_errors[1m])", "legendFormat": "{{agent_id}}"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total Errors (24h)",
+      "gridPos": {"h":4,"w":6,"x":12,"y":0},
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(increase(agent_errors[24h]))", "legendFormat": "errors"}
+      ]
+    }
+  ]
+} 

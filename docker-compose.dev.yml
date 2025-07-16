@@ -1,0 +1,115 @@
+version: "3.9"
+
+services:
+  orchestrator-py:
+    build:
+      context: ./services/orchestrator-py
+      dockerfile: Dockerfile
+    container_name: orchestrator-py
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    restart: unless-stopped
+
+  nats:
+    image: nats:2.10
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "-m", "8222"]
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+
+  neo4j:
+    image: neo4j:5.19
+    container_name: neo4j
+    environment:
+      - NEO4J_AUTH=none
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    volumes:
+      - ./devops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    volumes:
+      - ./devops/grafana/provisioning:/etc/grafana/provisioning
+      - ./devops/grafana/dashboards:/var/lib/grafana/dashboards
+
+  loki:
+    image: grafana/loki:2.9.5
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./devops/loki.yml:/etc/loki/local-config.yaml 
+
+  errorgold-listener:
+    build:
+      context: ./services/errorgold-listener
+    depends_on:
+      - nats
+      - loki
+    environment:
+      - NATS_URL=nats://nats:4222
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+    restart: unless-stopped 
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  embedding:
+    build:
+      context: ./services/embedding
+    container_name: embedding
+    ports:
+      - "8002:8000"
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  retriever:
+    build:
+      context: ./services/retriever
+    container_name: retriever
+    ports:
+      - "8001:8001"
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - NEO4J_URL=bolt://neo4j:7687
+      - REDIS_URL=redis://redis:6379/0
+      - EMBEDDING_SERVICE_URL=http://embedding:8000
+    depends_on:
+      - qdrant
+      - neo4j
+      - redis
+      - embedding
+    restart: unless-stopped 
