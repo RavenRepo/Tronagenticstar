@@ -1,9 +1,9 @@
 # Project Status – CAFS / AgenticStar
 
-_Last updated: 2025-07-13_
+_Last updated: 2025-07-16_
 
 ## Current Phase
-Sprint C – Embedding Optimisation & Hybrid Retrieval
+Sprint C – Embedding Optimisation & Hybrid Retrieval (Kick-off)
 
 ## Locked Roadmap
 | Phase | Timeline | Deliverables | Status |
@@ -31,6 +31,14 @@ Sprint C – Embedding Optimisation & Hybrid Retrieval
 | B3 | SDK helpers + Vitest / Pytest suites | SDK | Week 2 | ✅ Done |
 | B4 | Grafana dashboards for Retriever/Embedding/Neo4j | DevOps | Week 2 | ✅ Done |
 | B5 | Docker stack rebuild & validation | DevOps | Week 2 | ✅ Done |
+
+## Sprint C – Task Board (Embedding Optimisation & Hybrid Reranker)
+| ID | Task | Owner | Due | State |
+|----|------|-------|-----|-------|
+| C1 | `/embed/batch` endpoint with asyncio gather | AI/Dev | Week 1 | 🔜 |
+| C2 | Lightweight reranker integration (ms-marco-MiniLM) | AI/Dev | Week 1 | 🔜 |
+| C3 | SDK updates for batch + reranker | SDK | Week 1 | 🔜 |
+| C4 | Grafana panels for batch throughput & P@k | DevOps | Week 1 | 🔜 |
 
 ## KPIs (Running)
 * P95 Retriever Latency < 400 ms

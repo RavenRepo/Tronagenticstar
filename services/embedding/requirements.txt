@@ -4,3 +4,4 @@ sentence-transformers
 torch
 pydantic
 numpy 
+prometheus-client 

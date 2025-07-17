@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file following [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] – 2025-07-16
+### Added
+- Prometheus counters / histograms and `/metrics` endpoint in GPU Embedding Service.
+### Changed
+- `docker-compose.dev.yml`: embedding service now published on host port 8002 (container 8000).
+### Fixed
+- Health check confusion due to port collision with orchestrator.
+
+---
+
 ## [0.2.0] – 2025-07-13
 ### Added
 - **GPU Embedding Service** (`services/embedding`) with CUDA, Prometheus metrics, `/embed` endpoint.
