@@ -10,3 +10,8 @@ export * from "./concreteAgents.js";
 export * from "./orchestratorClient.js";
 export * from "./retrieverClient.js";
 export * from "./embeddingClient.js";
+export * from "./agentTemplates.js";
+export * from "./designForgeAgent.js";
+export * from "./securiShieldAgent.js";
+export * from "./codeCraftAgent.js";
+export * from "./perfPulseAgent.js";

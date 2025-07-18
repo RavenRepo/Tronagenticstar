@@ -1,9 +1,9 @@
 # Project Status – CAFS / AgenticStar
 
-_Last updated: 2025-07-16_
+_Last updated: 2025-07-18_
 
 ## Current Phase
-Sprint C – Embedding Optimisation & Hybrid Retrieval (Kick-off)
+Sprint D – Specialist Agents v1 (Kick-off)
 
 ## Locked Roadmap
 | Phase | Timeline | Deliverables | Status |
@@ -39,6 +39,17 @@ Sprint C – Embedding Optimisation & Hybrid Retrieval (Kick-off)
 | C2 | Lightweight reranker integration (ms-marco-MiniLM) | AI/Dev | Week 1 | 🔜 |
 | C3 | SDK updates for batch + reranker | SDK | Week 1 | 🔜 |
 | C4 | Grafana panels for batch throughput & P@k | DevOps | Week 1 | 🔜 |
+
+## Sprint D – Task Board (Specialist Agents v1)
+| ID | Task | Owner | Due | State |
+|----|------|-------|-----|-------|
+| D1 | agentTemplates utilities + factory hooks | Framework | Week 1 | 🔜 |
+| D2 | DesignForge agent scaffold | AI/Dev | Week 1 | 🔜 |
+| D3 | SecuriShield agent scaffold | AI/Dev | Week 1 | 🔜 |
+| D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | 🔜 |
+| D5 | PerfPulse agent scaffold | AI/Dev | Week 1 | 🔜 |
+| D6 | ADR-010 Specialist Agent Architecture | Arch | Week 1 | 🔜 |
+| D7 | noAgentDupes auto-update & tests | QA | Week 1 | 🔜 |
 
 ## KPIs (Running)
 * P95 Retriever Latency < 400 ms
