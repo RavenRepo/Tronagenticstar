@@ -9,3 +9,4 @@ export * from "./agentFactory.js";
 export * from "./concreteAgents.js";
 export * from "./orchestratorClient.js";
 export * from "./retrieverClient.js";
+export * from "./embeddingClient.js";

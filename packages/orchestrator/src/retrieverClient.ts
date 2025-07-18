@@ -6,6 +6,7 @@ export interface RetrieveQuery {
   query: string;
   topK?: number;
   sources?: string[];
+  rerank?: boolean; // enable/disable cross-encoder reranking
 }
 
 export interface RetrieveResult {
@@ -37,6 +38,7 @@ export class RetrieverClient {
         query: req.query,
         top_k: req.topK ?? 5,
         sources: req.sources ?? undefined,
+        rerank: req.rerank ?? true,
       }),
     });
 

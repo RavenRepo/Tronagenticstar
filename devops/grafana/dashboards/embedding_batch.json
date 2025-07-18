@@ -1,0 +1,23 @@
+{
+  "title": "Embedding Batch Metrics",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Batch Requests per Minute",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(embedding_batch_requests_total[1m])" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "req/s" } }
+    },
+    {
+      "type": "histogram",
+      "title": "Batch Size Distribution",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(embedding_batch_size_bucket[5m])) by (le))" }
+      ]
+    }
+  ],
+  "time": { "from": "now-5m", "to": "now" }
+} 

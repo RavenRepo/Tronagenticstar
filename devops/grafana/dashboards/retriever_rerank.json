@@ -1,0 +1,15 @@
+{
+  "title": "Retriever Reranker Metrics",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Rerank Latency P95",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(retriever_rerank_seconds_bucket[5m])) by (le))" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    }
+  ],
+  "time": { "from": "now-5m", "to": "now" }
+} 

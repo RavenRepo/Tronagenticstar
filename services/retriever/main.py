@@ -11,7 +11,8 @@ from starlette.responses import Response
 from qdrant_client import QdrantClient, models
 from neo4j import GraphDatabase
 import json
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
+import torch
 
 REQUEST_COUNTER = Counter(
     "retriever_requests_total",
@@ -67,6 +68,22 @@ def _embed(text: str) -> list[float]:
             pass
     return _local_embed(text)
 
+RERANKER_MODEL_NAME = os.getenv("RERANKER_MODEL_NAME", "cross-encoder/ms-marco-MiniLM-L-12-v2")
+
+_reranker: CrossEncoder | None = None
+
+def _get_reranker() -> CrossEncoder:
+    global _reranker
+    if _reranker is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        _reranker = CrossEncoder(RERANKER_MODEL_NAME, device=device)
+    return _reranker
+
+RERANK_DURATION = Histogram(
+    "retriever_rerank_seconds",
+    "Time taken to rerank search results"
+)
+
 # Initialise external clients
 qdrant = QdrantClient(url=QDRANT_URL)
 try:
@@ -115,6 +132,14 @@ async def retrieve(req: RetrieveRequest):
         vector = _embed(req.query)
         res = qdrant.search(collection_name=COLLECTION, query_vector=vector, limit=req.top_k)
         results = [point.payload.get("content", "") for point in res]
+        # Rerank results using cross-encoder for better relevance
+        if len(results) > 1:
+            with RERANK_DURATION.time():
+                reranker = _get_reranker()
+                pairs = [(req.query, doc) for doc in results]
+                scores = reranker.predict(pairs)
+                # sort by score desc
+                results = [doc for _, doc in sorted(zip(scores, results), key=lambda x: x[0], reverse=True)]
         return {"results": results}
 
 
