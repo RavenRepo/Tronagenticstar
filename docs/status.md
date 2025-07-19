@@ -1,16 +1,24 @@
 # Project Status – CAFS / AgenticStar
 
 _Last updated: 2025-07-20_
-
-## Current Phase
-Sprint E4 – Next Specialist Agent (PerfPulse Phase) - ✅ COMPLETED
+## Sprint D – Task Board (Specialist Agents v1) - ✅ COMPLETED
+| ID | Task | Owner | Due | State |
+|----|------|-------|-----|-------|
+| D1 | agentTemplates utilities + factory hooks | Framework | Week 1 | ✅ Done |
+| D2 | DesignForge agent scaffold | AI/Dev | Week 1 | ✅ Done (Pre-existing) |
+| D3 | SecuriShield agent scaffold | AI/Dev | Week 1 | ✅ Done (E2 Sprint) |
+| D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | ✅ Done (E3 Sprint) |
+| D5 | PerfPulse agent scaffold | AI/Dev | Week 1 | ✅ Done (E4 Sprint) |
+| D6 | ADR-010 Specialist Agent Architecture | Arch | Week 1 | ✅ Done |
+| D7 | noAgentDupes auto-update & tests | QA | Week 1 | ✅ Done |nt Phase
+🎯 Ready for Compliance Alpha Phase (SOC-2 & Evidence Exporter)
 
 ## Locked Roadmap
 | Phase | Timeline | Deliverables | Status |
 |-------|----------|--------------|--------|
 | Foundation | Month 0-1 | Python Orchestrator service, Event-Bus, SDKs, Docker Compose stack | ✅ Complete |
 | Error & RAG Core | Month 1-2 | ErrorGold MVP, Retriever Service, GPU Embedding, Prom/Grafana dashboards | ✅ Complete |
-| Specialist Agents v1 | Month 2-3 | DesignForge, SecuriShield, CodeCraft, PerfPulse | 🔄 In Progress |
+| Specialist Agents v1 | Month 2-3 | DesignForge, SecuriShield, CodeCraft, PerfPulse | ✅ Complete |
 | Compliance Alpha | Month 3-4 | SOC-2 rule sets, evidence exporter, dashboards | ⏳ Pending |
 | Dev-Tooling Beta | Month 4-5 | CLI scaffolder, ESLint plugin, VS-Code extension | ⏳ Pending |
 | Private Beta | Month 5-6 | Helm install, docs site GA, pilot onboarding | ⏳ Pending |
@@ -32,13 +40,13 @@ Sprint E4 – Next Specialist Agent (PerfPulse Phase) - ✅ COMPLETED
 | B4 | Grafana dashboards for Retriever/Embedding/Neo4j | DevOps | Week 2 | ✅ Done |
 | B5 | Docker stack rebuild & validation | DevOps | Week 2 | ✅ Done |
 
-## Sprint C – Task Board (Embedding Optimisation & Hybrid Reranker)
+## Sprint C – Task Board (Embedding Optimisation & Hybrid Reranker) - ✅ COMPLETED
 | ID | Task | Owner | Due | State |
 |----|------|-------|-----|-------|
-| C1 | `/embed/batch` endpoint with asyncio gather | AI/Dev | Week 1 | 🔜 |
-| C2 | Lightweight reranker integration (ms-marco-MiniLM) | AI/Dev | Week 1 | 🔜 |
-| C3 | SDK updates for batch + reranker | SDK | Week 1 | 🔜 |
-| C4 | Grafana panels for batch throughput & P@k | DevOps | Week 1 | 🔜 |
+| C1 | `/embed/batch` endpoint with asyncio gather | AI/Dev | Week 1 | ✅ Done |
+| C2 | Lightweight reranker integration (ms-marco-MiniLM) | AI/Dev | Week 1 | ✅ Done |
+| C3 | SDK updates for batch + reranker | SDK | Week 1 | ✅ Done |
+| C4 | Grafana panels for batch throughput & P@k | DevOps | Week 1 | ✅ Done |
 
 ## Sprint E2 – Task Board (SecuriShield Micro-service) - ✅ COMPLETED
 | ID | Task | Owner | Due | State |
@@ -71,7 +79,7 @@ Sprint E4 – Next Specialist Agent (PerfPulse Phase) - ✅ COMPLETED
 | ID | Task | Owner | Due | State |
 |----|------|-------|-----|-------|
 | D1 | agentTemplates utilities + factory hooks | Framework | Week 1 | 🔜 |
-| D2 | DesignForge agent scaffold | AI/Dev | Week 1 | 🔜 |
+| D2 | DesignForge agent scaffold | AI/Dev | Week 1 | ✅ Done (Pre-existing) |
 | D3 | SecuriShield agent scaffold | AI/Dev | Week 1 | ✅ Done (E2 Sprint) |
 | D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | � In Progress (E3 Sprint) |
 | D5 | PerfPulse agent scaffold | AI/Dev | Week 1 | ✅ Done (E4 Sprint) |
