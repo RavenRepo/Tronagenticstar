@@ -1,16 +1,16 @@
 # Project Status – CAFS / AgenticStar
 
-_Last updated: 2025-07-18_
+_Last updated: 2025-01-07| D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | ✅ Done (E3 Sprint) |
 
 ## Current Phase
-Sprint D – Specialist Agents v1 (Kick-off)
+Sprint E4 – Next Specialist Agent (PerfPulse Phase) - Ready to begin
 
 ## Locked Roadmap
 | Phase | Timeline | Deliverables | Status |
 |-------|----------|--------------|--------|
 | Foundation | Month 0-1 | Python Orchestrator service, Event-Bus, SDKs, Docker Compose stack | ✅ Complete |
 | Error & RAG Core | Month 1-2 | ErrorGold MVP, Retriever Service, GPU Embedding, Prom/Grafana dashboards | ✅ Complete |
-| Specialist Agents v1 | Month 2-3 | DesignForge, SecuriShield, CodeCraft, PerfPulse | ⏳ Pending |
+| Specialist Agents v1 | Month 2-3 | DesignForge, SecuriShield, CodeCraft, PerfPulse | 🔄 In Progress |
 | Compliance Alpha | Month 3-4 | SOC-2 rule sets, evidence exporter, dashboards | ⏳ Pending |
 | Dev-Tooling Beta | Month 4-5 | CLI scaffolder, ESLint plugin, VS-Code extension | ⏳ Pending |
 | Private Beta | Month 5-6 | Helm install, docs site GA, pilot onboarding | ⏳ Pending |
@@ -40,13 +40,31 @@ Sprint D – Specialist Agents v1 (Kick-off)
 | C3 | SDK updates for batch + reranker | SDK | Week 1 | 🔜 |
 | C4 | Grafana panels for batch throughput & P@k | DevOps | Week 1 | 🔜 |
 
+## Sprint E2 – Task Board (SecuriShield Micro-service) - ✅ COMPLETED
+| ID | Task | Owner | Due | State |
+|----|------|-------|-----|-------|
+| E2.1 | Scaffold SecuriShield micro-service (FastAPI) | AI/Dev | Day 2 | ✅ Done |
+| E2.2 | Create /scan, /health, /metrics endpoints | AI/Dev | Day 2 | ✅ Done |
+| E2.3 | Add SecuriShield Dockerfile & requirements.txt | DevOps | Day 2 | ✅ Done |
+| E2.4 | Update docker-compose.dev.yml | DevOps | Day 2 | ✅ Done |
+| E2.5 | Port assignment (8011) and service integration | DevOps | Day 2 | ✅ Done |
+
+## Sprint E3 – Task Board (CodeCraft Micro-service) - ✅ COMPLETED
+| ID | Task | Owner | Due | State |
+|----|------|-------|-----|-------|
+| E3.1 | Scaffold CodeCraft micro-service (FastAPI) | AI/Dev | Day 3 | ✅ Done |
+| E3.2 | Create /generate, /refactor, /health, /metrics endpoints | AI/Dev | Day 3 | ✅ Done |
+| E3.3 | Add CodeCraft Dockerfile & requirements.txt | DevOps | Day 3 | ✅ Done |
+| E3.4 | Update docker-compose.dev.yml for CodeCraft | DevOps | Day 3 | ✅ Done |
+| E3.5 | Port assignment (8012) and service integration | DevOps | Day 3 | ✅ Done |
+
 ## Sprint D – Task Board (Specialist Agents v1)
 | ID | Task | Owner | Due | State |
 |----|------|-------|-----|-------|
 | D1 | agentTemplates utilities + factory hooks | Framework | Week 1 | 🔜 |
 | D2 | DesignForge agent scaffold | AI/Dev | Week 1 | 🔜 |
-| D3 | SecuriShield agent scaffold | AI/Dev | Week 1 | 🔜 |
-| D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | 🔜 |
+| D3 | SecuriShield agent scaffold | AI/Dev | Week 1 | ✅ Done (E2 Sprint) |
+| D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | � In Progress (E3 Sprint) |
 | D5 | PerfPulse agent scaffold | AI/Dev | Week 1 | 🔜 |
 | D6 | ADR-010 Specialist Agent Architecture | Arch | Week 1 | 🔜 |
 | D7 | noAgentDupes auto-update & tests | QA | Week 1 | 🔜 |
@@ -57,4 +75,4 @@ Sprint D – Specialist Agents v1 (Kick-off)
 * ErrorGold auto-remediation ≥ 35 %
 * SOC-2 violations < 0.5 %
 
-Progress is reviewed every Friday and auto-synced via GitHub Action `doc-sync` (see `.github/workflows/doc-sync.yml`). 
+Progress is reviewed every Friday and auto-synced via GitHub Action `doc-sync` (see `.github/workflows/doc-sync.yml`

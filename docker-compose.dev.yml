@@ -113,3 +113,35 @@ services:
       - redis
       - embedding
     restart: unless-stopped 
+
+  designforge:
+    build:
+      context: ./services/designforge
+    container_name: designforge
+    ports:
+      - "8010:8010"
+    restart: unless-stopped 
+
+  securishield:
+    build:
+      context: ./services/securishield
+    container_name: securishield
+    ports:
+      - "8011:8011"
+    restart: unless-stopped 
+
+  codecraft:
+    build:
+      context: ./services/codecraft
+    container_name: codecraft
+    ports:
+      - "8012:8012"
+    restart: unless-stopped 
+
+  perfpulse:
+    build:
+      context: ./services/perfpulse
+    container_name: perfpulse
+    ports:
+      - "8013:8013"
+    restart: unless-stopped 

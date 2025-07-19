@@ -1,29 +1,37 @@
-# activeFocus – Sprint D (Specialist Agents v1)
+# activeFocus – Sprint E3 (CodeCraft Micro-service Scaffold)
 
-**Sprint Window:** 2025-07-29 → 2025-08-12
+**Sprint Window:** 2025-01-07 → 2025-01-10
 
 ## Objectives
-1. Scaffold first wave of specialist agents (DesignForge, SecuriShield, CodeCraft, PerfPulse) as reusable subclasses of `BaseAgent`.
-2. Implement agent registration & discovery: ensure `noAgentDupes.md` updated automatically.
-3. Provide minimal functional endpoints for each agent plus health & metrics.
-4. Author ADR-010 documenting specialist-agent design decisions.
+1. Complete CodeCraft micro-service scaffolding following SecuriShield pattern.
+2. Implement core code generation and refactoring endpoints.
+3. Integrate CodeCraft into docker-compose.dev.yml on port 8012.
+4. Prepare for E4 sprint (PerfPulse micro-service).
 
-## In-Progress
-* Sprint planning complete; agent templates drafted.
-* ADR-010 outline created (pending review).
+## Recently Completed (E2 Sprint)
+* ✅ SecuriShield micro-service scaffolding complete
+* ✅ FastAPI service with /scan, /health, /metrics endpoints
+* ✅ Dockerfile and requirements.txt created
+* ✅ docker-compose.dev.yml updated with SecuriShield on port 8011
+
+## In-Progress (E3 Sprint)
+* 🔄 CodeCraft micro-service scaffolding (next priority)
 
 ## Blockers / Risks
-* Capability overlap between DesignForge & existing ChiefArchitect – careful SRP analysis required.
-* SecuriShield early PoC needs mock vulnerability DB until external feed finalised.
+* Container count increase may exceed dev laptop resources.
+* Need to ensure consistent port allocation and service patterns.
 
-## Next 48-hour Tasks
-| D1 | Create `agentTemplates.ts` with abstract utilities & register factory hooks | Framework | Week 1 | 🔜 |
-| D2 | Scaffold DesignForge agent with C4 diagram generation stub | AI/Dev | Week 1 | 🔜 |
-| D3 | Scaffold SecuriShield agent with CVE lookup stub | AI/Dev | Week 1 | 🔜 |
-| D4 | Scaffold CodeCraft agent with ESLint/mutation stub | AI/Dev | Week 1 | 🔜 |
-| D5 | Scaffold PerfPulse agent with k6 load test stub | AI/Dev | Week 1 | 🔜 |
-| D6 | Write ADR-010 Specialist Agent Architecture | Arch | Week 1 | 🔜 |
-| D7 | Update `noAgentDupes.md` + integration tests | QA | Week 1 | 🔜 |
+## Next 48-hour Tasks (E3 Sprint)
+| E3.1 | Scaffold CodeCraft micro-service (FastAPI) | AI/Dev | Day 1 | � |
+| E3.2 | Create /generate, /refactor, /health, /metrics endpoints | AI/Dev | Day 1 | 🔜 |
+| E3.3 | Add CodeCraft Dockerfile & requirements.txt | DevOps | Day 1 | 🔜 |
+| E3.4 | Update docker-compose.dev.yml for CodeCraft | DevOps | Day 1 | 🔜 |
+| E3.5 | Port assignment (8012) and service integration | DevOps | Day 1 | 🔜 |
+| E3.6 | Test CodeCraft service startup and endpoints | QA | Day 2 | 🔜 |
+
+## Upcoming (E4 Sprint)
+| E4.1 | Scaffold PerfPulse micro-service | AI/Dev | Day 3 | 🔜 |
+| E4.2 | Performance monitoring endpoints | AI/Dev | Day 3 | 🔜 |
 
 <!-- Historical sprints retained below -->
 
