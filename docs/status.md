@@ -1,6 +1,9 @@
 # Project Status – CAFS / AgenticStar
 
 _Last updated: 2025-07-20_
+
+## Current Phase
+🎯 Ready for Dev-Tooling Beta Phase (CLI Scaffolder, ESLint Plugin, VS-Code Extension) - 🔄 IN PROGRESS
 ## Sprint D – Task Board (Specialist Agents v1) - ✅ COMPLETED
 | ID | Task | Owner | Due | State |
 |----|------|-------|-----|-------|
@@ -19,8 +22,8 @@ _Last updated: 2025-07-20_
 | Foundation | Month 0-1 | Python Orchestrator service, Event-Bus, SDKs, Docker Compose stack | ✅ Complete |
 | Error & RAG Core | Month 1-2 | ErrorGold MVP, Retriever Service, GPU Embedding, Prom/Grafana dashboards | ✅ Complete |
 | Specialist Agents v1 | Month 2-3 | DesignForge, SecuriShield, CodeCraft, PerfPulse | ✅ Complete |
-| Compliance Alpha | Month 3-4 | SOC-2 rule sets, evidence exporter, dashboards | ⏳ Pending |
-| Dev-Tooling Beta | Month 4-5 | CLI scaffolder, ESLint plugin, VS-Code extension | ⏳ Pending |
+| Compliance Alpha | Month 3-4 | SOC-2 rule sets, evidence exporter, dashboards | ✅ Complete |
+| Dev-Tooling Beta | Month 4-5 | CLI scaffolder, ESLint plugin, VS-Code extension | 🔄 In Progress |
 | Private Beta | Month 5-6 | Helm install, docs site GA, pilot onboarding | ⏳ Pending |
 | GA Hardening | Month 6-9 | Additional agents, chaos tests, cost governor | ⏳ Pending |
 
@@ -75,16 +78,31 @@ _Last updated: 2025-07-20_
 | E4.4 | Update docker-compose.dev.yml for PerfPulse | DevOps | Day 4 | ✅ Done |
 | E4.5 | Port assignment (8013) and service integration | DevOps | Day 4 | ✅ Done |
 
-## Sprint D – Task Board (Specialist Agents v1)
+## Sprint F – Task Board (Compliance Alpha - SOC-2 & Evidence) - ✅ COMPLETED
 | ID | Task | Owner | Due | State |
 |----|------|-------|-----|-------|
-| D1 | agentTemplates utilities + factory hooks | Framework | Week 1 | 🔜 |
-| D2 | DesignForge agent scaffold | AI/Dev | Week 1 | ✅ Done (Pre-existing) |
-| D3 | SecuriShield agent scaffold | AI/Dev | Week 1 | ✅ Done (E2 Sprint) |
-| D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | � In Progress (E3 Sprint) |
-| D5 | PerfPulse agent scaffold | AI/Dev | Week 1 | ✅ Done (E4 Sprint) |
-| D6 | ADR-010 Specialist Agent Architecture | Arch | Week 1 | 🔜 |
-| D7 | noAgentDupes auto-update & tests | QA | Week 1 | 🔜 |
+| F1 | Scaffold SOC-2 compliance service (FastAPI) | Compliance/Dev | Day 5 | ✅ Done |
+| F2 | Implement SOC-2 rule sets (CC6.1, CC6.2, A1.1, etc.) | Compliance/Dev | Day 5 | ✅ Done |
+| F3 | Create evidence exporter with date range filtering | Compliance/Dev | Day 5 | ✅ Done |
+| F4 | Add compliance dashboard endpoints | Compliance/Dev | Day 5 | ✅ Done |
+| F5 | SOC-2 service Dockerfile & requirements.txt | DevOps | Day 5 | ✅ Done |
+| F6 | Update docker-compose.dev.yml (port 8020) | DevOps | Day 5 | ✅ Done |
+| F7 | Create Grafana dashboards for compliance metrics | DevOps | Day 6 | ✅ Done |
+| F8 | Integration testing with existing services | QA | Day 6 | ✅ Done |
+
+## Sprint G – Task Board (Dev-Tooling Beta Phase) - 🔄 IN PROGRESS
+| ID | Task | Owner | Due | State |
+|----|------|-------|-----|-------|
+| G1 | Design CLI scaffolder architecture & commands | DevTools | Week 1 | ✅ Done |
+| G2 | Implement core CLI scaffolder (agent creation) | DevTools | Week 1 | ✅ Done |
+| G3 | Create ESLint plugin for AgentForge patterns | DevTools | Week 1 | ✅ Done |
+| G4 | Scaffold VS Code extension framework | DevTools | Week 2 | ✅ Done |
+| G5 | Implement agent panel UI in VS Code extension | DevTools | Week 2 | � |
+| G6 | Add code generation commands to VS Code extension | DevTools | Week 2 | 🔜 |
+| G7 | Package and test CLI + extensions | DevTools | Week 2 | 🔜 |
+| G8 | Create developer documentation and guides | Docs | Week 2 | 🔜 |
+
+
 
 ## KPIs (Running)
 * P95 Retriever Latency < 400 ms

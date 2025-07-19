@@ -1,0 +1,126 @@
+/* Activity Panel Styles */
+body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-foreground);
+    background: var(--vscode-editor-background);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: var(--vscode-foreground);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    padding-bottom: 10px;
+}
+
+.controls {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+button:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.activity-item {
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    padding: 16px;
+    border-radius: 6px;
+    border-left: 3px solid var(--vscode-charts-blue);
+}
+
+.activity-item.status-running {
+    border-left-color: var(--vscode-charts-orange);
+}
+
+.activity-item.status-completed {
+    border-left-color: var(--vscode-charts-green);
+}
+
+.activity-item.status-failed {
+    border-left-color: var(--vscode-charts-red);
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.agent-name {
+    font-weight: bold;
+    color: var(--vscode-charts-blue);
+}
+
+.action {
+    font-size: 14px;
+}
+
+.status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status.running {
+    background: var(--vscode-charts-orange);
+    color: white;
+}
+
+.status.completed {
+    background: var(--vscode-charts-green);
+    color: white;
+}
+
+.status.failed {
+    background: var(--vscode-charts-red);
+    color: white;
+}
+
+.activity-time {
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.error {
+    color: var(--vscode-errorForeground);
+    background: var(--vscode-inputValidation-errorBackground);
+    padding: 8px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 12px;
+}
+
+.no-activities {
+    text-align: center;
+    color: var(--vscode-descriptionForeground);
+    padding: 40px;
+    font-style: italic;
+}

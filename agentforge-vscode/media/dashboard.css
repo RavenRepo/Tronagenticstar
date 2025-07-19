@@ -1,0 +1,231 @@
+/* Dashboard Panel Styles */
+body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-foreground);
+    background: var(--vscode-editor-background);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    color: var(--vscode-foreground);
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+button:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.widget {
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 250px;
+}
+
+.widget h2 {
+    margin: 0 0 15px 0;
+    color: var(--vscode-foreground);
+    font-size: 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    padding-bottom: 8px;
+}
+
+/* Agents Widget */
+.agents-count {
+    font-size: 48px;
+    font-weight: bold;
+    color: var(--vscode-charts-blue);
+    text-align: center;
+    margin: 20px 0;
+}
+
+.agents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.agent-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--vscode-list-hoverBackground);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.agent-item:hover {
+    background: var(--vscode-list-activeSelectionBackground);
+}
+
+.agent-name {
+    font-weight: 500;
+}
+
+.agent-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+}
+
+.agent-status.active {
+    background: var(--vscode-charts-green);
+    color: white;
+}
+
+.agent-status.idle {
+    background: var(--vscode-charts-yellow);
+    color: black;
+}
+
+.agent-status.error {
+    background: var(--vscode-charts-red);
+    color: white;
+}
+
+/* Activity Widget */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--vscode-list-hoverBackground);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.activity-agent {
+    font-weight: 500;
+    color: var(--vscode-charts-blue);
+}
+
+.activity-action {
+    flex: 1;
+    margin: 0 10px;
+}
+
+.activity-status {
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.activity-status.status-running {
+    background: var(--vscode-charts-orange);
+    color: white;
+}
+
+.activity-status.status-completed {
+    background: var(--vscode-charts-green);
+    color: white;
+}
+
+.activity-status.status-failed {
+    background: var(--vscode-charts-red);
+    color: white;
+}
+
+/* Metrics Widget */
+.metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.metric:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    font-weight: 500;
+    color: var(--vscode-foreground);
+}
+
+.metric-value {
+    font-weight: bold;
+    color: var(--vscode-charts-blue);
+    font-size: 16px;
+}
+
+/* Actions Widget */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.action-buttons button {
+    width: 100%;
+    padding: 12px;
+    text-align: left;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.action-buttons button:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Empty states */
+.no-agents,
+.no-activity {
+    text-align: center;
+    color: var(--vscode-descriptionForeground);
+    padding: 40px 20px;
+    font-style: italic;
+}

@@ -144,4 +144,12 @@ services:
     container_name: perfpulse
     ports:
       - "8013:8013"
+    restart: unless-stopped
+
+  soc2-compliance:
+    build:
+      context: ./services/soc2-compliance
+    container_name: soc2-compliance
+    ports:
+      - "8020:8020"
     restart: unless-stopped 

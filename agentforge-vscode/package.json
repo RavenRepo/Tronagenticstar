@@ -1,0 +1,193 @@
+{
+  "name": "agentforge",
+  "displayName": "AgentForge - AI Agent Orchestration",
+  "description": "Orchestrate AI agents for comprehensive software development",
+  "version": "0.1.0",
+  "publisher": "agentforge",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Other"],
+  "keywords": ["ai", "agents", "orchestration", "development", "automation"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agentforge.showActivity",
+        "title": "Show Agent Activity",
+        "category": "AgentForge",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "agentforge.openChat",
+        "title": "Chat with Agents",
+        "category": "AgentForge",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "agentforge.showDashboard",
+        "title": "Project Dashboard",
+        "category": "AgentForge",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "agentforge.showSettings",
+        "title": "Settings",
+        "category": "AgentForge",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "agentforge.triggerArchitectureAnalysis",
+        "title": "Analyze Architecture",
+        "category": "AgentForge",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "agentforge.triggerSecurityScan",
+        "title": "Security Scan",
+        "category": "AgentForge",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "agentforge.triggerQualityCheck",
+        "title": "Quality Check",
+        "category": "AgentForge",
+        "icon": "$(verified)"
+      },
+      {
+        "command": "agentforge.generateAgent",
+        "title": "Generate New Agent",
+        "category": "AgentForge",
+        "icon": "$(add)"
+      },
+      {
+        "command": "agentforge.refreshActivity",
+        "title": "Refresh",
+        "category": "AgentForge",
+        "icon": "$(refresh)"
+      }
+    ],
+    "views": {
+      "agentforge": [
+        {
+          "id": "agentforge.activity",
+          "name": "Agent Activity",
+          "when": "agentforge.enabled",
+          "icon": "$(pulse)"
+        },
+        {
+          "id": "agentforge.agents",
+          "name": "Available Agents", 
+          "when": "agentforge.enabled",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "agentforge",
+          "title": "AgentForge",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "agentforge.refreshActivity",
+          "when": "view == agentforge.activity",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "agentforge.showActivity",
+          "when": "agentforge.enabled"
+        },
+        {
+          "command": "agentforge.openChat",
+          "when": "agentforge.enabled"
+        },
+        {
+          "command": "agentforge.showDashboard",
+          "when": "agentforge.enabled"
+        },
+        {
+          "command": "agentforge.triggerArchitectureAnalysis",
+          "when": "agentforge.enabled"
+        },
+        {
+          "command": "agentforge.triggerSecurityScan",
+          "when": "agentforge.enabled"
+        },
+        {
+          "command": "agentforge.triggerQualityCheck",
+          "when": "agentforge.enabled"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AgentForge",
+      "properties": {
+        "agentforge.orchestratorUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL of the AgentForge orchestrator"
+        },
+        "agentforge.apiKey": {
+          "type": "string",
+          "description": "API key for orchestrator authentication"
+        },
+        "agentforge.enableRealTimeUpdates": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time updates via WebSocket"
+        },
+        "agentforge.logLevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "default": "info",
+          "description": "Logging level for AgentForge extension"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "webpack --mode production",
+    "watch": "webpack --mode development --watch",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "eslint": "^8.47.0",
+    "typescript": "^5.1.6",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4",
+    "ts-loader": "^9.4.4",
+    "@vscode/test-electron": "^2.3.4",
+    "@vscode/vsce": "^2.19.0"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "socket.io-client": "^4.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/agentforge-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/agentforge-vscode/issues"
+  },
+  "homepage": "https://github.com/your-org/agentforge-vscode#readme"
+}

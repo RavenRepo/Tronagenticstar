@@ -1,0 +1,198 @@
+/* Settings Panel Styles */
+body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-foreground);
+    background: var(--vscode-editor-background);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+h1 {
+    margin: 0 0 30px 0;
+    color: var(--vscode-foreground);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    padding-bottom: 15px;
+}
+
+h2 {
+    margin: 30px 0 15px 0;
+    color: var(--vscode-foreground);
+    font-size: 18px;
+}
+
+#settingsForm {
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border: 1px solid var(--vscode-panel-border);
+}
+
+.setting-group {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--vscode-foreground);
+}
+
+input[type="url"],
+input[type="password"],
+select {
+    width: 100%;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+input[type="url"]:focus,
+input[type="password"]:focus,
+select:focus {
+    border-color: var(--vscode-focusBorder);
+    outline: none;
+}
+
+input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2);
+}
+
+small {
+    display: block;
+    margin-top: 5px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+button {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+button:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+button[type="submit"] {
+    background: var(--vscode-button-background);
+    font-weight: 500;
+}
+
+button[type="button"] {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+button[type="button"]:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.status-section {
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--vscode-panel-border);
+}
+
+#connectionStatus {
+    padding: 12px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
+    margin-top: 10px;
+}
+
+.status-unknown {
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+}
+
+.status-testing {
+    background: var(--vscode-charts-yellow);
+    color: black;
+}
+
+.status-success {
+    background: var(--vscode-charts-green);
+    color: white;
+}
+
+.status-error {
+    background: var(--vscode-charts-red);
+    color: white;
+}
+
+.info-section {
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--vscode-panel-border);
+}
+
+.info-section p {
+    margin: 5px 0;
+    color: var(--vscode-descriptionForeground);
+}
+
+.links {
+    margin-top: 15px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.links a {
+    color: var(--vscode-textLink-foreground);
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.links a:hover {
+    color: var(--vscode-textLink-activeForeground);
+    text-decoration: underline;
+}
+
+/* Form validation styles */
+input:invalid {
+    border-color: var(--vscode-inputValidation-errorBorder);
+}
+
+input:valid {
+    border-color: var(--vscode-input-border);
+}
+
+/* Animation for save feedback */
+#settingsForm.saved {
+    border-left: 4px solid var(--vscode-charts-green);
+    transition: border-left 0.3s ease;
+}
