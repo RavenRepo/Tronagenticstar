@@ -1,9 +1,9 @@
 # Project Status – CAFS / AgenticStar
 
-_Last updated: 2025-01-07| D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | ✅ Done (E3 Sprint) |
+_Last updated: 2025-07-20_
 
 ## Current Phase
-Sprint E4 – Next Specialist Agent (PerfPulse Phase) - Ready to begin
+Sprint E4 – Next Specialist Agent (PerfPulse Phase) - ✅ COMPLETED
 
 ## Locked Roadmap
 | Phase | Timeline | Deliverables | Status |
@@ -58,6 +58,15 @@ Sprint E4 – Next Specialist Agent (PerfPulse Phase) - Ready to begin
 | E3.4 | Update docker-compose.dev.yml for CodeCraft | DevOps | Day 3 | ✅ Done |
 | E3.5 | Port assignment (8012) and service integration | DevOps | Day 3 | ✅ Done |
 
+## Sprint E4 – Task Board (PerfPulse Micro-service) - ✅ COMPLETED
+| ID | Task | Owner | Due | State |
+|----|------|-------|-----|-------|
+| E4.1 | Scaffold PerfPulse micro-service (FastAPI) | AI/Dev | Day 4 | ✅ Done |
+| E4.2 | Create /analyze, /optimize, /health, /metrics endpoints | AI/Dev | Day 4 | ✅ Done |
+| E4.3 | Add PerfPulse Dockerfile & requirements.txt | DevOps | Day 4 | ✅ Done |
+| E4.4 | Update docker-compose.dev.yml for PerfPulse | DevOps | Day 4 | ✅ Done |
+| E4.5 | Port assignment (8013) and service integration | DevOps | Day 4 | ✅ Done |
+
 ## Sprint D – Task Board (Specialist Agents v1)
 | ID | Task | Owner | Due | State |
 |----|------|-------|-----|-------|
@@ -65,7 +74,7 @@ Sprint E4 – Next Specialist Agent (PerfPulse Phase) - Ready to begin
 | D2 | DesignForge agent scaffold | AI/Dev | Week 1 | 🔜 |
 | D3 | SecuriShield agent scaffold | AI/Dev | Week 1 | ✅ Done (E2 Sprint) |
 | D4 | CodeCraft agent scaffold | AI/Dev | Week 1 | � In Progress (E3 Sprint) |
-| D5 | PerfPulse agent scaffold | AI/Dev | Week 1 | 🔜 |
+| D5 | PerfPulse agent scaffold | AI/Dev | Week 1 | ✅ Done (E4 Sprint) |
 | D6 | ADR-010 Specialist Agent Architecture | Arch | Week 1 | 🔜 |
 | D7 | noAgentDupes auto-update & tests | QA | Week 1 | 🔜 |
 
