@@ -3,7 +3,12 @@
 _Last updated: 2025-07-20_
 
 ## Current Phase
-🎯 Ready for Dev-Tooling Beta Phase (CLI Scaffolder, ESLint Plugin, VS-Code Extension) - 🔄 IN PROGRESS
+🎯 Dev-Tooling Beta Phase - Sprint G in Progress (G5 ✅ Complete, G6 🔄 Starting)
+
+**Latest Milestone**: G5 Enhanced Agent Panel UI completed July 20, 2025  
+**Next Priority**: G6 Code Generation Commands (8-12 day implementation)  
+**Strategic Goal**: Complete G6-G8 by July 31 for Private Beta readiness
+
 ## Sprint D – Task Board (Specialist Agents v1) - ✅ COMPLETED
 | ID | Task | Owner | Due | State |
 |----|------|-------|-----|-------|
@@ -97,12 +102,29 @@ _Last updated: 2025-07-20_
 | G2 | Implement core CLI scaffolder (agent creation) | DevTools | Week 1 | ✅ Done |
 | G3 | Create ESLint plugin for AgentForge patterns | DevTools | Week 1 | ✅ Done |
 | G4 | Scaffold VS Code extension framework | DevTools | Week 2 | ✅ Done |
-| G5 | Implement agent panel UI in VS Code extension | DevTools | Week 2 | � |
+| G5 | Implement agent panel UI in VS Code extension | DevTools | Week 2 | ✅ Done |
 | G6 | Add code generation commands to VS Code extension | DevTools | Week 2 | 🔜 |
 | G7 | Package and test CLI + extensions | DevTools | Week 2 | 🔜 |
 | G8 | Create developer documentation and guides | Docs | Week 2 | 🔜 |
 
+## Recent Accomplishments (Week 2 Summary)
 
+### G5 ✅ COMPLETED - Enhanced Agent Panel UI
+**Delivery Date**: July 20, 2025  
+**Implementation**: [G5-IMPLEMENTATION-SUMMARY.md](./G5-IMPLEMENTATION-SUMMARY.md)
+
+**Key Deliverables**:
+- 🤖 Rich chat interface with agent selection and status indicators
+- 💬 Advanced message formatting (markdown, code blocks, links)
+- ⚡ Smart input features (code insertion, file context, templates)
+- 🔧 Power user tools (keyboard shortcuts, export, metrics)
+- 🎨 Professional UX with VS Code theme integration
+- ✅ **500+ lines** of TypeScript, **280+ lines** of CSS
+- ✅ Successful compilation with full feature set
+
+### Next Priority: G6 - Code Generation Commands
+
+**Strategic Focus**: Transform the VS Code extension from a chat interface into a powerful code generation and development assistant.
 
 ## KPIs (Running)
 * P95 Retriever Latency < 400 ms
