@@ -22,13 +22,10 @@ export class ChiefArchitect extends EventEmitter {
   private authenticator: AgentAuthenticator;
   private healthCheckInterval?: ReturnType<typeof setInterval>;
 
-  constructor(
-    router: FrameworkRouter,
-    config: ChiefArchitectConfig = {}
-  ) {
+  constructor(config: ChiefArchitectConfig = {}) {
     super();
-    this.router = router;
     this.registry = new AgentRegistry();
+    this.router = new FrameworkRouter(this.registry);
     this.memoryBank = new MemoryBankManager(config.retrieverServiceUrl);
     this.errorCollector = new ErrorGoldCollector({
       enableCircuitBreaker: true,

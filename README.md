@@ -99,7 +99,23 @@ Full files under `docs/adr/`.
 
 ---
 
-## 🔐 Security & Compliance
+## � Documentation
+
+### Strategic Planning
+- [Project Status](./docs/status.md) - Current phase and sprint progress
+- [Complete Roadmap](./docs/roadmap.md) - Startup roadmap from prototype to IPO
+- [MetaGPT Comparison](./docs/METAGPT-COMPARISON.md) - Competitive analysis vs leading multi-agent framework
+- [Project Reality Check](./docs/PROJECT-REALITY-CHECK.md) - Honest assessment and pivot strategy
+- [Week 1 Sprint Plan](./docs/WEEK-1-SPRINT-PLAN.md) - Critical sprint to implement real AI
+
+### Technical Architecture
+- [Architecture Decision Records](./docs/adr/) - ADR-001 through ADR-009
+- [Agent Specialization Strategy](./docs/AGENT-SPECIALIZATION-STRATEGY.md) - Multi-agent collaboration design
+- [Feature Matrix](./docs/feature-matrix.md) - Complete feature breakdown
+
+---
+
+## �🔐 Security & Compliance
 * **Validator** – `packages/compliance/` (WIP) checks input validation, auth, encryption, logging.
 * **Policy Enforcer** – LangGraph node blocks merges if Trust Service Criteria violated.
 * **Evidence Export** – Prometheus + Loki + audit logs zipped for auditors.

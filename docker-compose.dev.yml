@@ -146,10 +146,18 @@ services:
       - "8013:8013"
     restart: unless-stopped
 
+  evaluator:
+    build:
+      context: ./services/evaluator
+    container_name: evaluator
+    ports:
+      - "8014:8014"
+    restart: unless-stopped
+
   soc2-compliance:
     build:
       context: ./services/soc2-compliance
     container_name: soc2-compliance
     ports:
       - "8020:8020"
-    restart: unless-stopped 
+    restart: unless-stopped

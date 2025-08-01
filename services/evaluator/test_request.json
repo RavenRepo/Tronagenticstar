@@ -1,0 +1,5 @@
+{
+    "code": "def hello_world():\n    print('Hello, World!')\n\nhello_world()",
+    "language": "python",
+    "metrics": ["complexity", "maintainability", "readability"]
+}

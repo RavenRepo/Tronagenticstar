@@ -1,208 +1,165 @@
 #!/usr/bin/env python3
 """
-CodeCraft Agent Micro-service
+CodeCraft Agent Micro-service (ADR-012 Compliant)
 Specialized agent for code generation, refactoring, and optimization tasks.
 """
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Dict, List, Optional
 import logging
-import time
 import os
+import time
+import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import openai
+import uvicorn
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Depends, Request
+from pydantic import BaseModel, Field
+from starlette.status import HTTP_200_OK
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load environment variables
+load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if OPENAI_API_KEY:
+    openai.api_key = OPENAI_API_KEY
+else:
+    logger.warning("OPENAI_API_KEY not set. OpenAI integration will not work.")
+
+# --- Pydantic Models (ADR-012 Compliant) ---
+
+class HealthResponse(BaseModel):
+    status: str = "ok"
+    details: Optional[str] = None
+
+class CapabilitiesResponse(BaseModel):
+    agent_id: str = "codecraft"
+    agent_type: str = "specialist"
+    task_type: str = "CODE_GENERATION"
+    capabilities: List[str] = ["generate_code", "refactor_code"]
+
+class TaskParameters(BaseModel):
+    prompt: Optional[str] = None
+    language: Optional[str] = "python"
+    style: Optional[str] = "clean"
+    max_lines: Optional[int] = 100
+    code: Optional[str] = None
+    refactor_type: Optional[str] = "optimize"
+
+class Task(BaseModel):
+    task_id: str
+    task_type: str
+    parameters: TaskParameters
+    context: Optional[List[Dict[str, Any]]] = None
+
+class TaskResultMetrics(BaseModel):
+    processing_time_ms: float
+    tokens_used: Optional[int] = None
+
+class TaskResult(BaseModel):
+    task_id: str
+    status: str = "completed"
+    result: Dict[str, Any]
+    metrics: TaskResultMetrics
+
+# --- FastAPI App ---
+
 app = FastAPI(
     title="CodeCraft Agent",
     description="Specialized agent for code generation, refactoring, and optimization",
-    version="1.0.0"
+    version="2.0.0"
 )
 
-# Request/Response Models
-class CodeGenerationRequest(BaseModel):
-    prompt: str
-    language: str = "python"
-    style: Optional[str] = "clean"
-    max_lines: Optional[int] = 100
+# --- Agent Logic ---
 
-class CodeRefactorRequest(BaseModel):
-    code: str
-    language: str = "python"
-    refactor_type: str = "optimize"  # optimize, modernize, clean
-    preserve_functionality: bool = True
+async def _generate_code(params: TaskParameters) -> Dict[str, Any]:
+    if not OPENAI_API_KEY:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured.")
+    if not params.prompt:
+        raise HTTPException(status_code=422, detail="'prompt' is required for code generation.")
 
-class CodeResponse(BaseModel):
-    generated_code: str
-    language: str
-    confidence_score: float
-    suggestions: List[str]
-    execution_time_ms: float
+    prompt = f"""You are CodeCraft, a senior software engineer. Generate clean, idiomatic {params.language} code for the following task:\n\nTask: {params.prompt}"""
+    if params.style:
+        prompt += f"\nStyle: {params.style}"
+    if params.max_lines:
+        prompt += f"\nLimit output to {params.max_lines} lines."
 
-class HealthResponse(BaseModel):
-    status: str
-    timestamp: str
-    version: str
-    uptime_seconds: float
+    response = await openai.ChatCompletion.acreate(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": "You are a helpful coding assistant."},
+                  {"role": "user", "content": prompt}],
+        max_tokens=1024,
+        temperature=0.2
+    )
+    generated_code = response.choices[0].message.content.strip()
+    tokens_used = response.usage.total_tokens
 
-class MetricsResponse(BaseModel):
-    total_requests: int
-    generation_requests: int
-    refactor_requests: int
-    avg_response_time_ms: float
-    success_rate: float
+    return {
+        "generated_code": generated_code,
+        "language": params.language,
+        "confidence_score": 0.95, # Placeholder
+        "tokens_used": tokens_used
+    }
 
-# Global metrics tracking
-metrics = {
-    "total_requests": 0,
-    "generation_requests": 0,
-    "refactor_requests": 0,
-    "total_response_time": 0.0,
-    "successful_requests": 0,
-    "start_time": time.time()
-}
+async def _refactor_code(params: TaskParameters) -> Dict[str, Any]:
+    if not params.code:
+        raise HTTPException(status_code=422, detail="'code' is required for refactoring.")
+
+    # In production, this would use a more sophisticated LLM call
+    refactored_code = f"""# Refactored {params.language} code ({params.refactor_type})\n{params.code}\n\n# Refactoring applied: {params.refactor_type}"""
+
+    return {
+        "refactored_code": refactored_code,
+        "language": params.language,
+        "confidence_score": 0.92, # Placeholder
+    }
+
+# --- API Endpoints (ADR-012 Compliant) ---
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint for CodeCraft service"""
-    uptime = time.time() - metrics["start_time"]
-    return HealthResponse(
-        status="healthy",
-        timestamp=time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
-        version="1.0.0",
-        uptime_seconds=uptime
-    )
+    # In a real scenario, we might check DB connections, external services, etc.
+    return HealthResponse(status="ok")
 
-@app.get("/metrics", response_model=MetricsResponse)
-async def get_metrics():
-    """Metrics endpoint for monitoring and observability"""
-    avg_response_time = (
-        metrics["total_response_time"] / max(metrics["total_requests"], 1)
-    )
-    success_rate = (
-        metrics["successful_requests"] / max(metrics["total_requests"], 1) * 100
-    )
-    
-    return MetricsResponse(
-        total_requests=metrics["total_requests"],
-        generation_requests=metrics["generation_requests"],
-        refactor_requests=metrics["refactor_requests"],
-        avg_response_time_ms=avg_response_time,
-        success_rate=success_rate
-    )
+@app.get("/capabilities", response_model=CapabilitiesResponse)
+async def get_capabilities():
+    return CapabilitiesResponse()
 
-@app.post("/generate", response_model=CodeResponse)
-async def generate_code(request: CodeGenerationRequest):
-    """
-    Generate code based on natural language prompt
-    
-    This endpoint accepts a code generation request and returns
-    generated code with confidence metrics and suggestions.
-    """
+@app.post("/execute_task", response_model=TaskResult)
+async def execute_task(task: Task):
     start_time = time.time()
-    
+
     try:
-        metrics["total_requests"] += 1
-        metrics["generation_requests"] += 1
-        
-        # Simulate code generation logic
-        # In production, this would integrate with LLM APIs
-        generated_code = f"""
-# Generated {request.language} code for: {request.prompt}
-def solution():
-    # TODO: Implement {request.prompt}
-    pass
+        if task.task_type == "generate_code":
+            result_data = await _generate_code(task.parameters)
+        elif task.task_type == "refactor_code":
+            result_data = await _refactor_code(task.parameters)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported task type: {task.task_type}")
+
+        processing_time_ms = (time.time() - start_time) * 1000
+
+        return TaskResult(
+            task_id=task.task_id,
+            status="completed",
+            result=result_data,
+            metrics=TaskResultMetrics(
+                processing_time_ms=processing_time_ms,
+                tokens_used=result_data.get("tokens_used")
+            )
+        )
+
+    except HTTPException as e:
+        # Re-raise HTTP exceptions directly
+        raise e
+    except Exception as e:
+        logger.error(f"Task {task.task_id} failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    solution()
-"""
-        
-        execution_time = (time.time() - start_time) * 1000
-        metrics["total_response_time"] += execution_time
-        metrics["successful_requests"] += 1
-        
-        logger.info(f"Generated code for prompt: {request.prompt[:50]}...")
-        
-        return CodeResponse(
-            generated_code=generated_code.strip(),
-            language=request.language,
-            confidence_score=0.85,
-            suggestions=[
-                "Consider adding error handling",
-                "Add type hints for better code quality",
-                "Include unit tests for the generated function"
-            ],
-            execution_time_ms=execution_time
-        )
-        
-    except Exception as e:
-        logger.error(f"Code generation failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Code generation failed: {str(e)}")
-
-@app.post("/refactor", response_model=CodeResponse)
-async def refactor_code(request: CodeRefactorRequest):
-    """
-    Refactor existing code for optimization, modernization, or cleanup
-    
-    This endpoint accepts code and refactoring instructions,
-    returning improved code with suggestions.
-    """
-    start_time = time.time()
-    
-    try:
-        metrics["total_requests"] += 1
-        metrics["refactor_requests"] += 1
-        
-        # Simulate code refactoring logic
-        # In production, this would use AST parsing and LLM-based refactoring
-        refactored_code = f"""
-# Refactored {request.language} code ({request.refactor_type})
-{request.code}
-
-# Refactoring applied: {request.refactor_type}
-# Functionality preserved: {request.preserve_functionality}
-"""
-        
-        execution_time = (time.time() - start_time) * 1000
-        metrics["total_response_time"] += execution_time
-        metrics["successful_requests"] += 1
-        
-        logger.info(f"Refactored {request.language} code using {request.refactor_type}")
-        
-        return CodeResponse(
-            generated_code=refactored_code.strip(),
-            language=request.language,
-            confidence_score=0.92,
-            suggestions=[
-                "Code complexity reduced",
-                "Performance optimizations applied",
-                "Code style improved according to best practices"
-            ],
-            execution_time_ms=execution_time
-        )
-        
-    except Exception as e:
-        logger.error(f"Code refactoring failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Code refactoring failed: {str(e)}")
-
-@app.get("/")
-async def root():
-    """Root endpoint with service information"""
-    return {
-        "service": "CodeCraft Agent",
-        "version": "1.0.0",
-        "description": "Specialized agent for code generation, refactoring, and optimization",
-        "endpoints": {
-            "health": "/health",
-            "metrics": "/metrics",
-            "generate": "/generate",
-            "refactor": "/refactor"
-        }
-    }
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8012))
+    port = int(os.getenv("PORT", 8001)) # Default port for codecraft
     uvicorn.run(app, host="0.0.0.0", port=port)

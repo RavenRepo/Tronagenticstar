@@ -6,14 +6,25 @@ export enum TaskType {
   DEVOPS = "DEVOPS"
 }
 
+export enum TaskType {
+  CODE_GENERATION = 'CODE_GENERATION',
+  REFACTOR = 'REFACTOR',
+  EVALUATION = 'EVALUATION',
+  DESIGN = 'DESIGN',
+  EMBEDDING = 'EMBEDDING',
+  PERFORMANCE_ANALYSIS = 'PERFORMANCE_ANALYSIS',
+  SECURITY = 'SECURITY',
+  COMPLIANCE = 'COMPLIANCE',
+  RETRIEVAL = 'RETRIEVAL',
+}
+
 export interface Task {
   id: string;
   type: TaskType;
-  priority: number; // 1 (low) – 10 (critical)
-  parameters: Record<string, unknown>;
-  deadline?: Date;
+  parameters: any;
   correlationId?: string;
   manifestHash?: string;
+  priority?: number;
 }
 
 export interface AgentMetrics {

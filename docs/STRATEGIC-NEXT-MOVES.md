@@ -7,6 +7,7 @@
 - **Dev Tools**: CLI scaffolder, ESLint plugin, VS Code extension framework
 - **UI**: Professional agent chat interface with advanced features
 - **Infrastructure**: Docker, monitoring, SOC-2 compliance, documentation
+- **Analysis**: [METAGPT-COMPARISON.md](./METAGPT-COMPARISON.md) - Competitive positioning vs leading multi-agent framework
 
 ### 🎯 **IMMEDIATE PRIORITIES** (Next 7-10 Days)
 

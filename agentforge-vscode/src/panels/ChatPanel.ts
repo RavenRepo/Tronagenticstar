@@ -104,7 +104,8 @@ export class ChatPanel {
                 { id: 'designforge', name: 'DesignForge', status: 'active', description: 'Architecture & Design Assistant' },
                 { id: 'securishield', name: 'SecuriShield', status: 'active', description: 'Security Analysis Expert' },
                 { id: 'codecraft', name: 'CodeCraft', status: 'active', description: 'Code Quality & Refactoring' },
-                { id: 'perfpulse', name: 'PerfPulse', status: 'active', description: 'Performance Optimization' }
+                { id: 'perfpulse', name: 'PerfPulse', status: 'active', description: 'Performance Optimization' },
+                { id: 'evaluator', name: 'Evaluator', status: 'active', description: 'Code Quality Assessment & Technical Debt Analysis' }
             ];
         }
 
@@ -371,6 +372,11 @@ export class ChatPanel {
                         document.getElementById('perfBtn').disabled = false;
                         document.getElementById('explainBtn').disabled = false;
                         break;
+                    case 'evaluator':
+                        document.getElementById('qualBtn').disabled = false;
+                        document.getElementById('perfBtn').disabled = false;
+                        document.getElementById('explainBtn').disabled = false;
+                        break;
                     default:
                         // Enable all for unknown agents
                         document.querySelectorAll('.feature-btn').forEach(btn => btn.disabled = false);
@@ -381,10 +387,11 @@ export class ChatPanel {
                 const templates = {
                     architecture: "Please analyze the architecture of my current project and provide recommendations for improvement.",
                     security: "Perform a security analysis of my code and identify potential vulnerabilities.",
-                    quality: "Review my code quality and suggest refactoring opportunities.",
-                    performance: "Analyze the performance of my application and suggest optimizations.",
+                    quality: "Review my code quality and suggest refactoring opportunities. Include metrics for complexity, maintainability, and readability.",
+                    performance: "Analyze the performance of my application and suggest optimizations. Include time/space complexity analysis.",
                     explain: "Please explain how this code works and what it does.",
-                    refactor: "Please review this code and suggest refactoring improvements for better maintainability and performance."
+                    refactor: "Please review this code and suggest refactoring improvements for better maintainability and performance.",
+                    evaluate: "Perform a comprehensive evaluation of this code including quality metrics, technical debt analysis, and improvement recommendations."
                 };
                 
                 const messageInput = document.getElementById('messageInput');
@@ -485,7 +492,8 @@ export class ChatPanel {
                     'DesignForge': '🏗️',
                     'SecuriShield': '🛡️',
                     'CodeCraft': '⚒️',
-                    'PerfPulse': '⚡'
+                    'PerfPulse': '⚡',
+                    'Evaluator': '📊'
                 };
                 return icons[agent] || '🤖';
             }
