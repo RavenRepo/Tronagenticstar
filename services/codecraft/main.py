@@ -66,6 +66,24 @@ class TaskResult(BaseModel):
     result: Dict[str, Any]
     metrics: TaskResultMetrics
 
+# --- Auth / Security Helpers ---
+
+AGENT_BEARER = os.getenv("AGENT_BEARER") or os.getenv("CODECRAFT_TOKEN")
+
+async def verify_orchestrator(request: Request):
+    """Optional bearer check. If AGENT_BEARER is set, require matching Authorization header.
+    Otherwise allow (for local/dev).
+    """
+    if not AGENT_BEARER:
+        return True
+    auth = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth or not auth.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    token = auth.split(" ", 1)[1].strip()
+    if token != AGENT_BEARER:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    return True
+
 # --- FastAPI App ---
 
 app = FastAPI(
@@ -76,7 +94,18 @@ app = FastAPI(
 
 # --- Agent Logic ---
 
-async def _generate_code(params: TaskParameters) -> Dict[str, Any]:
+def _format_context_for_prompt(context: Optional[List[Dict[str, Any]]]) -> str:
+    if not context:
+        return ""
+    lines: List[str] = ["\nRelevant project context (truncated):"]
+    for i, item in enumerate(context[:5]):
+        snippet = str(item.get("content"))
+        if len(snippet) > 800:
+            snippet = snippet[:800] + "..."
+        lines.append(f"[C{i+1}] tags={item.get('tags')}\n{snippet}")
+    return "\n".join(lines)
+
+async def _generate_code(params: TaskParameters, context: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
     if not OPENAI_API_KEY:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured.")
     if not params.prompt:
@@ -87,16 +116,30 @@ async def _generate_code(params: TaskParameters) -> Dict[str, Any]:
         prompt += f"\nStyle: {params.style}"
     if params.max_lines:
         prompt += f"\nLimit output to {params.max_lines} lines."
+    prompt += _format_context_for_prompt(context)
 
-    response = await openai.ChatCompletion.acreate(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "system", "content": "You are a helpful coding assistant."},
-                  {"role": "user", "content": prompt}],
-        max_tokens=1024,
-        temperature=0.2
-    )
-    generated_code = response.choices[0].message.content.strip()
-    tokens_used = response.usage.total_tokens
+    # Prefer newer Chat Completions API if available
+    try:
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": "You are a senior software engineer who writes clean, secure, well-structured code."},
+                      {"role": "user", "content": prompt}],
+            max_tokens=1024,
+            temperature=0.2
+        )
+        generated_code = response.choices[0].message.content.strip()
+        tokens_used = response.usage.total_tokens
+    except Exception:
+        # Fallback to gpt-3.5-turbo
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": "You are a helpful coding assistant."},
+                      {"role": "user", "content": prompt}],
+            max_tokens=1024,
+            temperature=0.2
+        )
+        generated_code = response.choices[0].message.content.strip()
+        tokens_used = response.usage.total_tokens
 
     return {
         "generated_code": generated_code,
@@ -105,12 +148,13 @@ async def _generate_code(params: TaskParameters) -> Dict[str, Any]:
         "tokens_used": tokens_used
     }
 
-async def _refactor_code(params: TaskParameters) -> Dict[str, Any]:
+async def _refactor_code(params: TaskParameters, context: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
     if not params.code:
         raise HTTPException(status_code=422, detail="'code' is required for refactoring.")
 
     # In production, this would use a more sophisticated LLM call
-    refactored_code = f"""# Refactored {params.language} code ({params.refactor_type})\n{params.code}\n\n# Refactoring applied: {params.refactor_type}"""
+    context_note = _format_context_for_prompt(context)
+    refactored_code = f"""# Refactored {params.language} code ({params.refactor_type})\n{params.code}\n\n# Refactoring applied: {params.refactor_type}{context_note}"""
 
     return {
         "refactored_code": refactored_code,
@@ -126,18 +170,18 @@ async def health_check():
     return HealthResponse(status="ok")
 
 @app.get("/capabilities", response_model=CapabilitiesResponse)
-async def get_capabilities():
+async def get_capabilities(_: bool = Depends(verify_orchestrator)):
     return CapabilitiesResponse()
 
 @app.post("/execute_task", response_model=TaskResult)
-async def execute_task(task: Task):
+async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
     start_time = time.time()
 
     try:
         if task.task_type == "generate_code":
-            result_data = await _generate_code(task.parameters)
+            result_data = await _generate_code(task.parameters, task.context)
         elif task.task_type == "refactor_code":
-            result_data = await _refactor_code(task.parameters)
+            result_data = await _refactor_code(task.parameters, task.context)
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported task type: {task.task_type}")
 

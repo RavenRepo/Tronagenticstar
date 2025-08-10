@@ -21,7 +21,7 @@ export class AgentForgeOrchestrator {
     this.router = new FrameworkRouter();
     
     // Initialize the Chief Architect with all components
-    this.chiefArchitect = new ChiefArchitect(this.router, config);
+    this.chiefArchitect = new ChiefArchitect(config);
     
     // Register agent types
     this.registerAgentTypes();

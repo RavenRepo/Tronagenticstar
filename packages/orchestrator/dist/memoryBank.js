@@ -63,14 +63,9 @@ export class MemoryBankManager extends EventEmitter {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    text: query.query,
-                    manifestHash: query.taskType || 'global',
-                    filters: {
-                        agentId: query.agentId,
-                        taskType: query.taskType,
-                        ...query.filters
-                    },
-                    limit: query.limit || 10
+                    query: query.query,
+                    top_k: query.limit || 10,
+                    sources: query.filters?.sources || undefined
                 })
             });
             if (!response.ok) {

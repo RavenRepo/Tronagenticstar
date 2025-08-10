@@ -3,38 +3,52 @@ export declare enum TaskType {
     SECURITY = "SECURITY",
     QUALITY = "QUALITY",
     PERFORMANCE = "PERFORMANCE",
-    DEVOPS = "DEVOPS"
+    DEVOPS = "DEVOPS",
+    CODE_GENERATION = "CODE_GENERATION",
+    REFACTOR = "REFACTOR",
+    EVALUATION = "EVALUATION",
+    DESIGN = "DESIGN",
+    EMBEDDING = "EMBEDDING",
+    PERFORMANCE_ANALYSIS = "PERFORMANCE_ANALYSIS",
+    COMPLIANCE = "COMPLIANCE",
+    RETRIEVAL = "RETRIEVAL"
 }
 export interface Task {
     id: string;
     type: TaskType;
-    priority: number;
-    parameters: Record<string, unknown>;
-    deadline?: Date;
+    parameters: any;
     correlationId?: string;
     manifestHash?: string;
+    priority?: number;
 }
 export interface AgentMetrics {
     avgResponseTimeMs: number;
     currentLoad: number;
     qualityScore?: number;
-    healthStatus: 'healthy' | 'degraded' | 'unhealthy';
-    lastActivity: Date;
+    healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+    lastActivity?: Date;
+    totalTasksCompleted?: number;
+    totalTasksFailed?: number;
+    lastSeen?: Date;
 }
 export interface AgentInfo {
     id: string;
-    type: string;
+    type?: string;
+    address?: string;
     specialization: TaskType;
     capabilities: string[];
     status: AgentStatus;
-    version: string;
-    metadata: Record<string, unknown>;
+    metrics: AgentMetrics;
+    version?: string;
+    metadata?: Record<string, unknown>;
+    lastSeen?: Date;
 }
 export declare enum AgentStatus {
     INITIALIZING = "initializing",
     READY = "ready",
     BUSY = "busy",
     DEGRADED = "degraded",
+    UNAVAILABLE = "unavailable",
     FAILED = "failed",
     SHUTTING_DOWN = "shutting_down"
 }
@@ -76,4 +90,14 @@ export declare enum CircuitBreakerState {
     CLOSED = "closed",
     OPEN = "open",
     HALF_OPEN = "half_open"
+}
+export interface TaskResultMetrics {
+    processing_time_ms: number;
+    [key: string]: unknown;
+}
+export interface TaskResult {
+    task_id: string;
+    status: string;
+    result: unknown;
+    metrics: TaskResultMetrics;
 }

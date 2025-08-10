@@ -1,13 +1,14 @@
 import { EventEmitter } from "eventemitter3";
+import { FrameworkRouter } from "./frameworkRouter.js";
 import { AgentRegistry } from "./agentRegistry.js";
 import { MemoryBankManager } from "./memoryBank.js";
 import { ErrorGoldCollector } from "./errorGold.js";
 import { AgentFactory, AgentAuthenticator } from "./agentFactory.js";
 export class ChiefArchitect extends EventEmitter {
-    constructor(router, config = {}) {
+    constructor(config = {}) {
         super();
-        this.router = router;
         this.registry = new AgentRegistry();
+        this.router = new FrameworkRouter(this.registry);
         this.memoryBank = new MemoryBankManager(config.retrieverServiceUrl);
         this.errorCollector = new ErrorGoldCollector({
             enableCircuitBreaker: true,
@@ -29,7 +30,7 @@ export class ChiefArchitect extends EventEmitter {
             const context = await this.getTaskContext(task);
             // Execute with error handling
             const result = await this.errorCollector.safeExecute('chief-architect', task.id, async () => {
-                return await this.router.route(task);
+                return await this.router.route(task, context);
             }, { context, taskType: task.type });
             // Store result in memory
             await this.storeResultMemory(task, result);
@@ -140,7 +141,7 @@ export class ChiefArchitect extends EventEmitter {
         try {
             // Check agent health
             const agentHealth = await this.agentFactory.performHealthCheck();
-            const agentStats = this.registry.getStats();
+            const agentStats = this.agentFactory.getStats();
             // Check memory bank status
             const memoryStats = this.memoryBank.getMemoryStats();
             // Check error rates

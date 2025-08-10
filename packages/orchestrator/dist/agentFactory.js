@@ -1,5 +1,5 @@
 import { EventEmitter } from "eventemitter3";
-import { TaskType, AgentStatus } from "./types.js";
+import { AgentStatus } from "./types.js";
 /**
  * Agent Factory - Creates and manages agent instances
  */
@@ -118,6 +118,14 @@ export class AgentFactory extends EventEmitter {
             capabilities,
             status: AgentStatus.READY,
             version,
+            metrics: {
+                avgResponseTimeMs: 0,
+                currentLoad: 0,
+                healthStatus: 'healthy',
+                lastActivity: new Date(),
+                totalTasksCompleted: 0,
+                totalTasksFailed: 0,
+            },
             metadata: {
                 ...metadata,
                 createdAt: new Date().toISOString(),
@@ -158,17 +166,12 @@ export class AgentFactory extends EventEmitter {
         AgentFactory.getAvailableTypes().forEach(type => {
             agentsByType[type] = 0;
         });
-        const agentsBySpecialization = {
-            [TaskType.ARCHITECTURE]: 0,
-            [TaskType.SECURITY]: 0,
-            [TaskType.QUALITY]: 0,
-            [TaskType.PERFORMANCE]: 0,
-            [TaskType.DEVOPS]: 0
-        };
+        const agentsBySpecialization = {};
         // Count agents
         for (const agent of this.instances.values()) {
             // Count by specialization
-            agentsBySpecialization[agent.specialization]++;
+            const key = agent.specialization;
+            agentsBySpecialization[key] = (agentsBySpecialization[key] || 0) + 1;
         }
         // Count by type (would need to track type in agent or config)
         // For now, we'll leave this as initialized values

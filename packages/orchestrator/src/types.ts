@@ -1,19 +1,19 @@
+// Unified task types across local TS agents and external Python microservices
 export enum TaskType {
-  ARCHITECTURE = "ARCHITECTURE",
-  SECURITY = "SECURITY", 
-  QUALITY = "QUALITY",
-  PERFORMANCE = "PERFORMANCE",
-  DEVOPS = "DEVOPS"
-}
+  // Domain-level tasks
+  ARCHITECTURE = 'ARCHITECTURE',
+  SECURITY = 'SECURITY',
+  QUALITY = 'QUALITY',
+  PERFORMANCE = 'PERFORMANCE',
+  DEVOPS = 'DEVOPS',
 
-export enum TaskType {
+  // Action-level tasks (microservices)
   CODE_GENERATION = 'CODE_GENERATION',
   REFACTOR = 'REFACTOR',
   EVALUATION = 'EVALUATION',
   DESIGN = 'DESIGN',
   EMBEDDING = 'EMBEDDING',
   PERFORMANCE_ANALYSIS = 'PERFORMANCE_ANALYSIS',
-  SECURITY = 'SECURITY',
   COMPLIANCE = 'COMPLIANCE',
   RETRIEVAL = 'RETRIEVAL',
 }
@@ -31,19 +31,25 @@ export interface AgentMetrics {
   avgResponseTimeMs: number;
   currentLoad: number; // 0–1
   qualityScore?: number;
-  healthStatus: 'healthy' | 'degraded' | 'unhealthy';
-  lastActivity: Date;
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+  lastActivity?: Date;
+  totalTasksCompleted?: number;
+  totalTasksFailed?: number;
+  lastSeen?: Date;
 }
 
 // Agent Registry Types
 export interface AgentInfo {
   id: string;
-  type: string;
+  type?: string;
+  address?: string;
   specialization: TaskType;
   capabilities: string[];
   status: AgentStatus;
-  version: string;
-  metadata: Record<string, unknown>;
+  metrics: AgentMetrics;
+  version?: string;
+  metadata?: Record<string, unknown>;
+  lastSeen?: Date;
 }
 
 export enum AgentStatus {
@@ -51,6 +57,7 @@ export enum AgentStatus {
   READY = 'ready',
   BUSY = 'busy',
   DEGRADED = 'degraded',
+  UNAVAILABLE = 'unavailable',
   FAILED = 'failed',
   SHUTTING_DOWN = 'shutting_down'
 }
@@ -102,4 +109,17 @@ export enum CircuitBreakerState {
   CLOSED = 'closed',
   OPEN = 'open',
   HALF_OPEN = 'half_open'
+}
+
+// Result contract returned by Python microservices
+export interface TaskResultMetrics {
+  processing_time_ms: number;
+  [key: string]: unknown;
+}
+
+export interface TaskResult {
+  task_id: string;
+  status: string;
+  result: unknown;
+  metrics: TaskResultMetrics;
 }

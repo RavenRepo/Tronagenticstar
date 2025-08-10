@@ -1,6 +1,5 @@
 import { EventEmitter } from "eventemitter3";
 import { Task, TaskType, MemoryEntry, ContextQuery } from "./types.js";
-import { FrameworkRouter } from "./frameworkRouter.js";
 import { AgentRegistry } from "./agentRegistry.js";
 import { MemoryBankManager } from "./memoryBank.js";
 import { ErrorGoldCollector } from "./errorGold.js";
@@ -19,7 +18,7 @@ export declare class ChiefArchitect extends EventEmitter {
     private agentFactory;
     private authenticator;
     private healthCheckInterval?;
-    constructor(router: FrameworkRouter, config?: ChiefArchitectConfig);
+    constructor(config?: ChiefArchitectConfig);
     /** Entry point called by SystemTrigger */
     handleRequest(task: Task): Promise<unknown>;
     /**

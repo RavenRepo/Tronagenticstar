@@ -57,7 +57,7 @@ export class ChiefArchitect extends EventEmitter {
         'chief-architect',
         task.id,
         async () => {
-          return await this.router.route(task);
+          return await this.router.route(task, context);
         },
         { context, taskType: task.type }
       );
@@ -209,7 +209,7 @@ export class ChiefArchitect extends EventEmitter {
     try {
       // Check agent health
       const agentHealth = await this.agentFactory.performHealthCheck();
-      const agentStats = this.registry.getStats();
+      const agentStats = this.agentFactory.getStats();
       
       // Check memory bank status
       const memoryStats = this.memoryBank.getMemoryStats();

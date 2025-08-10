@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { ChiefArchitect, Task, TaskType } from '../src';
 import { execSync } from 'child_process';
 
-const CODECRAFT_PORT = 8001;
+const CODECRAFT_PORT = 8011;
 
 describe('ChiefArchitect Integration Test', () => {
   let chiefArchitect: ChiefArchitect;
@@ -23,10 +23,10 @@ describe('ChiefArchitect Integration Test', () => {
 
   afterAll(() => {
     try {
-      const pid = execSync('cat .agent_pid').toString().trim();
+      const pid = execSync('cat test/.agent_pid').toString().trim();
       if (pid) {
         execSync(`kill ${pid}`);
-        execSync('rm .agent_pid');
+        execSync('rm test/.agent_pid');
       }
     } catch (error) {
       // Ignore errors if the file doesn't exist

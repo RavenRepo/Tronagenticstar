@@ -11,7 +11,13 @@ export class AgentRegistry extends EventEmitter {
 
   async discoverAndRegisterAgent(agentUrl: string): Promise<AgentInfo | null> {
     try {
-      const response = await axios.get(`${agentUrl}/capabilities`, { timeout: 5000 });
+      const bearerEnv = process.env.AGENT_BEARER || process.env.CODECRAFT_TOKEN;
+      const response = await axios.get(`${agentUrl}/capabilities`, {
+        timeout: 5000,
+        headers: {
+          ...(bearerEnv ? { Authorization: `Bearer ${bearerEnv}` } : {}),
+        },
+      });
       const capabilities = response.data;
 
       const agentInfo: AgentInfo = {
@@ -25,6 +31,8 @@ export class AgentRegistry extends EventEmitter {
           totalTasksCompleted: 0,
           totalTasksFailed: 0,
           currentLoad: 0,
+          healthStatus: 'healthy',
+          lastActivity: new Date(),
         },
         lastSeen: new Date(),
       };
@@ -55,7 +63,36 @@ export class AgentRegistry extends EventEmitter {
   }
 
   getAgentsByTaskType(type: TaskType): AgentInfo[] {
-    return Array.from(this.agents.values()).filter(agent => agent.specialization === type);
+    const capabilityToType = (cap: string): TaskType | undefined => {
+      switch (cap) {
+        case 'generate_code':
+          return TaskType.CODE_GENERATION;
+        case 'refactor_code':
+          return TaskType.REFACTOR;
+        case 'generate_diagram':
+          return TaskType.DESIGN;
+        case 'scan_target':
+          return TaskType.SECURITY;
+        case 'analyze_performance':
+          return TaskType.PERFORMANCE_ANALYSIS;
+        case 'generate_embedding':
+          return TaskType.EMBEDDING;
+        case 'evaluate_quality':
+          return TaskType.EVALUATION;
+        case 'evaluate_compliance':
+          return TaskType.COMPLIANCE;
+        case 'retrieve_memories':
+          return TaskType.RETRIEVAL;
+        default:
+          return undefined;
+      }
+    };
+
+    return Array.from(this.agents.values()).filter(agent => {
+      if (agent.specialization === type) return true;
+      // Fallback: infer support from capabilities
+      return (agent.capabilities || []).some((cap) => capabilityToType(cap) === type);
+    });
   }
 
   getAllAgents(): AgentInfo[] {
@@ -72,7 +109,13 @@ export class AgentRegistry extends EventEmitter {
   async performHealthCheck(): Promise<void> {
     for (const agent of this.agents.values()) {
       try {
-        const response = await axios.get(`${agent.address}/health`, { timeout: 3000 });
+        const bearerEnv = process.env.AGENT_BEARER || process.env.CODECRAFT_TOKEN;
+        const response = await axios.get(`${agent.address}/health`, {
+          timeout: 3000,
+          headers: {
+            ...(bearerEnv ? { Authorization: `Bearer ${bearerEnv}` } : {}),
+          },
+        });
         if (response.data.status === 'ok') {
           agent.status = AgentStatus.READY;
         } else {
@@ -80,7 +123,7 @@ export class AgentRegistry extends EventEmitter {
         }
         agent.lastSeen = new Date();
       } catch (error) {
-        agent.status = AgentStatus.UNAVAILABLE;
+        agent.status = AgentStatus.UNAVAILABLE as any;
         this.emit('agent_unavailable', agent);
       }
     }

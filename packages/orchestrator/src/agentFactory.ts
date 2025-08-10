@@ -154,12 +154,20 @@ export class AgentFactory extends EventEmitter {
       capabilities,
       status: AgentStatus.READY,
       version,
+      metrics: {
+        avgResponseTimeMs: 0,
+        currentLoad: 0,
+        healthStatus: 'healthy',
+        lastActivity: new Date(),
+        totalTasksCompleted: 0,
+        totalTasksFailed: 0,
+      },
       metadata: {
         ...metadata,
         createdAt: new Date().toISOString(),
         lastHeartbeat: new Date().toISOString()
       }
-    };
+    } as AgentInfo;
   }
 
   /**
@@ -193,7 +201,7 @@ export class AgentFactory extends EventEmitter {
   getStats(): {
     totalAgents: number;
     agentsByType: Record<string, number>;
-    agentsBySpecialization: Record<TaskType, number>;
+    agentsBySpecialization: Partial<Record<TaskType, number>>;
   } {
     const agentsByType: Record<string, number> = {};
     
@@ -202,18 +210,13 @@ export class AgentFactory extends EventEmitter {
       agentsByType[type] = 0;
     });
     
-    const agentsBySpecialization = {
-      [TaskType.ARCHITECTURE]: 0,
-      [TaskType.SECURITY]: 0,
-      [TaskType.QUALITY]: 0,
-      [TaskType.PERFORMANCE]: 0,
-      [TaskType.DEVOPS]: 0
-    };
+    const agentsBySpecialization: Partial<Record<TaskType, number>> = {};
 
     // Count agents
     for (const agent of this.instances.values()) {
       // Count by specialization
-      agentsBySpecialization[agent.specialization]++;
+      const key = agent.specialization;
+      agentsBySpecialization[key] = (agentsBySpecialization[key] || 0) + 1;
     }
 
     // Count by type (would need to track type in agent or config)

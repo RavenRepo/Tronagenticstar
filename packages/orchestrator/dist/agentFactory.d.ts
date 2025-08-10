@@ -51,7 +51,7 @@ export declare class AgentFactory extends EventEmitter {
     getStats(): {
         totalAgents: number;
         agentsByType: Record<string, number>;
-        agentsBySpecialization: Record<TaskType, number>;
+        agentsBySpecialization: Partial<Record<TaskType, number>>;
     };
     private setupAgentEventHandlers;
 }
