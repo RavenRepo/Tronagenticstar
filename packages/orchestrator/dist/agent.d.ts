@@ -3,6 +3,7 @@ import { Task, AgentMetrics, TaskType } from "./types.js";
 export interface AgentConfig {
     id: string;
     specialization: TaskType;
+    llmApiKey?: string;
 }
 export declare abstract class BaseAgent extends EventEmitter {
     readonly id: string;

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Request
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
@@ -59,6 +59,19 @@ class TaskResult(BaseModel):
 
 # --- FastAPI App ---
 
+AGENT_BEARER = os.getenv("AGENT_BEARER") or os.getenv("CODECRAFT_TOKEN")
+
+async def verify_orchestrator(request: Request):
+    if not AGENT_BEARER:
+        return True
+    auth = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth or not auth.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    token = auth.split(" ", 1)[1].strip()
+    if token != AGENT_BEARER:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    return True
+
 app = FastAPI(
     title="Embedding Agent",
     description="Specialized agent for generating text embeddings",
@@ -86,11 +99,11 @@ async def health_check():
     return HealthResponse()
 
 @app.get("/capabilities", response_model=CapabilitiesResponse)
-async def get_capabilities():
+async def get_capabilities(_: bool = Depends(verify_orchestrator)):
     return CapabilitiesResponse()
 
 @app.post("/execute_task", response_model=TaskResult)
-async def execute_task(task: Task):
+async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
     start_time = time.time()
 
     try:

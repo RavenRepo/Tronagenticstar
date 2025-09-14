@@ -4,16 +4,17 @@ import { Task, AgentMetrics, TaskType } from "./types.js";
 export interface AgentConfig {
   id: string;
   specialization: TaskType;
+  llmApiKey?: string;
 }
 
 export abstract class BaseAgent extends EventEmitter {
   readonly id: string;
   readonly specialization: TaskType;
-  private metrics: AgentMetrics = { 
-    avgResponseTimeMs: 0, 
+  private metrics: AgentMetrics = {
+    avgResponseTimeMs: 0,
     currentLoad: 0,
-    healthStatus: 'healthy',
-    lastActivity: new Date()
+    healthStatus: "healthy",
+    lastActivity: new Date(),
   };
 
   constructor(config: AgentConfig) {
@@ -33,4 +34,4 @@ export abstract class BaseAgent extends EventEmitter {
 
   /** Execute a task and return result payload */
   abstract execute(task: Task): Promise<unknown>;
-} 
+}

@@ -7,8 +7,16 @@
   "engines": {
     "vscode": "^1.74.0"
   },
-  "categories": ["Other"],
-  "keywords": ["ai", "agents", "orchestration", "development", "automation"],
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "agents",
+    "orchestration",
+    "development",
+    "automation"
+  ],
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -80,7 +88,7 @@
         },
         {
           "id": "agentforge.agents",
-          "name": "Available Agents", 
+          "name": "Available Agents",
           "when": "agentforge.enabled",
           "icon": "$(robot)"
         }
@@ -133,25 +141,59 @@
     "configuration": {
       "title": "AgentForge",
       "properties": {
-        "agentforge.orchestratorUrl": {
+        "agentforge.gatewayUrl": {
           "type": "string",
           "default": "http://localhost:3000",
-          "description": "URL of the AgentForge orchestrator"
+          "description": "URL of the Constella API Gateway"
         },
         "agentforge.apiKey": {
           "type": "string",
-          "description": "API key for orchestrator authentication"
+          "description": "API key for gateway authentication (or JWT token)"
+        },
+        "agentforge.authType": {
+          "type": "string",
+          "enum": [
+            "apikey",
+            "jwt"
+          ],
+          "default": "apikey",
+          "description": "Authentication type for API Gateway"
         },
         "agentforge.enableRealTimeUpdates": {
           "type": "boolean",
           "default": true,
           "description": "Enable real-time updates via WebSocket"
         },
+        "agentforge.rateLimitWarning": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show warnings when approaching rate limits"
+        },
+        "agentforge.autoRetry": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically retry failed requests with exponential backoff"
+        },
+        "agentforge.requestTimeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Request timeout in milliseconds"
+        },
         "agentforge.logLevel": {
           "type": "string",
-          "enum": ["debug", "info", "warn", "error"],
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
           "default": "info",
           "description": "Logging level for AgentForge extension"
+        },
+        "agentforge.enableServiceProxy": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable direct service proxy features (advanced)"
         }
       }
     }

@@ -1,0 +1,173 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      target: development
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - API_GATEWAY_PORT=3000
+      - API_GATEWAY_HOST=0.0.0.0
+      - JWT_SECRET=dev-secret-change-in-production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ORCHESTRATOR_URL=http://orchestrator:3001
+      - EMBEDDING_URL=http://embedding:8001
+      - RETRIEVER_URL=http://retriever:8002
+      - DESIGNFORGE_URL=http://designforge:8003
+      - SECURISHIELD_URL=http://securishield:8004
+      - CODECRAFT_URL=http://codecraft:8005
+      - PERFPULSE_URL=http://perfpulse:8006
+      - SOC2_COMPLIANCE_URL=http://soc2-compliance:8007
+      - LOG_LEVEL=debug
+      - ENABLE_PROMETHEUS=true
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    networks:
+      - constella-network
+    restart: unless-stopped
+
+  # Redis for rate limiting and caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - constella-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Mock Orchestrator Service (for testing)
+  mock-orchestrator:
+    image: node:18-alpine
+    ports:
+      - "3001:3001"
+    working_dir: /app
+    command: |
+      sh -c "
+        npm init -y &&
+        npm install express &&
+        node -e \"
+          const express = require('express');
+          const app = express();
+          app.use(express.json());
+
+          app.get('/health', (req, res) => res.json({ status: 'healthy' }));
+          app.get('/agents', (req, res) => res.json([
+            { id: 'architecture', name: 'Architecture Agent', specialization: 'System Architecture' },
+            { id: 'security', name: 'Security Agent', specialization: 'Security Analysis' },
+            { id: 'quality', name: 'Quality Agent', specialization: 'Code Quality' }
+          ]));
+          app.post('/trigger', (req, res) => res.json({
+            success: true,
+            result: 'Mock response from orchestrator',
+            metadata: { agentId: 'mock', executionTime: 100, requestId: req.body.context?.requestId, timestamp: new Date() }
+          }));
+
+          app.listen(3001, '0.0.0.0', () => console.log('Mock Orchestrator running on port 3001'));
+        \"
+      "
+    networks:
+      - constella-network
+    restart: unless-stopped
+
+  # Mock Services for testing
+  mock-embedding:
+    image: node:18-alpine
+    ports:
+      - "8001:8001"
+    working_dir: /app
+    command: |
+      sh -c "
+        npm init -y &&
+        npm install express &&
+        node -e \"
+          const express = require('express');
+          const app = express();
+          app.use(express.json());
+          app.get('/health', (req, res) => res.json({ status: 'healthy' }));
+          app.post('/embed', (req, res) => res.json({ embeddings: [0.1, 0.2, 0.3] }));
+          app.listen(8001, '0.0.0.0', () => console.log('Mock Embedding running on port 8001'));
+        \"
+      "
+    networks:
+      - constella-network
+    restart: unless-stopped
+
+  mock-retriever:
+    image: node:18-alpine
+    ports:
+      - "8002:8002"
+    working_dir: /app
+    command: |
+      sh -c "
+        npm init -y &&
+        npm install express &&
+        node -e \"
+          const express = require('express');
+          const app = express();
+          app.use(express.json());
+          app.get('/health', (req, res) => res.json({ status: 'healthy' }));
+          app.post('/search', (req, res) => res.json({ results: ['doc1', 'doc2'] }));
+          app.listen(8002, '0.0.0.0', () => console.log('Mock Retriever running on port 8002'));
+        \"
+      "
+    networks:
+      - constella-network
+    restart: unless-stopped
+
+  # Monitoring services
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - constella-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - constella-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  grafana_data:
+
+networks:
+  constella-network:
+    driver: bridge
+    name: constella-network

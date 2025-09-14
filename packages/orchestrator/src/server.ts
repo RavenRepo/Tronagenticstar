@@ -10,6 +10,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Simple API key authentication middleware (optional)
+const API_KEYS = (process.env.API_KEYS || process.env.API_KEY || '').split(',').map((k) => k.trim()).filter(Boolean);
+app.use((req, res, next) => {
+  if (req.path === '/health' || req.path === '/' || req.path.startsWith('/api/codecraft')) {
+    // Allow health, root, and legacy thin endpoints without API key
+    return next();
+  }
+  if (API_KEYS.length === 0) {
+    return next();
+  }
+  const key = (req.headers['x-api-key'] as string) || '';
+  if (!key || !API_KEYS.includes(key)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  return next();
+});
+
 // Initialize in-memory orchestrator
 const orchestrator = new ChiefArchitect();
 
@@ -296,6 +313,89 @@ app.post('/api/codecraft/refactor', async (req, res) => {
     res.json({ taskId, result });
   } catch (err: any) {
     res.status(500).json({ error: err?.message || 'failed' });
+  }
+});
+
+// --- Unified API v1 (Gateway-lite) ---
+
+// List all available agents (registry view)
+app.get('/v1/agents', (_req, res) => {
+  const agents = orchestrator.getRegistry().getAllAgents();
+  res.json({ agents });
+});
+
+// Trigger agent by id or name with action
+app.post('/v1/agents/:agentId/trigger', async (req, res) => {
+  const { agentId } = req.params;
+  const { action, parameters = {} } = req.body || {};
+  const agents = orchestrator.getRegistry().getAllAgents();
+  const target = agents.find((a) => a.id === agentId || (a.metadata as any)?.name === agentId);
+  if (!target) {
+    return res.status(404).json({ error: `Agent not found: ${agentId}` });
+  }
+  const taskId = `v1_${Date.now()}`;
+  try {
+    const result = await orchestrator.handleRequest({
+      id: taskId,
+      type: target.specialization,
+      parameters: { ...parameters, action },
+      priority: 5,
+      manifestHash: 'v1',
+    } as any);
+    res.json({ task_id: taskId, success: true, result });
+  } catch (err: any) {
+    res.status(500).json({ task_id: taskId, success: false, error: err?.message || 'failed' });
+  }
+});
+
+// Proxy to retriever service for semantic search
+app.post('/v1/search', async (req, res) => {
+  const retrieverUrl = process.env.RETRIEVER_URL || 'http://localhost:8006';
+  const { query, filters, domain, max_results = 10, min_score = 0, include_context = true } = req.body || {};
+  if (!query) return res.status(422).json({ error: "'query' is required" });
+  try {
+    const bearer = process.env.AGENT_BEARER || process.env.CODECRAFT_TOKEN;
+    const resp = await axios.post(
+      `${retrieverUrl}/execute_task`,
+      {
+        task_id: `search_${Date.now()}`,
+        task_type: 'retrieve_memories',
+        parameters: { query, top_k: max_results, filters, domain, min_score },
+      },
+      {
+        timeout: 30000,
+        headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}) },
+      }
+    );
+    res.json(resp.data);
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'search failed' });
+  }
+});
+
+// Proxy to embedding service for single/batch embeddings
+app.post('/v1/embed', async (req, res) => {
+  const embeddingUrl = process.env.EMBEDDING_URL || 'http://localhost:8004';
+  const { text, texts } = req.body || {};
+  if (!text && !texts) return res.status(422).json({ error: "'text' or 'texts' is required" });
+  const taskType = text ? 'generate_embedding' : 'generate_embedding_batch';
+  try {
+    const bearer = process.env.AGENT_BEARER || process.env.CODECRAFT_TOKEN;
+    const resp = await axios.post(
+      `${embeddingUrl}/execute_task`,
+      {
+        task_id: `embed_${Date.now()}`,
+        task_type: taskType,
+        parameters: text ? { text } : { texts },
+      },
+      {
+        timeout: 30000,
+        headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}) },
+      }
+    );
+    res.json(resp.data);
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'embedding failed' });
   }
 });
 

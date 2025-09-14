@@ -1,0 +1,83 @@
+{
+  "name": "@constella/llm-core",
+  "version": "1.0.0",
+  "description": "LLM provider abstraction and management for Constella platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "llm",
+    "ai",
+    "openai",
+    "anthropic",
+    "constella",
+    "agent",
+    "completion",
+    "embedding"
+  ],
+  "author": "Constella Team",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2",
+    "vitest": "^1.0.4",
+    "@vitest/coverage-c8": "^0.33.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.5.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./providers/base": {
+      "import": "./dist/providers/base.js",
+      "types": "./dist/providers/base.d.ts"
+    },
+    "./providers/openai": {
+      "import": "./dist/providers/openai.js",
+      "types": "./dist/providers/openai.d.ts"
+    },
+    "./manager": {
+      "import": "./dist/manager.js",
+      "types": "./dist/manager.d.ts"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/constella/platform.git",
+    "directory": "packages/llm-core"
+  },
+  "bugs": {
+    "url": "https://github.com/constella/platform/issues"
+  },
+  "homepage": "https://github.com/constella/platform/tree/main/packages/llm-core#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -61,7 +61,7 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
-      - ./devops/loki.yml:/etc/loki/local-config.yaml 
+      - ./devops/loki.yml:/etc/loki/local-config.yaml
 
   errorgold-listener:
     build:
@@ -72,7 +72,7 @@ services:
     environment:
       - NATS_URL=nats://nats:4222
       - LOKI_URL=http://loki:3100/loki/api/v1/push
-    restart: unless-stopped 
+    restart: unless-stopped
 
   redis:
     image: redis:7.2-alpine
@@ -112,7 +112,7 @@ services:
       - neo4j
       - redis
       - embedding
-    restart: unless-stopped 
+    restart: unless-stopped
 
   designforge:
     build:
@@ -120,7 +120,7 @@ services:
     container_name: designforge
     ports:
       - "8010:8010"
-    restart: unless-stopped 
+    restart: unless-stopped
 
   securishield:
     build:
@@ -128,7 +128,7 @@ services:
     container_name: securishield
     ports:
       - "8011:8011"
-    restart: unless-stopped 
+    restart: unless-stopped
 
   codecraft:
     build:
@@ -136,7 +136,7 @@ services:
     container_name: codecraft
     ports:
       - "8012:8012"
-    restart: unless-stopped 
+    restart: unless-stopped
 
   perfpulse:
     build:
@@ -160,4 +160,28 @@ services:
     container_name: soc2-compliance
     ports:
       - "8020:8020"
+    restart: unless-stopped
+
+  expressops:
+    build:
+      context: ./services/expressops
+    container_name: expressops
+    ports:
+      - "8015:8015"
+    restart: unless-stopped
+
+  mobilefirstops:
+    build:
+      context: ./services/mobilefirstops
+    container_name: mobilefirstops
+    ports:
+      - "8016:8016"
+    restart: unless-stopped
+
+  database-agent:
+    build:
+      context: ./services/database-agent
+    container_name: database-agent
+    ports:
+      - "8017:8017"
     restart: unless-stopped

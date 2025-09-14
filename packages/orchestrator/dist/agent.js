@@ -5,8 +5,8 @@ export class BaseAgent extends EventEmitter {
         this.metrics = {
             avgResponseTimeMs: 0,
             currentLoad: 0,
-            healthStatus: 'healthy',
-            lastActivity: new Date()
+            healthStatus: "healthy",
+            lastActivity: new Date(),
         };
         this.id = config.id;
         this.specialization = config.specialization;
