@@ -1,0 +1,51 @@
+# Memory Guardian Service Dependencies
+# Core FastAPI and async support
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# Memory system clients
+redis==5.0.1
+qdrant-client==1.7.0
+neo4j==5.15.0
+
+# AI and embedding support
+sentence-transformers==2.2.2
+transformers==4.36.2
+torch==2.1.1
+
+# HTTP client for inter-service communication
+aiohttp==3.9.1
+httpx==0.25.2
+
+# File and data handling
+aiofiles==23.2.0
+python-dotenv==1.0.0
+
+# Security and authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Data processing and utilities
+numpy==1.24.3
+pandas==2.0.3
+hashlib3==1.0.1
+
+# Monitoring and metrics
+prometheus-client==0.19.0
+
+# Development and testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+
+# Code quality
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+
+# Additional utilities
+click==8.1.7
+coloredlogs==15.0.1
+psutil==5.9.6

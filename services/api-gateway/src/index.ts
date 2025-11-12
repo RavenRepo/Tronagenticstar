@@ -1,5 +1,5 @@
 import "./utils/logger"; // Initialize logger first
-import { APIGateway } from "./server";
+import { app, startServer } from "./server";
 import { config } from "./config";
 import { logger } from "./utils/logger";
 
@@ -15,9 +15,8 @@ async function main(): Promise<void> {
       host: config.host,
     });
 
-    // Create and start the API Gateway
-    const gateway = new APIGateway();
-    await gateway.start();
+    // Start the server
+    const server = await startServer();
 
     logger.info("Constella API Gateway started successfully");
 
@@ -26,7 +25,9 @@ async function main(): Promise<void> {
       logger.info(`Received ${signal} signal, starting graceful shutdown...`);
 
       try {
-        await gateway.stop();
+        server.close(() => {
+          logger.info("Server closed");
+        });
         logger.info("Graceful shutdown completed");
         process.exit(0);
       } catch (error) {

@@ -1,5 +1,4 @@
 import winston from "winston";
-import { config, LOG_LEVEL, LOG_FORMAT } from "../config";
 
 // Custom log format
 const customFormat = winston.format.combine(
@@ -14,7 +13,7 @@ const customFormat = winston.format.combine(
       level,
       message,
       service: "api-gateway",
-      environment: config.environment,
+      environment: process.env.NODE_ENV || "development",
       ...meta,
     };
 
@@ -49,18 +48,18 @@ const consoleFormat = winston.format.combine(
 
 // Create logger instance
 export const logger = winston.createLogger({
-  level: LOG_LEVEL,
+  level: process.env.LOG_LEVEL || "info",
   format: customFormat,
   defaultMeta: {
     service: "api-gateway",
-    environment: config.environment,
+    environment: process.env.NODE_ENV || "development",
     version: "1.0.0",
   },
   transports: [
     // Console transport
     new winston.transports.Console({
       format:
-        config.environment === "development" ? consoleFormat : customFormat,
+        process.env.NODE_ENV === "development" ? consoleFormat : customFormat,
       handleExceptions: true,
       handleRejections: true,
     }),

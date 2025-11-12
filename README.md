@@ -2,6 +2,17 @@
 
 > **The world's first Enterprise AI Operating Platform** - A self-hosted, multi-agent ecosystem that doesn't just assist developers, it **operates** your entire software development lifecycle with the precision, governance, and quality standards of Fortune 500 engineering teams.
 
+## 📚 Documentation
+
+**Complete documentation is available at [`/documentation/`](/documentation/README.md)** - organized by audience and purpose for easy navigation.
+
+**Quick Links:**
+- **[Architecture & Technical Specs](/documentation/architecture/)** - System design, ADRs, and framework documentation
+- **[Developer Guides](/documentation/development/guides/)** - Implementation guides and how-to resources  
+- **[Implementation Status](/documentation/development/implementation/)** - Current phase progress and integration guides
+- **[Product & Strategy](/documentation/business/)** - PRDs, roadmaps, and strategic planning
+- **[Reports & Analysis](/documentation/reports/)** - Project status, audits, and analysis documents
+
 ---
 
 ## 🚀 What Makes Constella Different

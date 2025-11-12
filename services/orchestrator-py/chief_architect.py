@@ -47,6 +47,7 @@ class AgentType(Enum):
     PERFPULSE = "perfpulse"
     EVALUATOR = "evaluator"
     SOC2_COMPLIANCE = "soc2_compliance"
+    PYTHON_EXPERT = "python_expert"
 
 
 class TaskPriority(Enum):
@@ -120,6 +121,7 @@ class ChiefArchitectAgent:
             AgentType.PERFPULSE: "http://perfpulse:8013",
             AgentType.EVALUATOR: "http://evaluator:8014",
             AgentType.SOC2_COMPLIANCE: "http://soc2-compliance:8020",
+            AgentType.PYTHON_EXPERT: "http://python-expert:8018",
         }
 
         # Initialize knowledge collections
@@ -142,6 +144,13 @@ class ChiefArchitectAgent:
                     collection_name="architectural_patterns",
                     vectors_config=VectorParams(size=384, distance=Distance.COSINE),
                 )
+
+            if "inter_agent_context" not in collection_names:
+                self.qdrant_client.create_collection(
+                    collection_name="inter_agent_context",
+                    vectors_config=VectorParams(size=384, distance=Distance.COSINE),
+                )
+                logger.info("Created inter-agent context sharing collection")
 
         except Exception as e:
             logger.error(f"Failed to initialize Qdrant collections: {e}")

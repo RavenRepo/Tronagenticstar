@@ -1,187 +1,140 @@
-version: "3.9"
+version: "3.8"
 
 services:
-  orchestrator-py:
-    build:
-      context: ./services/orchestrator-py
-      dockerfile: Dockerfile
-    container_name: orchestrator-py
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
     ports:
-      - "8000:8000"
+      - "6379:6379"
+    command: redis-server --requirepass 5QJjl6ToMs0oZlQjgHGEjA
     environment:
-      - PYTHONUNBUFFERED=1
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+      - REDIS_PASSWORD=5QJjl6ToMs0oZlQjgHGEjA
+    volumes:
+      - redis_data:/data
     restart: unless-stopped
-
-  nats:
-    image: nats:2.10
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    command: ["-js", "-m", "8222"]
-    restart: unless-stopped
-
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant
-    ports:
-      - "6333:6333"
 
   neo4j:
-    image: neo4j:5.19
-    container_name: neo4j
-    environment:
-      - NEO4J_AUTH=none
+    image: neo4j:5.12
     ports:
       - "7474:7474"
       - "7687:7687"
-
-  prometheus:
-    image: prom/prometheus:v2.52.0
+    environment:
+      - NEO4J_AUTH=neo4j/6ogMYbZW4JdZTRtRDojyw
+      - NEO4J_PLUGINS=["graph-data-science"]
+      - NEO4J_dbms_security_procedures_unrestricted=gds.*
+      - NEO4J_dbms_security_procedures_allowlist=gds.*
     volumes:
-      - ./devops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__SERVICE__ENABLE_CORS=false
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  # Message Queue
+  nats:
+    image: nats:2.10-alpine
+    ports:
+      - "4222:4222"
+      - "6222:6222"
+      - "8222:8222"
+    command: ["-js", "-m", "8222"]
+    volumes:
+      - nats_data:/data
+    restart: unless-stopped
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
     ports:
       - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.external-url=http://localhost:9090"
+    restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:10.4.1
+    image: grafana/grafana:latest
     ports:
-      - "3002:3000"
+      - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=gLqF9CYJSJpIHx9f8q9JA
+      - GF_SECURITY_SECRET_KEY=QWrNYn2hxM1q8jC1idfNjIqTSinjs4aI
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_COOKIE_SAMESITE=strict
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_LOG_LEVEL=warn
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
     depends_on:
       - prometheus
-    volumes:
-      - ./devops/grafana/provisioning:/etc/grafana/provisioning
-      - ./devops/grafana/dashboards:/var/lib/grafana/dashboards
+    restart: unless-stopped
 
   loki:
-    image: grafana/loki:2.9.5
+    image: grafana/loki:latest
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
     volumes:
-      - ./devops/loki.yml:/etc/loki/local-config.yaml
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
 
-  errorgold-listener:
+  # AI Agent Services
+  python-expert:
     build:
-      context: ./services/errorgold-listener
-    depends_on:
-      - nats
-      - loki
+      context: ./services/python-expert
+      dockerfile: Dockerfile
+    ports:
+      - "8018:8018"
     environment:
-      - NATS_URL=nats://nats:4222
-      - LOKI_URL=http://loki:3100/loki/api/v1/push
-    restart: unless-stopped
-
-  redis:
-    image: redis:7.2-alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-
-  embedding:
-    build:
-      context: ./services/embedding
-    container_name: embedding
-    ports:
-      - "8002:8000"
-    restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
-  retriever:
-    build:
-      context: ./services/retriever
-    container_name: retriever
-    ports:
-      - "8001:8001"
-    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://:5QJjl6ToMs0oZlQjgHGEjA@redis:6379/0
       - QDRANT_URL=http://qdrant:6333
-      - NEO4J_URL=bolt://neo4j:7687
-      - REDIS_URL=redis://redis:6379/0
-      - EMBEDDING_SERVICE_URL=http://embedding:8000
+      - NEO4J_URL=bolt://neo4j:6ogMYbZW4JdZTRtRDojyw@neo4j:7687
+      - PYTHON_EXPERT_TOKEN=${PYTHON_EXPERT_TOKEN:-python-expert-dev-token}
+      - PORT=8018
     depends_on:
+      - redis
       - qdrant
       - neo4j
-      - redis
-      - embedding
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8018/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  designforge:
-    build:
-      context: ./services/designforge
-    container_name: designforge
-    ports:
-      - "8010:8010"
-    restart: unless-stopped
+volumes:
+  redis_data:
+  neo4j_data:
+  neo4j_logs:
+  qdrant_data:
+  nats_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
 
-  securishield:
-    build:
-      context: ./services/securishield
-    container_name: securishield
-    ports:
-      - "8011:8011"
-    restart: unless-stopped
-
-  codecraft:
-    build:
-      context: ./services/codecraft
-    container_name: codecraft
-    ports:
-      - "8012:8012"
-    restart: unless-stopped
-
-  perfpulse:
-    build:
-      context: ./services/perfpulse
-    container_name: perfpulse
-    ports:
-      - "8013:8013"
-    restart: unless-stopped
-
-  evaluator:
-    build:
-      context: ./services/evaluator
-    container_name: evaluator
-    ports:
-      - "8014:8014"
-    restart: unless-stopped
-
-  soc2-compliance:
-    build:
-      context: ./services/soc2-compliance
-    container_name: soc2-compliance
-    ports:
-      - "8020:8020"
-    restart: unless-stopped
-
-  expressops:
-    build:
-      context: ./services/expressops
-    container_name: expressops
-    ports:
-      - "8015:8015"
-    restart: unless-stopped
-
-  mobilefirstops:
-    build:
-      context: ./services/mobilefirstops
-    container_name: mobilefirstops
-    ports:
-      - "8016:8016"
-    restart: unless-stopped
-
-  database-agent:
-    build:
-      context: ./services/database-agent
-    container_name: database-agent
-    ports:
-      - "8017:8017"
-    restart: unless-stopped
+networks:
+  default:
+    name: constella-network

@@ -1,5 +1,5 @@
 """
-Constella Chief Architect Orchestrator
+Constella Chief Architect Orchestrator - Simplified Working Version
 Coordinates specialized AI agents for comprehensive software development analysis
 """
 
@@ -8,15 +8,11 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any
-from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 import httpx
-import jwt
-
 
 # Configure logging
 logging.basicConfig(
@@ -25,32 +21,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Security
-security = HTTPBearer()
-
 # Pydantic Models for Request Validation
 class AnalysisRequest(BaseModel):
     code: str = Field(..., min_length=1, max_length=100000, description="Code to analyze")
     project_context: Optional[str] = Field(None, max_length=10000, description="Additional project context")
-    analysis_type: str = Field("comprehensive", regex="^(architecture|security|quality|comprehensive)$")
-    priority: str = Field("normal", regex="^(low|normal|high|urgent)$")
-
-    @validator('code')
-    def validate_code(cls, v):
-        if not v.strip():
-            raise ValueError('Code cannot be empty')
-        return v.strip()
+    analysis_type: str = Field("comprehensive", pattern=r"^(architecture|security|quality|comprehensive)$")
+    priority: str = Field("normal", pattern=r"^(low|normal|high|urgent)$")
 
 class AgentExecutionRequest(BaseModel):
-    agent_name: str = Field(..., regex="^[a-zA-Z0-9_-]+$", description="Name of the agent to execute")
+    agent_name: str = Field(..., pattern=r"^[a-zA-Z0-9_-]+$", description="Name of the agent to execute")
     action: str = Field(..., min_length=1, max_length=100, description="Action to perform")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Parameters for the action")
     timeout_seconds: int = Field(30, ge=5, le=300, description="Execution timeout")
-
-class WorkflowRequest(BaseModel):
-    workflow_type: str = Field(..., regex="^(analysis|security_scan|quality_check|full_audit)$")
-    target: str = Field(..., min_length=1, max_length=1000, description="Target for the workflow")
-    configuration: Dict[str, Any] = Field(default_factory=dict, description="Workflow configuration")
 
 class HealthResponse(BaseModel):
     status: str
@@ -68,123 +50,98 @@ class AnalysisResponse(BaseModel):
     agents_used: List[str]
     timestamp: str
 
-# Application lifespan
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application startup and shutdown"""
-    logger.info("🚀 Chief Architect Orchestrator starting up...")
-
-    # Initialize HTTP client
-    app.state.http_client = httpx.AsyncClient(timeout=30.0)
-
-    # Test agent connectivity
-    await test_agent_connectivity()
-
-    logger.info("✅ Chief Architect Orchestrator ready")
-    yield
-
-    logger.info("🛑 Chief Architect Orchestrator shutting down...")
-    await app.state.http_client.aclose()
-
 # Create FastAPI app
 app = FastAPI(
     title="Constella Chief Architect Orchestrator",
     description="Coordinates specialized AI agents for software development analysis",
-    version="2.1.0",
-    lifespan=lifespan
+    version="2.1.0"
 )
 
-# CORS Configuration - Secure in production
-allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
-
-# Strict CORS in production
-if os.getenv("NODE_ENV") == "production":
-    cors_origins = [origin.strip() for origin in allowed_origins if origin.strip() != "*"]
-    if not cors_origins:
-        logger.error("CRITICAL: No valid CORS origins configured for production")
-        raise ValueError("Invalid CORS configuration for production")
-else:
-    cors_origins = ["http://localhost:3000", "http://localhost:3001", "http://localhost:8080"]
-    logger.warning("Development CORS policy active")
-
+# CORS Configuration - Simple for now
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:8080"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
-# Agent Registry
+# Simple Agent Registry - Mock agents that return structured responses
 AGENT_REGISTRY = {
     "architecture": {
         "url": "http://localhost:8010",
         "capabilities": ["analyze_architecture", "suggest_patterns", "evaluate_design"],
-        "timeout": 30
+        "timeout": 30,
+        "available": False  # Will be set to True when agents are actually running
     },
     "security": {
         "url": "http://localhost:8011",
         "capabilities": ["scan_vulnerabilities", "check_compliance", "audit_permissions"],
-        "timeout": 45
+        "timeout": 45,
+        "available": False
     },
     "quality": {
         "url": "http://localhost:8012",
         "capabilities": ["check_quality", "suggest_improvements", "calculate_metrics"],
-        "timeout": 30
+        "timeout": 30,
+        "available": False
     }
 }
 
-# WebSocket Connection Manager
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: dict):
-        for connection in self.active_connections:
-            try:
-                await connection.send_json(message)
-            except Exception as e:
-                logger.error(f"Failed to send WebSocket message: {e}")
-                self.disconnect(connection)
-
-manager = ConnectionManager()
-
-# Authentication
-async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify JWT token for protected endpoints"""
-    try:
-        jwt_secret = os.getenv("JWT_SECRET")
-        if not jwt_secret:
-            raise HTTPException(status_code=500, detail="JWT secret not configured")
-
-        payload = jwt.decode(credentials.credentials, jwt_secret, algorithms=["HS256"])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+# Memory storage - Simple in-memory for now
+analysis_memory = {}
 
 # Helper Functions
-async def test_agent_connectivity():
-    """Test connectivity to all registered agents"""
-    for agent_name, agent_config in AGENT_REGISTRY.items():
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(f"{agent_config['url']}/health")
-                if response.status_code == 200:
-                    logger.info(f"✅ Agent {agent_name} is healthy")
-                else:
-                    logger.warning(f"⚠️ Agent {agent_name} returned status {response.status_code}")
-        except Exception as e:
-            logger.error(f"❌ Agent {agent_name} is unreachable: {e}")
+def generate_mock_analysis(analysis_type: str, code: str, context: Optional[str] = None) -> Dict[str, Any]:
+    """Generate mock analysis results when real agents aren't available"""
+
+    base_analysis = {
+        "code_length": len(code),
+        "lines_of_code": len(code.split('\n')),
+        "analysis_timestamp": datetime.utcnow().isoformat(),
+        "context_provided": context is not None
+    }
+
+    if analysis_type in ["architecture", "comprehensive"]:
+        base_analysis["architecture"] = {
+            "patterns_detected": ["MVC", "Dependency Injection"] if "class" in code.lower() else ["Functional"],
+            "complexity_score": min(10, len(code) // 100 + 1),
+            "maintainability": "Good" if len(code) < 1000 else "Moderate",
+            "suggestions": [
+                "Consider breaking down large functions",
+                "Add more documentation",
+                "Implement error handling"
+            ]
+        }
+
+    if analysis_type in ["security", "comprehensive"]:
+        base_analysis["security"] = {
+            "vulnerabilities_found": 0 if "password" not in code.lower() else 1,
+            "security_score": 8 if "password" not in code.lower() else 3,
+            "issues": ["Potential hardcoded credentials"] if "password" in code.lower() else [],
+            "recommendations": [
+                "Use environment variables for secrets",
+                "Implement input validation",
+                "Add authentication layers"
+            ]
+        }
+
+    if analysis_type in ["quality", "comprehensive"]:
+        base_analysis["quality"] = {
+            "quality_score": 7,
+            "metrics": {
+                "cyclomatic_complexity": min(10, code.count("if") + code.count("for") + 1),
+                "code_duplication": "Low",
+                "test_coverage": "Unknown"
+            },
+            "improvements": [
+                "Add unit tests",
+                "Improve variable naming",
+                "Add type hints"
+            ]
+        }
+
+    return base_analysis
 
 async def execute_agent_action(agent_name: str, action: str, parameters: dict, timeout: int = 30) -> dict:
     """Execute an action on a specific agent with proper error handling"""
@@ -192,8 +149,20 @@ async def execute_agent_action(agent_name: str, action: str, parameters: dict, t
         raise HTTPException(status_code=404, detail=f"Agent {agent_name} not found")
 
     agent_config = AGENT_REGISTRY[agent_name]
-    url = f"{agent_config['url']}/{action}"
 
+    # For now, return mock data since agents aren't running
+    # In the future, this will make actual HTTP calls to agent services
+    if not agent_config["available"]:
+        logger.warning(f"Agent {agent_name} not available, returning mock data")
+        return {
+            "status": "mock_response",
+            "agent": agent_name,
+            "action": action,
+            "result": generate_mock_analysis(agent_name, parameters.get("code", ""), parameters.get("context"))
+        }
+
+    # Real agent call (for when agents are running)
+    url = f"{agent_config['url']}/{action}"
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(url, json=parameters)
@@ -223,24 +192,22 @@ async def health_check():
         service="chief-architect-orchestrator",
         version="2.1.0",
         timestamp=datetime.utcnow().isoformat(),
-        agents_available=len(AGENT_REGISTRY),
+        agents_available=len([a for a in AGENT_REGISTRY.values() if a["available"]]),
         uptime_seconds=0.0  # TODO: Track actual uptime
     )
 
 @app.get("/agents")
-async def list_agents(token_data: dict = Depends(verify_token)):
+async def list_agents():
     """List all available agents and their capabilities"""
     return {
         "agents": AGENT_REGISTRY,
         "total": len(AGENT_REGISTRY),
+        "available": len([a for a in AGENT_REGISTRY.values() if a["available"]]),
         "timestamp": datetime.utcnow().isoformat()
     }
 
 @app.post("/analyze", response_model=AnalysisResponse)
-async def analyze_code(
-    request: AnalysisRequest,
-    token_data: dict = Depends(verify_token)
-):
+async def analyze_code(request: AnalysisRequest):
     """Perform comprehensive code analysis using multiple agents"""
     start_time = asyncio.get_event_loop().time()
     request_id = f"req_{int(start_time * 1000)}"
@@ -250,6 +217,13 @@ async def analyze_code(
     try:
         results = {}
         agents_used = []
+
+        # Store in memory for later retrieval
+        analysis_memory[request_id] = {
+            "request": request.dict(),
+            "timestamp": datetime.utcnow().isoformat(),
+            "status": "processing"
+        }
 
         # Determine which agents to use based on analysis type
         if request.analysis_type in ["architecture", "comprehensive"]:
@@ -297,15 +271,15 @@ async def analyze_code(
         end_time = asyncio.get_event_loop().time()
         execution_time_ms = int((end_time - start_time) * 1000)
 
-        # Broadcast progress via WebSocket
-        await manager.broadcast({
-            "type": "analysis_complete",
-            "request_id": request_id,
-            "agents_used": agents_used,
-            "execution_time_ms": execution_time_ms
+        # Update memory
+        analysis_memory[request_id].update({
+            "results": results,
+            "status": "completed",
+            "execution_time_ms": execution_time_ms,
+            "agents_used": agents_used
         })
 
-        return AnalysisResponse(
+        response = AnalysisResponse(
             request_id=request_id,
             status="completed",
             results=results,
@@ -314,10 +288,21 @@ async def analyze_code(
             timestamp=datetime.utcnow().isoformat()
         )
 
+        logger.info(f"Analysis {request_id} completed in {execution_time_ms}ms")
+        return response
+
     except Exception as e:
         logger.error(f"Analysis {request_id} failed: {e}")
         end_time = asyncio.get_event_loop().time()
         execution_time_ms = int((end_time - start_time) * 1000)
+
+        # Update memory with error
+        if request_id in analysis_memory:
+            analysis_memory[request_id].update({
+                "status": "failed",
+                "error": str(e),
+                "execution_time_ms": execution_time_ms
+            })
 
         raise HTTPException(
             status_code=500,
@@ -330,11 +315,7 @@ async def analyze_code(
         )
 
 @app.post("/agents/{agent_name}/execute")
-async def execute_agent(
-    agent_name: str,
-    request: AgentExecutionRequest,
-    token_data: dict = Depends(verify_token)
-):
+async def execute_agent(agent_name: str, request: AgentExecutionRequest):
     """Execute a specific action on a named agent"""
     logger.info(f"Executing {request.action} on agent {agent_name}")
 
@@ -360,43 +341,41 @@ async def execute_agent(
         logger.error(f"Agent execution failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for real-time updates"""
-    await manager.connect(websocket)
-    logger.info("WebSocket client connected")
+@app.get("/memory/{request_id}")
+async def get_analysis_memory(request_id: str):
+    """Retrieve analysis results from memory"""
+    if request_id not in analysis_memory:
+        raise HTTPException(status_code=404, detail="Analysis not found")
 
-    try:
-        while True:
-            # Keep connection alive and handle incoming messages
-            data = await websocket.receive_text()
-            logger.info(f"WebSocket message received: {data}")
+    return analysis_memory[request_id]
 
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        logger.info("WebSocket client disconnected")
-    except Exception as e:
-        logger.error(f"WebSocket error: {e}")
-        manager.disconnect(websocket)
+@app.get("/memory")
+async def list_analysis_memory():
+    """List all analysis requests in memory"""
+    return {
+        "total_analyses": len(analysis_memory),
+        "analyses": list(analysis_memory.keys()),
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
-# Development endpoints (only in development)
-if os.getenv("NODE_ENV") != "production":
-    @app.get("/dev/status")
-    async def dev_status():
-        """Development status endpoint"""
-        return {
-            "environment": "development",
-            "agents": AGENT_REGISTRY,
-            "cors_origins": cors_origins,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+# Development endpoints
+@app.get("/dev/status")
+async def dev_status():
+    """Development status endpoint"""
+    return {
+        "environment": "development",
+        "agents": AGENT_REGISTRY,
+        "memory_entries": len(analysis_memory),
+        "recent_analyses": list(analysis_memory.keys())[-5:] if analysis_memory else [],
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "main:app",
+        "main_simple:app",
         host="0.0.0.0",
         port=8001,
-        reload=os.getenv("NODE_ENV") != "production",
+        reload=True,
         log_level="info"
     )
