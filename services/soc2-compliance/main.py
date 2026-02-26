@@ -71,6 +71,7 @@ class CapabilitiesResponse(BaseModel):
     task_type: str = "COMPLIANCE"
     capabilities: List[str] = [
         "evaluate_compliance",
+        "process_evidence",
         "export_evidence",
         "get_rules",
         "get_history",
@@ -85,6 +86,7 @@ class TaskParameters(BaseModel):
     end_date: Optional[datetime] = None
     categories: Optional[List[TrustServiceCategory]] = None
     limit: int = 10
+    evidence_data: Optional[Dict[str, Any]] = None
 
 
 class Task(BaseModel):
@@ -141,10 +143,35 @@ COMPLIANCE_RULES: Dict[str, Any] = {
         "category": "security",
         "title": "Logical and Physical Access Controls",
     },
+    "CC6.2": {
+        "rule_id": "CC6.2",
+        "category": "security",
+        "title": "User Registration and Authorization",
+    },
+    "CC6.3": {
+        "rule_id": "CC6.3",
+        "category": "security",
+        "title": "Access Authorization Modification",
+    },
+    "CC7.1": {
+        "rule_id": "CC7.1",
+        "category": "security",
+        "title": "System Configuration and Vulnerability Management",
+    },
+    "CC8.1": {
+        "rule_id": "CC8.1",
+        "category": "security",
+        "title": "Incident Response",
+    },
     "A1.1": {
         "rule_id": "A1.1",
         "category": "availability",
         "title": "System Availability",
+    },
+    "PI1.1": {
+        "rule_id": "PI1.1",
+        "category": "processing_integrity",
+        "title": "Processing Integrity",
     },
 }
 compliance_history: List[Dict[str, Any]] = []
@@ -158,10 +185,16 @@ async def _evaluate_compliance(params: TaskParameters) -> Dict[str, Any]:
 
     llm = await get_llm()
 
+    evidence_context = ""
+    if params.evidence_data:
+        evidence_context = (
+            f"\n    Evidence Data:\n    {json.dumps(params.evidence_data, indent=2)}\n"
+        )
+
     prompt = f"""
     Evaluate SOC-2 compliance for the service: {params.service_name}.
     Rules to evaluate: {params.rules or "All applicable rules"}
-    Categories: {params.categories or "All categories"}
+    Categories: {params.categories or "All categories"}{evidence_context}
 
     Provide a detailed compliance report in JSON format with the following structure:
     {{
@@ -218,6 +251,68 @@ async def _evaluate_compliance(params: TaskParameters) -> Dict[str, Any]:
 
     compliance_history.append(report)
     return report
+
+
+async def _process_evidence(params: TaskParameters) -> Dict[str, Any]:
+    if not params.service_name or not params.evidence_data:
+        raise HTTPException(
+            status_code=422, detail="'service_name' and 'evidence_data' are required."
+        )
+
+    llm = await get_llm()
+
+    prompt = f"""
+    Analyze the following evidence data for SOC-2 compliance for the service: {params.service_name}.
+
+    Evidence Data:
+    {json.dumps(params.evidence_data, indent=2)}
+
+    Provide a detailed analysis of this evidence in JSON format with the following structure:
+    {{
+        "service_name": "{params.service_name}",
+        "evidence_validity": "valid" | "invalid" | "partial",
+        "applicable_rules": ["list of rule IDs this evidence applies to"],
+        "findings": [
+            {{
+                "description": "string",
+                "is_compliant": true,
+                "confidence": <float 0-100>
+            }}
+        ],
+        "missing_information": ["list of missing data points needed for full compliance check"]
+    }}
+    """
+
+    response = await llm.complete(
+        LLMRequest(
+            system_prompt="You are an expert SOC-2 compliance auditor. Analyze the provided evidence and return a strict JSON response.",
+            user_prompt=prompt,
+            temperature=0.1,
+            require_json=True,
+        )
+    )
+
+    try:
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        result = json.loads(content)
+    except Exception as e:
+        logger.error(f"Failed to parse LLM response: {e}\nContent: {response.content}")
+        result = {
+            "service_name": params.service_name,
+            "evidence_validity": "invalid",
+            "error": "Failed to parse LLM response",
+        }
+
+    result["timestamp"] = datetime.now().isoformat()
+    result["llm_provider"] = response.provider
+    result["llm_model"] = response.model
+    result["cost_usd"] = response.cost_usd
+
+    return result
 
 
 async def _export_evidence(params: TaskParameters) -> Dict[str, Any]:
@@ -295,6 +390,8 @@ async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
     try:
         if task.task_type == "evaluate_compliance":
             result_data = await _evaluate_compliance(task.parameters)
+        elif task.task_type == "process_evidence":
+            result_data = await _process_evidence(task.parameters)
         elif task.task_type == "export_evidence":
             result_data = await _export_evidence(task.parameters)
         elif task.task_type == "get_rules":

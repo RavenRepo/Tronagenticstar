@@ -521,8 +521,8 @@ services:
 
   perfpulse:
     build:
-      context: ./services/perfpulse
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/perfpulse/Dockerfile
     container_name: constella-perfpulse
     profiles: ["agents"]
     <<: *common-agent
