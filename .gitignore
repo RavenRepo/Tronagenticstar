@@ -206,6 +206,9 @@ credentials.json
 config.local.*
 .env*
 !.env.example
+!.env.production.template
+.env.production
+.secrets-reference.txt
 
 # Jupyter Notebooks
 .ipynb_checkpoints

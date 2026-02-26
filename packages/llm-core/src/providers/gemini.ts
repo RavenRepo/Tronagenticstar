@@ -115,7 +115,7 @@ export class GeminiProvider extends BaseLLMProvider {
       const geminiMessages = this.convertMessages(messages);
 
       // Prepare request
-      const model = options.model || "gemini-1.5-flash";
+      const model = options.model || "gemini-2.0-flash";
       const requestBody: GeminiRequest = {
         contents: geminiMessages,
         generationConfig: {
@@ -406,36 +406,36 @@ export function createGeminiProvider(config: GeminiConfig): GeminiProvider {
  */
 export const GEMINI_MODELS = {
   // Chat models
-  GEMINI_15_PRO: "gemini-1.5-pro",
-  GEMINI_15_FLASH: "gemini-1.5-flash",
-  GEMINI_10_PRO: "gemini-1.0-pro",
+  GEMINI_25_PRO: "gemini-2.5-pro",
+  GEMINI_25_FLASH: "gemini-2.5-flash",
+  GEMINI_20_FLASH: "gemini-2.0-flash",
 
   // Embedding models
-  EMBEDDING_001: "embedding-001",
+  TEXT_EMBEDDING: "text-embedding-004",
 } as const;
 
 /**
  * Model capabilities and pricing information
  */
 export const GEMINI_MODEL_INFO = {
-  [GEMINI_MODELS.GEMINI_15_PRO]: {
+  [GEMINI_MODELS.GEMINI_25_PRO]: {
     contextWindow: 1048576, // 1M tokens
-    outputTokens: 8192,
-    costPer1KTokens: { input: 0.00125, output: 0.00375 },
+    outputTokens: 65536,
+    costPer1KTokens: { input: 0.00125, output: 0.005 },
   },
-  [GEMINI_MODELS.GEMINI_15_FLASH]: {
+  [GEMINI_MODELS.GEMINI_25_FLASH]: {
+    contextWindow: 1048576, // 1M tokens
+    outputTokens: 65536,
+    costPer1KTokens: { input: 0.000075, output: 0.0003 },
+  },
+  [GEMINI_MODELS.GEMINI_20_FLASH]: {
     contextWindow: 1048576, // 1M tokens
     outputTokens: 8192,
     costPer1KTokens: { input: 0.000075, output: 0.0003 },
   },
-  [GEMINI_MODELS.GEMINI_10_PRO]: {
-    contextWindow: 32768,
-    outputTokens: 2048,
-    costPer1KTokens: { input: 0.0005, output: 0.0015 },
-  },
-  [GEMINI_MODELS.EMBEDDING_001]: {
+  [GEMINI_MODELS.TEXT_EMBEDDING]: {
     contextWindow: 2048,
     dimensions: 768,
-    costPer1KTokens: { input: 0.0000125 },
+    costPer1KTokens: { input: 0.000025 },
   },
 } as const;

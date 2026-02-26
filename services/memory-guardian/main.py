@@ -33,11 +33,32 @@ from health_monitor import HealthMonitoringSystem, HealthAlert, AlertSeverity
 from consistency_validator import ConsistencyValidationSystem, InconsistencyType
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+import logging
+import json
+from datetime import datetime
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+        }
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_data)
+
 logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JSONFormatter())
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    
+# Disable uvicorn default access log formatting if it exists
+logging.getLogger("uvicorn.access").handlers = []
+
 
 # Security
 security = HTTPBearer()
@@ -568,7 +589,7 @@ signal.signal(signal.SIGINT, signal_handler)
 if __name__ == "__main__":
     # Configuration
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", 8019))
+    port = int(os.getenv("PORT", 8009))
     log_level = os.getenv("LOG_LEVEL", "info")
     reload = os.getenv("NODE_ENV") != "production"
 

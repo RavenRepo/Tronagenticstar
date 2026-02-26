@@ -17,7 +17,7 @@ RUN pnpm install --frozen-lockfile
 FROM base AS development
 ENV NODE_ENV=development
 COPY . .
-EXPOSE 3000
+EXPOSE 3002
 CMD ["pnpm", "run", "dev"]
 
 # Build stage
@@ -62,7 +62,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3002
 
 # Set environment
 ENV NODE_ENV=production

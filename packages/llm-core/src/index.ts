@@ -78,45 +78,29 @@ export function createLLMManager(apiKeys: {
   gemini?: string;
   openrouter?: string;
 }): LLMManager {
+  // Deep copy the providers config
+  const providers: typeof DEFAULT_LLM_CONFIG.providers = {};
+  for (const [name, providerConfig] of Object.entries(DEFAULT_LLM_CONFIG.providers)) {
+    providers[name] = { ...providerConfig };
+  }
+
+  // Update API keys based on provider type
+  for (const [name, providerConfig] of Object.entries(providers)) {
+    if (providerConfig.type === "openai" && apiKeys.openai) {
+      providerConfig.apiKey = apiKeys.openai;
+    } else if (providerConfig.type === "gemini" && apiKeys.gemini) {
+      providerConfig.apiKey = apiKeys.gemini;
+    } else if (providerConfig.type === "anthropic" && apiKeys.anthropic) {
+      providerConfig.apiKey = apiKeys.anthropic;
+    } else if (providerConfig.type === "openrouter" && apiKeys.openrouter) {
+      providerConfig.apiKey = apiKeys.openrouter;
+    }
+  }
+
   const config = {
     ...DEFAULT_LLM_CONFIG,
-    providers: {
-      ...DEFAULT_LLM_CONFIG.providers,
-    },
+    providers,
   };
-
-  // Update API keys
-  if (apiKeys.openai) {
-    for (const [name, providerConfig] of Object.entries(config.providers)) {
-      if (providerConfig.type === "openai") {
-        (providerConfig as any).apiKey = apiKeys.openai;
-      }
-    }
-  }
-
-  if (apiKeys.gemini) {
-    for (const [name, providerConfig] of Object.entries(config.providers)) {
-      if (providerConfig.type === "gemini") {
-        (providerConfig as any).apiKey = apiKeys.gemini;
-      }
-    }
-  }
-
-  if (apiKeys.anthropic) {
-    for (const [name, providerConfig] of Object.entries(config.providers)) {
-      if (providerConfig.type === "anthropic") {
-        (providerConfig as any).apiKey = apiKeys.anthropic;
-      }
-    }
-  }
-
-  if (apiKeys.openrouter) {
-    for (const [name, providerConfig] of Object.entries(config.providers)) {
-      if (providerConfig.type === "openrouter") {
-        (providerConfig as any).apiKey = apiKeys.openrouter;
-      }
-    }
-  }
 
   return new LLMManager(config);
 }

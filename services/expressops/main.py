@@ -4,24 +4,52 @@ ExpressOps Agent - Express.js/Node.js Backend Development Specialist
 Specialized agent for Express.js API development, middleware creation, and Node.js backend optimization
 """
 
+import json
 import logging
 import os
 import time
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
+from llm_provider import LLMProvider, LLMRequest, get_llm_provider
 from pydantic import BaseModel
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+        }
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_data)
+
+
 logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JSONFormatter())
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
+# Disable uvicorn default access log formatting if it exists
+logging.getLogger("uvicorn.access").handlers = []
+
 
 # --- Pydantic Models (ADR-012 Compliant) ---
+
 
 class HealthResponse(BaseModel):
     status: str = "ok"
     details: Optional[str] = None
+    llm_configured: bool = False
+    llm_cost_usd: Optional[float] = None
+
 
 class CapabilitiesResponse(BaseModel):
     agent_id: str = "expressops"
@@ -37,8 +65,9 @@ class CapabilitiesResponse(BaseModel):
         "configure_cors",
         "implement_validation",
         "setup_logging",
-        "performance_optimization"
+        "performance_optimization",
     ]
+
 
 class TaskParameters(BaseModel):
     project_name: str
@@ -50,11 +79,13 @@ class TaskParameters(BaseModel):
     performance_targets: Optional[Dict[str, Any]] = None
     security_requirements: Optional[List[str]] = None
 
+
 class Task(BaseModel):
     task_id: str
     task_type: str
     parameters: TaskParameters
     context: Optional[List[Dict[str, Any]]] = None
+
 
 class TaskResultMetrics(BaseModel):
     processing_time_ms: float
@@ -62,15 +93,18 @@ class TaskResultMetrics(BaseModel):
     endpoints_created: int
     middleware_components: int
 
+
 class TaskResult(BaseModel):
     task_id: str
     status: str = "completed"
     result: Dict[str, Any]
     metrics: TaskResultMetrics
 
+
 # --- FastAPI App ---
 
 AGENT_BEARER = os.getenv("AGENT_BEARER")
+
 
 async def verify_orchestrator(request: Request):
     if not AGENT_BEARER:
@@ -83,30 +117,91 @@ async def verify_orchestrator(request: Request):
         raise HTTPException(status_code=403, detail="Invalid token")
     return True
 
+
 app = FastAPI(
     title="ExpressOps Agent",
     description="Express.js/Node.js Backend Development Specialist",
-    version="2.0.0"
+    version="2.0.0",
 )
 
+# Global LLM provider instance
+_llm: Optional[LLMProvider] = None
+
+
+async def get_llm() -> LLMProvider:
+    global _llm
+    if _llm is None:
+        _llm = await get_llm_provider()
+    return _llm
+
+
+@app.get("/llm-metrics")
+async def llm_metrics(_: bool = Depends(verify_orchestrator)):
+    """Return LLM usage metrics for monitoring."""
+    try:
+        llm = await get_llm()
+        return {
+            "status": "ok",
+            "cost_today_usd": llm.get_cost_today(),
+            "provider_health": {
+                name: health.model_dump()
+                for name, health in llm.get_provider_health().items()
+            },
+            "rate_limits": llm.get_rate_limit_status(),
+        }
+    except Exception as e:
+        return {"error": str(e), "status": "llm_not_initialized"}
+
+
 # --- Agent Logic ---
+
 
 async def _create_express_api(params: TaskParameters) -> Dict[str, Any]:
     """Generate complete Express.js API structure with best practices"""
 
-    project_structure = {
-        "package.json": _generate_package_json(params),
-        "server.js": _generate_server_js(params),
-        "app.js": _generate_app_js(params),
-        "routes/": _generate_routes(params),
-        "middleware/": _generate_middleware(params),
-        "models/": _generate_models(params),
-        "controllers/": _generate_controllers(params),
-        "config/": _generate_config_files(params),
-        "utils/": _generate_utilities(params),
-        ".env.example": _generate_env_example(params),
-        "README.md": _generate_readme(params)
-    }
+    llm = await get_llm()
+
+    prompt = f"""
+    Generate a complete Express.js API structure for project: {params.project_name}
+    Requirements: {params.api_requirements}
+    Database: {params.database_type}
+    Auth: {params.auth_method}
+
+    Return a JSON object with the following structure:
+    {{
+        "package.json": "content",
+        "server.js": "content",
+        "app.js": "content",
+        "routes/": {{"index.js": "content"}},
+        "middleware/": {{"auth.js": "content"}},
+        "models/": {{"user.js": "content"}},
+        "controllers/": {{"userController.js": "content"}},
+        "config/": {{"db.js": "content"}},
+        "utils/": {{"helpers.js": "content"}},
+        ".env.example": "content",
+        "README.md": "content"
+    }}
+    """
+
+    response = await llm.complete(
+        LLMRequest(
+            system_prompt="You are an expert Node.js/Express.js backend developer.",
+            user_prompt=prompt,
+            temperature=0.2,
+            require_json=True,
+        )
+    )
+
+    try:
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        project_structure = json.loads(content)
+    except Exception as e:
+        logger.error(f"Failed to parse LLM response: {e}")
+        project_structure = {"error": "Failed to parse LLM response"}
 
     return {
         "project_name": params.project_name,
@@ -114,54 +209,105 @@ async def _create_express_api(params: TaskParameters) -> Dict[str, Any]:
         "setup_instructions": _generate_setup_instructions(params),
         "best_practices": _get_express_best_practices(),
         "security_recommendations": _get_security_recommendations(),
-        "performance_tips": _get_performance_recommendations()
+        "performance_tips": _get_performance_recommendations(),
+        "llm_provider": response.provider,
+        "llm_model": response.model,
+        "cost_usd": response.cost_usd,
     }
+
 
 async def _generate_middleware(params: TaskParameters) -> Dict[str, Any]:
     """Create custom middleware components"""
 
-    middleware_components = {}
+    llm = await get_llm()
 
-    # Authentication middleware
-    if params.auth_method:
-        middleware_components["auth.js"] = _generate_auth_middleware(params.auth_method)
+    prompt = f"""
+    Create custom middleware components for project: {params.project_name}
+    Auth Method: {params.auth_method}
+    Requirements: {params.middleware_requirements}
 
-    # Error handling middleware
-    middleware_components["errorHandler.js"] = _generate_error_middleware()
+    Return a JSON object with the following structure:
+    {{
+        "middleware_components": {{"auth.js": "content", "errorHandler.js": "content"}},
+        "usage_examples": ["example 1"],
+        "testing_strategies": ["strategy 1"]
+    }}
+    """
 
-    # Logging middleware
-    middleware_components["logger.js"] = _generate_logging_middleware()
+    response = await llm.complete(
+        LLMRequest(
+            system_prompt="You are an expert Node.js/Express.js backend developer.",
+            user_prompt=prompt,
+            temperature=0.2,
+            require_json=True,
+        )
+    )
 
-    # Rate limiting middleware
-    middleware_components["rateLimiter.js"] = _generate_rate_limiter()
+    try:
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        result = json.loads(content)
+    except Exception as e:
+        logger.error(f"Failed to parse LLM response: {e}")
+        result = {"error": "Failed to parse LLM response"}
 
-    # Custom middleware based on requirements
-    if params.middleware_requirements:
-        for requirement in params.middleware_requirements:
-            middleware_components[f"{requirement}.js"] = _generate_custom_middleware(requirement)
+    result["llm_provider"] = response.provider
+    result["llm_model"] = response.model
+    result["cost_usd"] = response.cost_usd
+    return result
 
-    return {
-        "middleware_components": middleware_components,
-        "usage_examples": _generate_middleware_usage_examples(),
-        "testing_strategies": _generate_middleware_tests()
-    }
 
 async def _optimize_routes(params: TaskParameters) -> Dict[str, Any]:
     """Optimize Express.js routes for performance and maintainability"""
 
-    optimization_strategies = {
-        "route_organization": _generate_route_organization_pattern(),
-        "parameter_validation": _generate_validation_schemas(),
-        "caching_strategies": _generate_caching_patterns(),
-        "async_optimization": _generate_async_patterns(),
-        "error_boundaries": _generate_error_boundaries()
-    }
+    llm = await get_llm()
 
-    return {
-        "optimizations": optimization_strategies,
-        "performance_improvements": _calculate_performance_gains(),
-        "best_practices": _get_routing_best_practices()
-    }
+    prompt = f"""
+    Optimize Express.js routes for performance and maintainability for project: {params.project_name}
+    Performance Targets: {params.performance_targets}
+
+    Return a JSON object with the following structure:
+    {{
+        "optimizations": {{
+            "route_organization": "description",
+            "parameter_validation": "description",
+            "caching_strategies": "description",
+            "async_optimization": "description",
+            "error_boundaries": "description"
+        }},
+        "performance_improvements": ["improvement 1"],
+        "best_practices": ["practice 1"]
+    }}
+    """
+
+    response = await llm.complete(
+        LLMRequest(
+            system_prompt="You are an expert Node.js/Express.js performance engineer.",
+            user_prompt=prompt,
+            temperature=0.2,
+            require_json=True,
+        )
+    )
+
+    try:
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        result = json.loads(content)
+    except Exception as e:
+        logger.error(f"Failed to parse LLM response: {e}")
+        result = {"error": "Failed to parse LLM response"}
+
+    result["llm_provider"] = response.provider
+    result["llm_model"] = response.model
+    result["cost_usd"] = response.cost_usd
+    return result
+
 
 def _generate_package_json(params: TaskParameters) -> str:
     """Generate package.json with appropriate dependencies"""
@@ -172,7 +318,7 @@ def _generate_package_json(params: TaskParameters) -> str:
         "helmet": "^7.0.0",
         "express-rate-limit": "^6.7.0",
         "compression": "^1.7.4",
-        "dotenv": "^16.3.1"
+        "dotenv": "^16.3.1",
     }
 
     dev_dependencies = {
@@ -180,7 +326,7 @@ def _generate_package_json(params: TaskParameters) -> str:
         "jest": "^29.5.0",
         "supertest": "^6.3.3",
         "@types/node": "^20.4.0",
-        "eslint": "^8.44.0"
+        "eslint": "^8.44.0",
     }
 
     # Add database dependencies
@@ -211,26 +357,25 @@ def _generate_package_json(params: TaskParameters) -> str:
             "test": "jest",
             "test:watch": "jest --watch",
             "lint": "eslint .",
-            "lint:fix": "eslint . --fix"
+            "lint:fix": "eslint . --fix",
         },
         "dependencies": dependencies,
         "devDependencies": dev_dependencies,
         "keywords": ["express", "api", "node.js", "backend"],
         "author": "Constella ExpressOps Agent",
         "license": "MIT",
-        "engines": {
-            "node": ">=18.0.0",
-            "npm": ">=9.0.0"
-        }
+        "engines": {"node": ">=18.0.0", "npm": ">=9.0.0"},
     }
 
     import json
+
     return json.dumps(package_json, indent=2)
+
 
 def _generate_server_js(params: TaskParameters) -> str:
     """Generate main server.js file"""
 
-    return f'''#!/usr/bin/env node
+    return f"""#!/usr/bin/env node
 /**
  * {params.project_name} - Express.js Server
  * Generated by Constella ExpressOps Agent
@@ -273,17 +418,18 @@ process.on('unhandledRejection', (err) => {{
     process.exit(1);
   }});
 }});
-'''
+"""
+
 
 def _generate_app_js(params: TaskParameters) -> str:
     """Generate main app.js file with middleware setup"""
 
     cors_config = params.cors_settings or {
         "origin": "http://localhost:3000",
-        "credentials": True
+        "credentials": True,
     }
 
-    return f'''/**
+    return f"""/**
  * {params.project_name} - Express Application
  * Generated by Constella ExpressOps Agent
  */
@@ -377,13 +523,14 @@ app.use('*', (req, res) => {{
 app.use(errorHandler);
 
 module.exports = app;
-'''
+"""
+
 
 def _generate_auth_middleware(auth_method: str) -> str:
     """Generate authentication middleware based on method"""
 
     if auth_method == "jwt":
-        return '''/**
+        return """/**
  * JWT Authentication Middleware
  * Generated by Constella ExpressOps Agent
  */
@@ -431,9 +578,9 @@ const auth = async (req, res, next) => {
 };
 
 module.exports = auth;
-'''
+"""
 
-    return '''/**
+    return """/**
  * Basic Authentication Middleware
  * Generated by Constella ExpressOps Agent
  */
@@ -449,12 +596,13 @@ const auth = async (req, res, next) => {
 };
 
 module.exports = auth;
-'''
+"""
+
 
 def _generate_error_middleware() -> str:
     """Generate error handling middleware"""
 
-    return '''/**
+    return """/**
  * Error Handling Middleware
  * Generated by Constella ExpressOps Agent
  */
@@ -524,7 +672,8 @@ const errorHandler = (err, req, res, next) => {
 };
 
 module.exports = errorHandler;
-'''
+"""
+
 
 def _generate_setup_instructions(params: TaskParameters) -> List[str]:
     """Generate setup instructions for the project"""
@@ -558,8 +707,9 @@ def _generate_setup_instructions(params: TaskParameters) -> List[str]:
         "- PORT: Server port (default: 3000)",
         "- NODE_ENV: Environment (development/production)",
         "- JWT_SECRET: JWT signing secret",
-        f"- DATABASE_URL: {params.database_type.title()} connection string"
+        f"- DATABASE_URL: {params.database_type.title()} connection string",
     ]
+
 
 def _get_express_best_practices() -> List[str]:
     """Get Express.js best practices"""
@@ -576,8 +726,9 @@ def _get_express_best_practices() -> List[str]:
         "Structure routes logically in separate files",
         "Implement graceful shutdown handling",
         "Use async/await for better error handling",
-        "Implement request/response caching where appropriate"
+        "Implement request/response caching where appropriate",
     ]
+
 
 def _get_security_recommendations() -> List[str]:
     """Get security recommendations"""
@@ -594,8 +745,9 @@ def _get_security_recommendations() -> List[str]:
         "Log security events and monitor for suspicious activity",
         "Use secure session configuration",
         "Implement proper error messages (don't leak sensitive info)",
-        "Regular security audits and penetration testing"
+        "Regular security audits and penetration testing",
     ]
+
 
 def _get_performance_recommendations() -> List[str]:
     """Get performance optimization recommendations"""
@@ -612,24 +764,30 @@ def _get_performance_recommendations() -> List[str]:
         "Use clustering for CPU-intensive operations",
         "Optimize JSON responses (avoid circular references)",
         "Implement request/response compression",
-        "Use appropriate HTTP status codes and caching headers"
+        "Use appropriate HTTP status codes and caching headers",
     ]
+
 
 # Helper functions for other components
 def _generate_routes(params: TaskParameters) -> Dict[str, str]:
     return {"api.js": "// API routes will be generated here"}
 
+
 def _generate_models(params: TaskParameters) -> Dict[str, str]:
     return {"index.js": "// Database models will be generated here"}
+
 
 def _generate_controllers(params: TaskParameters) -> Dict[str, str]:
     return {"index.js": "// Controllers will be generated here"}
 
+
 def _generate_config_files(params: TaskParameters) -> Dict[str, str]:
     return {"database.js": "// Database configuration"}
 
+
 def _generate_utilities(params: TaskParameters) -> Dict[str, str]:
     return {"helpers.js": "// Utility functions"}
+
 
 def _generate_env_example(params: TaskParameters) -> str:
     return f"""# {params.project_name} Environment Variables
@@ -639,54 +797,89 @@ JWT_SECRET=your-secret-key-here
 DATABASE_URL=your-database-connection-string
 """
 
+
 def _generate_readme(params: TaskParameters) -> str:
     return f"# {params.project_name}\n\nExpress.js API generated by Constella ExpressOps Agent"
+
 
 def _generate_logging_middleware() -> str:
     return "// Logging middleware implementation"
 
+
 def _generate_rate_limiter() -> str:
     return "// Rate limiting middleware implementation"
+
 
 def _generate_custom_middleware(requirement: str) -> str:
     return f"// Custom {requirement} middleware implementation"
 
+
 def _generate_middleware_usage_examples() -> Dict[str, str]:
     return {"examples": "Middleware usage examples"}
+
 
 def _generate_middleware_tests() -> Dict[str, str]:
     return {"tests": "Middleware testing strategies"}
 
+
 def _generate_route_organization_pattern() -> Dict[str, str]:
     return {"pattern": "Route organization recommendations"}
+
 
 def _generate_validation_schemas() -> Dict[str, str]:
     return {"schemas": "Input validation schemas"}
 
+
 def _generate_caching_patterns() -> Dict[str, str]:
     return {"patterns": "Caching implementation patterns"}
+
 
 def _generate_async_patterns() -> Dict[str, str]:
     return {"patterns": "Async/await optimization patterns"}
 
+
 def _generate_error_boundaries() -> Dict[str, str]:
     return {"boundaries": "Error boundary implementations"}
+
 
 def _calculate_performance_gains() -> Dict[str, Any]:
     return {"estimated_improvement": "20-40% performance improvement"}
 
+
 def _get_routing_best_practices() -> List[str]:
-    return ["Use appropriate HTTP methods", "Implement proper status codes", "Use middleware efficiently"]
+    return [
+        "Use appropriate HTTP methods",
+        "Implement proper status codes",
+        "Use middleware efficiently",
+    ]
+
 
 # --- API Endpoints (ADR-012 Compliant) ---
 
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    return HealthResponse(status="ok")
+    try:
+        llm = await get_llm()
+        llm_ok = llm is not None and llm._initialized
+        return HealthResponse(
+            status="ok" if llm_ok else "degraded",
+            details="LLM provider active" if llm_ok else "LLM provider not initialized",
+            llm_configured=llm_ok,
+            llm_cost_usd=llm.get_cost_today() if llm_ok else 0.0,
+        )
+    except Exception as e:
+        return HealthResponse(
+            status="degraded",
+            details=f"LLM provider error: {str(e)}",
+            llm_configured=False,
+        )
+
 
 @app.get("/capabilities", response_model=CapabilitiesResponse)
 async def get_capabilities(_: bool = Depends(verify_orchestrator)):
     return CapabilitiesResponse()
+
 
 @app.post("/execute_task", response_model=TaskResult)
 async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
@@ -700,7 +893,9 @@ async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
         elif task.task_type == "optimize_routes":
             result_data = await _optimize_routes(task.parameters)
         else:
-            raise HTTPException(status_code=400, detail=f"Unsupported task type: {task.task_type}")
+            raise HTTPException(
+                status_code=400, detail=f"Unsupported task type: {task.task_type}"
+            )
 
         processing_time_ms = (time.time() - start_time) * 1000
 
@@ -717,15 +912,18 @@ async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
                 processing_time_ms=processing_time_ms,
                 files_generated=files_generated,
                 endpoints_created=endpoints_created,
-                middleware_components=middleware_components
-            )
+                middleware_components=middleware_components,
+            ),
         )
 
     except HTTPException as e:
         raise e
     except Exception as e:
         logger.error(f"Task {task.task_id} failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {str(e)}"
+        )
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8015))  # Default port for expressops

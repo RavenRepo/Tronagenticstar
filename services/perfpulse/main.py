@@ -14,8 +14,32 @@ from fastapi import FastAPI, HTTPException, Depends, Request
 from pydantic import BaseModel
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+import logging
+import json
+from datetime import datetime
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+        }
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_data)
+
 logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JSONFormatter())
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    
+# Disable uvicorn default access log formatting if it exists
+logging.getLogger("uvicorn.access").handlers = []
+
 
 # --- Pydantic Models (ADR-012 Compliant) ---
 

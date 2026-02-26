@@ -10,18 +10,24 @@ import styles from './index.module.css';
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
+
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
         <Heading as="h1" className="hero__title">
-          {siteConfig.title}
+          Constella – The Multi‑Agent AI Operating System for Serious Engineering Teams
         </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <p className="hero__subtitle">
+          Orchestrate specialized AI agents for architecture, security, performance, code, and compliance
+          through a single, production‑ready platform. Constella turns scattered LLM tools into one coherent
+          engineering brain.
+        </p>
         <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/intro">
-            Docusaurus Tutorial - 5min ⏱️
+          <Link className="button button--secondary button--lg" to="/docs/intro">
+            Get Started with the API Gateway
+          </Link>
+          <Link className="button button--outline button--lg" to="/docs/agents/overview">
+            View Agent Catalog
           </Link>
         </div>
       </div>
@@ -31,10 +37,11 @@ function HomepageHeader() {
 
 export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
+
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title="Constella – Multi‑Agent AI Operating System"
+      description="Constella is a production‑grade multi‑agent AI platform with orchestrated specialist agents for architecture, security, performance, code, memory, and compliance.">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

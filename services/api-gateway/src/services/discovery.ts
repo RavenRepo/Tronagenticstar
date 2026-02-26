@@ -72,8 +72,9 @@ export class ServiceDiscovery {
       }
     } catch (error) {
       if (service.status === "healthy") {
+        const errMsg = error instanceof Error ? error.message : String(error);
         logger.error(
-          `Service ${service.name} is now unhealthy. Error: ${error.message}`,
+          `Service ${service.name} is now unhealthy. Error: ${errMsg}`,
         );
       }
       service.status = "unhealthy";

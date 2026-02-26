@@ -5,24 +5,54 @@ Specialized agent for database architecture, schema design, migrations, performa
 and data management across SQL and NoSQL databases
 """
 
+import json
+
+# Configure logging
 import logging
 import os
 import time
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
+from llm_provider import LLMProvider, LLMRequest, get_llm_provider
 from pydantic import BaseModel
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+        }
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_data)
+
+
 logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JSONFormatter())
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
+# Disable uvicorn default access log formatting if it exists
+logging.getLogger("uvicorn.access").handlers = []
+
 
 # --- Pydantic Models (ADR-012 Compliant) ---
+
 
 class HealthResponse(BaseModel):
     status: str = "ok"
     details: Optional[str] = None
+    llm_configured: bool = False
+    llm_cost_usd: Optional[float] = None
+
 
 class CapabilitiesResponse(BaseModel):
     agent_id: str = "database_agent"
@@ -40,8 +70,9 @@ class CapabilitiesResponse(BaseModel):
         "implement_data_seeding",
         "analyze_query_performance",
         "design_data_relationships",
-        "implement_database_security"
+        "implement_database_security",
     ]
+
 
 class DatabaseType(BaseModel):
     type: str  # postgresql, mysql, mongodb, redis, sqlite, etc.
@@ -50,12 +81,14 @@ class DatabaseType(BaseModel):
     port: Optional[int] = None
     connection_pool_size: Optional[int] = 10
 
+
 class TableSchema(BaseModel):
     name: str
     fields: Dict[str, Dict[str, Any]]
     indexes: Optional[List[Dict[str, Any]]] = []
     constraints: Optional[List[Dict[str, Any]]] = []
     relationships: Optional[List[Dict[str, Any]]] = []
+
 
 class TaskParameters(BaseModel):
     project_name: str
@@ -65,15 +98,19 @@ class TaskParameters(BaseModel):
     security_requirements: Optional[List[str]] = []
     backup_strategy: Optional[str] = "daily"
     environment: str = "development"  # development, staging, production
-    orm_framework: Optional[str] = "sqlalchemy"  # sqlalchemy, django_orm, prisma, mongoose
+    orm_framework: Optional[str] = (
+        "sqlalchemy"  # sqlalchemy, django_orm, prisma, mongoose
+    )
     migration_strategy: Optional[str] = "incremental"
     data_volume_estimate: Optional[str] = "small"  # small, medium, large, enterprise
+
 
 class Task(BaseModel):
     task_id: str
     task_type: str
     parameters: TaskParameters
     context: Optional[List[Dict[str, Any]]] = None
+
 
 class TaskResultMetrics(BaseModel):
     processing_time_ms: float
@@ -82,15 +119,18 @@ class TaskResultMetrics(BaseModel):
     indexes_created: int
     queries_optimized: int
 
+
 class TaskResult(BaseModel):
     task_id: str
     status: str = "completed"
     result: Dict[str, Any]
     metrics: TaskResultMetrics
 
+
 # --- FastAPI App ---
 
 AGENT_BEARER = os.getenv("AGENT_BEARER")
+
 
 async def verify_orchestrator(request: Request):
     if not AGENT_BEARER:
@@ -103,126 +143,243 @@ async def verify_orchestrator(request: Request):
         raise HTTPException(status_code=403, detail="Invalid token")
     return True
 
+
 app = FastAPI(
     title="Database Agent",
     description="Database Design, Optimization & Management Specialist",
-    version="2.0.0"
+    version="2.0.0",
 )
 
+# Global LLM provider instance
+_llm: Optional[LLMProvider] = None
+
+
+async def get_llm() -> LLMProvider:
+    global _llm
+    if _llm is None:
+        _llm = await get_llm_provider()
+    return _llm
+
+
+@app.get("/llm-metrics")
+async def llm_metrics(_: bool = Depends(verify_orchestrator)):
+    """Return LLM usage metrics for monitoring."""
+    try:
+        llm = await get_llm()
+        return {
+            "status": "ok",
+            "cost_today_usd": llm.get_cost_today(),
+            "provider_health": {
+                name: health.model_dump()
+                for name, health in llm.get_provider_health().items()
+            },
+            "rate_limits": llm.get_rate_limit_status(),
+        }
+    except Exception as e:
+        return {"error": str(e), "status": "llm_not_initialized"}
+
+
 # --- Agent Logic ---
+
 
 async def _design_database_schema(params: TaskParameters) -> Dict[str, Any]:
     """Design comprehensive database schema with best practices"""
 
-    database_design = {
-        "schema_definition": _generate_schema_definition(params),
-        "entity_relationships": _design_entity_relationships(params),
-        "indexes": _design_indexes(params),
-        "constraints": _design_constraints(params),
-        "views": _design_views(params),
-        "stored_procedures": _design_stored_procedures(params),
-        "triggers": _design_triggers(params),
-        "partitioning_strategy": _design_partitioning(params),
-        "normalization_analysis": _analyze_normalization(params),
-        "performance_considerations": _analyze_performance_requirements(params)
-    }
+    llm = await get_llm()
+
+    prompt = f"""
+    Design a comprehensive database schema for project: {params.project_name}
+    Database Type: {params.database_type.type}
+    Requirements: {params.schema_requirements}
+
+    Return a JSON object with the following structure:
+    {{
+        "schema_definition": {{}},
+        "entity_relationships": [],
+        "indexes": [],
+        "performance_considerations": []
+    }}
+    """
+
+    response = await llm.complete(
+        LLMRequest(
+            system_prompt="You are an expert database architect.",
+            user_prompt=prompt,
+            temperature=0.2,
+            require_json=True,
+        )
+    )
+
+    try:
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        database_design = json.loads(content)
+    except Exception as e:
+        logger.error(f"Failed to parse LLM response: {e}")
+        database_design = {"error": "Failed to parse LLM response"}
 
     return {
         "project_name": params.project_name,
         "database_type": params.database_type.dict(),
         "schema": database_design,
-        "orm_models": _generate_orm_models(params),
-        "migration_scripts": _generate_initial_migrations(params),
-        "setup_instructions": _generate_setup_instructions(params),
-        "best_practices": _get_database_best_practices(params.database_type.type),
-        "security_recommendations": _get_security_recommendations(params)
+        "llm_provider": response.provider,
+        "llm_model": response.model,
+        "cost_usd": response.cost_usd,
     }
+
 
 async def _generate_migrations(params: TaskParameters) -> Dict[str, Any]:
     """Generate database migration scripts"""
 
-    migrations = {}
+    llm = await get_llm()
 
-    for i, table_schema in enumerate(params.schema_requirements, 1):
-        migration_name = f"{i:03d}_create_{table_schema.name}_table"
+    prompt = f"""
+    Generate database migration scripts for project: {params.project_name}
+    Database Type: {params.database_type.type}
+    Requirements: {params.schema_requirements}
 
-        if params.database_type.type in ["postgresql", "mysql", "sqlite"]:
-            migrations[f"{migration_name}.sql"] = _generate_sql_migration(table_schema, params.database_type.type)
-        elif params.database_type.type == "mongodb":
-            migrations[f"{migration_name}.js"] = _generate_mongodb_migration(table_schema)
+    Return a JSON object with the following structure:
+    {{
+        "migrations": {{"filename.sql": "sql content"}},
+        "migration_order": ["filename.sql"],
+        "rollback_strategy": "description"
+    }}
+    """
 
-        # Generate rollback migration
-        migrations[f"{migration_name}_rollback.sql"] = _generate_rollback_migration(table_schema, params.database_type.type)
+    response = await llm.complete(
+        LLMRequest(
+            system_prompt="You are an expert database architect.",
+            user_prompt=prompt,
+            temperature=0.2,
+            require_json=True,
+        )
+    )
 
-    return {
-        "migrations": migrations,
-        "migration_order": list(migrations.keys()),
-        "migration_runner": _generate_migration_runner(params),
-        "rollback_strategy": _generate_rollback_strategy(params),
-        "testing_strategy": _generate_migration_testing_strategy(params)
-    }
+    try:
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        result = json.loads(content)
+    except Exception as e:
+        logger.error(f"Failed to parse LLM response: {e}")
+        result = {"error": "Failed to parse LLM response"}
+
+    result["llm_provider"] = response.provider
+    result["llm_model"] = response.model
+    result["cost_usd"] = response.cost_usd
+    return result
+
 
 async def _optimize_queries(params: TaskParameters) -> Dict[str, Any]:
     """Analyze and optimize database queries"""
 
-    optimization_strategies = {
-        "index_recommendations": _analyze_index_requirements(params),
-        "query_patterns": _analyze_query_patterns(params),
-        "performance_bottlenecks": _identify_performance_bottlenecks(params),
-        "caching_strategies": _recommend_caching_strategies(params),
-        "connection_pooling": _optimize_connection_pooling(params),
-        "query_optimization_tips": _get_query_optimization_tips(params.database_type.type),
-        "monitoring_setup": _setup_performance_monitoring(params),
-        "benchmarking_results": _generate_performance_benchmarks(params)
-    }
+    llm = await get_llm()
 
-    return {
-        "optimization_report": optimization_strategies,
-        "recommended_changes": _generate_optimization_recommendations(params),
-        "performance_metrics": _calculate_performance_improvements(params),
-        "implementation_guide": _generate_optimization_implementation_guide(params)
-    }
+    prompt = f"""
+    Analyze and optimize database queries for project: {params.project_name}
+    Database Type: {params.database_type.type}
+    Performance Requirements: {params.performance_requirements}
+
+    Return a JSON object with the following structure:
+    {{
+        "optimization_report": {{}},
+        "recommended_changes": [],
+        "implementation_guide": "description"
+    }}
+    """
+
+    response = await llm.complete(
+        LLMRequest(
+            system_prompt="You are an expert database performance engineer.",
+            user_prompt=prompt,
+            temperature=0.2,
+            require_json=True,
+        )
+    )
+
+    try:
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        result = json.loads(content)
+    except Exception as e:
+        logger.error(f"Failed to parse LLM response: {e}")
+        result = {"error": "Failed to parse LLM response"}
+
+    result["llm_provider"] = response.provider
+    result["llm_model"] = response.model
+    result["cost_usd"] = response.cost_usd
+    return result
+
 
 async def _setup_database_connections(params: TaskParameters) -> Dict[str, Any]:
     """Setup database connections and configuration"""
 
-    connection_configs = {
-        "connection_strings": _generate_connection_strings(params),
-        "environment_configs": _generate_environment_configs(params),
-        "connection_pooling": _configure_connection_pooling(params),
-        "ssl_configuration": _configure_ssl_settings(params),
-        "timeout_settings": _configure_timeout_settings(params),
-        "retry_logic": _implement_retry_logic(params),
-        "health_checks": _implement_health_checks(params),
-        "monitoring": _setup_connection_monitoring(params)
-    }
+    llm = await get_llm()
 
-    return {
-        "configurations": connection_configs,
-        "docker_compose": _generate_docker_database_config(params),
-        "kubernetes_manifests": _generate_k8s_database_config(params),
-        "backup_configuration": _configure_backup_settings(params),
-        "security_configuration": _configure_database_security(params)
-    }
+    prompt = f"""
+    Setup database connections and configuration for project: {params.project_name}
+    Database Type: {params.database_type.type}
+    Environment: {params.environment}
+
+    Return a JSON object with the following structure:
+    {{
+        "configurations": {{}},
+        "docker_compose": "yaml content",
+        "security_configuration": []
+    }}
+    """
+
+    response = await llm.complete(
+        LLMRequest(
+            system_prompt="You are an expert database administrator.",
+            user_prompt=prompt,
+            temperature=0.2,
+            require_json=True,
+        )
+    )
+
+    try:
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        result = json.loads(content)
+    except Exception as e:
+        logger.error(f"Failed to parse LLM response: {e}")
+        result = {"error": "Failed to parse LLM response"}
+
+    result["llm_provider"] = response.provider
+    result["llm_model"] = response.model
+    result["cost_usd"] = response.cost_usd
+    return result
+
 
 def _generate_schema_definition(params: TaskParameters) -> Dict[str, Any]:
     """Generate comprehensive schema definition"""
 
-    schema_def = {
-        "tables": {},
-        "relationships": [],
-        "constraints": [],
-        "indexes": []
-    }
+    schema_def = {"tables": {}, "relationships": [], "constraints": [], "indexes": []}
 
     for table in params.schema_requirements:
         table_definition = {
             "name": table.name,
-            "fields": _normalize_field_definitions(table.fields, params.database_type.type),
+            "fields": _normalize_field_definitions(
+                table.fields, params.database_type.type
+            ),
             "primary_key": _identify_primary_key(table.fields),
             "foreign_keys": _identify_foreign_keys(table.relationships or []),
             "indexes": _convert_indexes(table.indexes or [], params.database_type.type),
-            "constraints": _convert_constraints(table.constraints or [], params.database_type.type)
+            "constraints": _convert_constraints(
+                table.constraints or [], params.database_type.type
+            ),
         }
 
         schema_def["tables"][table.name] = table_definition
@@ -230,15 +387,18 @@ def _generate_schema_definition(params: TaskParameters) -> Dict[str, Any]:
         # Add relationships to global relationships list
         if table.relationships:
             for rel in table.relationships:
-                schema_def["relationships"].append({
-                    "from_table": table.name,
-                    "to_table": rel.get("table"),
-                    "relationship_type": rel.get("type"),
-                    "foreign_key": rel.get("foreign_key"),
-                    "reference_key": rel.get("reference_key", "id")
-                })
+                schema_def["relationships"].append(
+                    {
+                        "from_table": table.name,
+                        "to_table": rel.get("table"),
+                        "relationship_type": rel.get("type"),
+                        "foreign_key": rel.get("foreign_key"),
+                        "reference_key": rel.get("reference_key", "id"),
+                    }
+                )
 
     return schema_def
+
 
 def _generate_orm_models(params: TaskParameters) -> Dict[str, str]:
     """Generate ORM model files"""
@@ -257,6 +417,7 @@ def _generate_orm_models(params: TaskParameters) -> Dict[str, str]:
         models.update(_generate_generic_orm_models(params))
 
     return models
+
 
 def _generate_sqlalchemy_models(params: TaskParameters) -> Dict[str, str]:
     """Generate SQLAlchemy ORM models"""
@@ -315,7 +476,7 @@ class BaseModel(Base):
         imports = [
             "from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Index",
             "from sqlalchemy.orm import relationship",
-            "from .base import BaseModel"
+            "from .base import BaseModel",
         ]
 
         fields = []
@@ -329,25 +490,29 @@ class BaseModel(Base):
             nullable = field_config.get("nullable", True)
             default = field_config.get("default")
 
-            field_line = f'    {field_name} = Column({sql_type}'
+            field_line = f"    {field_name} = Column({sql_type}"
             if not nullable:
-                field_line += ', nullable=False'
+                field_line += ", nullable=False"
             if default is not None:
-                field_line += f', default={repr(default)}'
-            field_line += ')'
+                field_line += f", default={repr(default)}"
+            field_line += ")"
 
             fields.append(field_line)
 
         # Add relationships
-        for rel in (table.relationships or []):
+        for rel in table.relationships or []:
             rel_name = rel.get("name", rel.get("table"))
             rel_table = _to_pascal_case(rel.get("table", ""))
             rel_type = rel.get("type", "many_to_one")
 
             if rel_type == "one_to_many":
-                relationships.append(f'    {rel_name} = relationship("{rel_table}", back_populates="{table.name.lower()}")')
+                relationships.append(
+                    f'    {rel_name} = relationship("{rel_table}", back_populates="{table.name.lower()}")'
+                )
             elif rel_type == "many_to_one":
-                relationships.append(f'    {rel_name} = relationship("{rel_table}", back_populates="{table.name.lower()}s")')
+                relationships.append(
+                    f'    {rel_name} = relationship("{rel_table}", back_populates="{table.name.lower()}s")'
+                )
 
         model_content = f'''"""
 {model_name} SQLAlchemy model
@@ -417,6 +582,7 @@ def drop_tables():
 
     return models
 
+
 def _generate_sql_migration(table_schema: TableSchema, db_type: str) -> str:
     """Generate SQL migration script"""
 
@@ -428,37 +594,51 @@ def _generate_sql_migration(table_schema: TableSchema, db_type: str) -> str:
     for field_name, field_config in table_schema.fields.items():
         sql_type = _map_field_type_to_sql(field_config.get("type", "string"), db_type)
         nullable = "" if field_config.get("nullable", True) else " NOT NULL"
-        default = f" DEFAULT {field_config['default']}" if field_config.get("default") else ""
+        default = (
+            f" DEFAULT {field_config['default']}" if field_config.get("default") else ""
+        )
 
         field_definitions.append(f"    {field_name} {sql_type}{nullable}{default}")
 
     # Add primary key if not explicitly defined
     if not any("PRIMARY KEY" in field for field in field_definitions):
-        field_definitions.insert(0, "    id SERIAL PRIMARY KEY" if db_type == "postgresql" else "    id INTEGER PRIMARY KEY AUTO_INCREMENT")
+        field_definitions.insert(
+            0,
+            "    id SERIAL PRIMARY KEY"
+            if db_type == "postgresql"
+            else "    id INTEGER PRIMARY KEY AUTO_INCREMENT",
+        )
 
     # Add timestamps
     if db_type == "postgresql":
-        field_definitions.extend([
-            "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-            "    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-        ])
+        field_definitions.extend(
+            [
+                "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+                "    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            ]
+        )
     else:
-        field_definitions.extend([
-            "    created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
-            "    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-        ])
+        field_definitions.extend(
+            [
+                "    created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+                "    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+            ]
+        )
 
     sql_lines.append(",\n".join(field_definitions))
     sql_lines.append(");")
 
     # Add indexes
-    for index in (table_schema.indexes or []):
+    for index in table_schema.indexes or []:
         index_name = index.get("name", f"idx_{table_schema.name}_{index['fields'][0]}")
         fields = ", ".join(index["fields"])
         unique = "UNIQUE " if index.get("unique", False) else ""
-        sql_lines.append(f"\nCREATE {unique}INDEX {index_name} ON {table_schema.name} ({fields});")
+        sql_lines.append(
+            f"\nCREATE {unique}INDEX {index_name} ON {table_schema.name} ({fields});"
+        )
 
     return "\n".join(sql_lines)
+
 
 def _get_database_best_practices(db_type: str) -> List[str]:
     """Get database-specific best practices"""
@@ -473,7 +653,7 @@ def _get_database_best_practices(db_type: str) -> List[str]:
         "Use transactions for data consistency",
         "Implement proper error handling",
         "Use prepared statements to prevent SQL injection",
-        "Regular database maintenance and optimization"
+        "Regular database maintenance and optimization",
     ]
 
     db_specific = {
@@ -481,27 +661,29 @@ def _get_database_best_practices(db_type: str) -> List[str]:
             "Use JSONB for JSON data instead of JSON",
             "Consider partitioning for large tables",
             "Use VACUUM ANALYZE regularly",
-            "Leverage PostgreSQL-specific features like arrays and ranges"
+            "Leverage PostgreSQL-specific features like arrays and ranges",
         ],
         "mysql": [
             "Choose appropriate storage engine (InnoDB recommended)",
             "Use utf8mb4 charset for full UTF-8 support",
             "Configure innodb_buffer_pool_size properly",
-            "Use MySQL-specific optimization techniques"
+            "Use MySQL-specific optimization techniques",
         ],
         "mongodb": [
             "Design schema for your query patterns",
             "Use compound indexes effectively",
             "Consider sharding for horizontal scaling",
-            "Use aggregation pipeline for complex queries"
-        ]
+            "Use aggregation pipeline for complex queries",
+        ],
     }
 
     return common_practices + db_specific.get(db_type, [])
 
+
 # Helper functions
 def _to_pascal_case(snake_str: str) -> str:
-    return ''.join(word.capitalize() for word in snake_str.split('_'))
+    return "".join(word.capitalize() for word in snake_str.split("_"))
+
 
 def _map_field_type_to_sqlalchemy(field_type: str) -> str:
     mapping = {
@@ -513,9 +695,10 @@ def _map_field_type_to_sqlalchemy(field_type: str) -> str:
         "datetime": "DateTime",
         "date": "Date",
         "time": "Time",
-        "json": "JSON"
+        "json": "JSON",
     }
     return mapping.get(field_type.lower(), "String(255)")
+
 
 def _map_field_type_to_sql(field_type: str, db_type: str) -> str:
     if db_type == "postgresql":
@@ -528,7 +711,7 @@ def _map_field_type_to_sql(field_type: str, db_type: str) -> str:
             "datetime": "TIMESTAMP",
             "date": "DATE",
             "time": "TIME",
-            "json": "JSONB"
+            "json": "JSONB",
         }
     elif db_type == "mysql":
         mapping = {
@@ -540,7 +723,7 @@ def _map_field_type_to_sql(field_type: str, db_type: str) -> str:
             "datetime": "DATETIME",
             "date": "DATE",
             "time": "TIME",
-            "json": "JSON"
+            "json": "JSON",
         }
     else:  # sqlite
         mapping = {
@@ -552,10 +735,11 @@ def _map_field_type_to_sql(field_type: str, db_type: str) -> str:
             "datetime": "DATETIME",
             "date": "DATE",
             "time": "TIME",
-            "json": "TEXT"
+            "json": "TEXT",
         }
 
     return mapping.get(field_type.lower(), "VARCHAR(255)")
+
 
 def _get_default_connection_string(db_type: DatabaseType) -> str:
     if db_type.type == "postgresql":
@@ -569,7 +753,10 @@ def _get_default_connection_string(db_type: DatabaseType) -> str:
     else:
         return "sqlite:///./database.db"
 
-def _normalize_field_definitions(fields: Dict[str, Dict[str, Any]], db_type: str) -> Dict[str, Dict[str, Any]]:
+
+def _normalize_field_definitions(
+    fields: Dict[str, Dict[str, Any]], db_type: str
+) -> Dict[str, Dict[str, Any]]:
     """Normalize field definitions for database type"""
     normalized = {}
     for field_name, field_config in fields.items():
@@ -578,9 +765,10 @@ def _normalize_field_definitions(fields: Dict[str, Dict[str, Any]], db_type: str
             "nullable": field_config.get("nullable", True),
             "default": field_config.get("default"),
             "unique": field_config.get("unique", False),
-            "index": field_config.get("index", False)
+            "index": field_config.get("index", False),
         }
     return normalized
+
 
 def _identify_primary_key(fields: Dict[str, Dict[str, Any]]) -> List[str]:
     """Identify primary key fields"""
@@ -590,167 +778,238 @@ def _identify_primary_key(fields: Dict[str, Dict[str, Any]]) -> List[str]:
             pk_fields.append(field_name)
     return pk_fields or ["id"]
 
+
 def _identify_foreign_keys(relationships: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Identify foreign key relationships"""
     fks = []
     for rel in relationships:
         if rel.get("type") in ["many_to_one", "one_to_one"]:
-            fks.append({
-                "field": rel.get("foreign_key"),
-                "references": f"{rel.get('table')}.{rel.get('reference_key', 'id')}"
-            })
+            fks.append(
+                {
+                    "field": rel.get("foreign_key"),
+                    "references": f"{rel.get('table')}.{rel.get('reference_key', 'id')}",
+                }
+            )
     return fks
 
-def _convert_indexes(indexes: List[Dict[str, Any]], db_type: str) -> List[Dict[str, Any]]:
+
+def _convert_indexes(
+    indexes: List[Dict[str, Any]], db_type: str
+) -> List[Dict[str, Any]]:
     """Convert index definitions for database type"""
     return indexes  # Already normalized
 
-def _convert_constraints(constraints: List[Dict[str, Any]], db_type: str) -> List[Dict[str, Any]]:
+
+def _convert_constraints(
+    constraints: List[Dict[str, Any]], db_type: str
+) -> List[Dict[str, Any]]:
     """Convert constraint definitions for database type"""
     return constraints  # Already normalized
+
 
 # Additional helper functions for other operations
 def _design_entity_relationships(params: TaskParameters) -> Dict[str, Any]:
     return {"relationships": "Entity relationship analysis"}
 
+
 def _design_indexes(params: TaskParameters) -> Dict[str, Any]:
     return {"indexes": "Index design recommendations"}
+
 
 def _design_constraints(params: TaskParameters) -> Dict[str, Any]:
     return {"constraints": "Constraint definitions"}
 
+
 def _design_views(params: TaskParameters) -> Dict[str, Any]:
     return {"views": "Database view definitions"}
+
 
 def _design_stored_procedures(params: TaskParameters) -> Dict[str, Any]:
     return {"procedures": "Stored procedure definitions"}
 
+
 def _design_triggers(params: TaskParameters) -> Dict[str, Any]:
     return {"triggers": "Database trigger definitions"}
+
 
 def _design_partitioning(params: TaskParameters) -> Dict[str, Any]:
     return {"partitioning": "Table partitioning strategy"}
 
+
 def _analyze_normalization(params: TaskParameters) -> Dict[str, Any]:
     return {"normalization": "Database normalization analysis"}
+
 
 def _analyze_performance_requirements(params: TaskParameters) -> Dict[str, Any]:
     return {"performance": "Performance requirement analysis"}
 
+
 def _generate_initial_migrations(params: TaskParameters) -> Dict[str, str]:
     return {"001_initial.sql": "Initial migration script"}
+
 
 def _generate_setup_instructions(params: TaskParameters) -> List[str]:
     return ["Setup instructions for database"]
 
+
 def _get_security_recommendations(params: TaskParameters) -> List[str]:
     return ["Database security recommendations"]
+
 
 def _generate_mongodb_migration(table_schema: TableSchema) -> str:
     return f"// MongoDB migration for {table_schema.name}"
 
+
 def _generate_rollback_migration(table_schema: TableSchema, db_type: str) -> str:
     return f"DROP TABLE IF EXISTS {table_schema.name};"
+
 
 def _generate_migration_runner(params: TaskParameters) -> Dict[str, str]:
     return {"runner.py": "Migration runner script"}
 
+
 def _generate_rollback_strategy(params: TaskParameters) -> Dict[str, str]:
     return {"strategy": "Rollback strategy documentation"}
+
 
 def _generate_migration_testing_strategy(params: TaskParameters) -> Dict[str, str]:
     return {"testing": "Migration testing strategy"}
 
+
 def _analyze_index_requirements(params: TaskParameters) -> Dict[str, Any]:
     return {"indexes": "Index analysis"}
+
 
 def _analyze_query_patterns(params: TaskParameters) -> Dict[str, Any]:
     return {"patterns": "Query pattern analysis"}
 
+
 def _identify_performance_bottlenecks(params: TaskParameters) -> Dict[str, Any]:
     return {"bottlenecks": "Performance bottleneck analysis"}
+
 
 def _recommend_caching_strategies(params: TaskParameters) -> Dict[str, Any]:
     return {"caching": "Caching strategy recommendations"}
 
+
 def _optimize_connection_pooling(params: TaskParameters) -> Dict[str, Any]:
     return {"pooling": "Connection pooling optimization"}
+
 
 def _get_query_optimization_tips(db_type: str) -> List[str]:
     return ["Query optimization tips"]
 
+
 def _setup_performance_monitoring(params: TaskParameters) -> Dict[str, Any]:
     return {"monitoring": "Performance monitoring setup"}
+
 
 def _generate_performance_benchmarks(params: TaskParameters) -> Dict[str, Any]:
     return {"benchmarks": "Performance benchmarks"}
 
+
 def _generate_optimization_recommendations(params: TaskParameters) -> List[str]:
     return ["Optimization recommendations"]
+
 
 def _calculate_performance_improvements(params: TaskParameters) -> Dict[str, Any]:
     return {"improvements": "Expected performance improvements"}
 
+
 def _generate_optimization_implementation_guide(params: TaskParameters) -> List[str]:
     return ["Implementation guide"]
+
 
 def _generate_connection_strings(params: TaskParameters) -> Dict[str, str]:
     return {"development": "Development connection string"}
 
+
 def _generate_environment_configs(params: TaskParameters) -> Dict[str, Dict[str, str]]:
     return {"development": {"config": "Development configuration"}}
+
 
 def _configure_connection_pooling(params: TaskParameters) -> Dict[str, Any]:
     return {"pooling": "Connection pooling configuration"}
 
+
 def _configure_ssl_settings(params: TaskParameters) -> Dict[str, Any]:
     return {"ssl": "SSL configuration"}
+
 
 def _configure_timeout_settings(params: TaskParameters) -> Dict[str, Any]:
     return {"timeouts": "Timeout configuration"}
 
+
 def _implement_retry_logic(params: TaskParameters) -> Dict[str, Any]:
     return {"retry": "Retry logic implementation"}
+
 
 def _implement_health_checks(params: TaskParameters) -> Dict[str, Any]:
     return {"health": "Health check implementation"}
 
+
 def _setup_connection_monitoring(params: TaskParameters) -> Dict[str, Any]:
     return {"monitoring": "Connection monitoring setup"}
+
 
 def _generate_docker_database_config(params: TaskParameters) -> str:
     return "# Docker database configuration"
 
+
 def _generate_k8s_database_config(params: TaskParameters) -> Dict[str, str]:
     return {"deployment.yaml": "Kubernetes database deployment"}
+
 
 def _configure_backup_settings(params: TaskParameters) -> Dict[str, Any]:
     return {"backup": "Backup configuration"}
 
+
 def _configure_database_security(params: TaskParameters) -> Dict[str, Any]:
     return {"security": "Database security configuration"}
+
 
 def _generate_django_models(params: TaskParameters) -> Dict[str, str]:
     return {"models.py": "Django ORM models"}
 
+
 def _generate_prisma_schema(params: TaskParameters) -> Dict[str, str]:
     return {"schema.prisma": "Prisma schema"}
+
 
 def _generate_mongoose_models(params: TaskParameters) -> Dict[str, str]:
     return {"models.js": "Mongoose models"}
 
+
 def _generate_generic_orm_models(params: TaskParameters) -> Dict[str, str]:
     return {"models.py": "Generic ORM models"}
 
+
 # --- API Endpoints (ADR-012 Compliant) ---
+
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    return HealthResponse(status="ok")
+    try:
+        llm = await get_llm()
+        llm_ok = llm is not None and llm._initialized
+        return HealthResponse(
+            status="ok" if llm_ok else "degraded",
+            details="LLM provider active" if llm_ok else "LLM provider not initialized",
+            llm_configured=llm_ok,
+            llm_cost_usd=llm.get_cost_today() if llm_ok else 0.0,
+        )
+    except Exception as e:
+        return HealthResponse(
+            status="degraded",
+            details=f"LLM provider error: {str(e)}",
+            llm_configured=False,
+        )
+
 
 @app.get("/capabilities", response_model=CapabilitiesResponse)
 async def get_capabilities(_: bool = Depends(verify_orchestrator)):
     return CapabilitiesResponse()
+
 
 @app.post("/execute_task", response_model=TaskResult)
 async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
@@ -766,15 +1025,22 @@ async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
         elif task.task_type == "setup_database_connections":
             result_data = await _setup_database_connections(task.parameters)
         else:
-            raise HTTPException(status_code=400, detail=f"Unsupported task type: {task.task_type}")
+            raise HTTPException(
+                status_code=400, detail=f"Unsupported task type: {task.task_type}"
+            )
 
         processing_time_ms = (time.time() - start_time) * 1000
 
         # Calculate metrics
         tables_designed = len(task.parameters.schema_requirements or [])
         migrations_generated = len(result_data.get("migrations", {}))
-        indexes_created = sum(len(table.indexes or []) for table in (task.parameters.schema_requirements or []))
-        queries_optimized = len(result_data.get("optimization_report", {}).get("query_patterns", {}))
+        indexes_created = sum(
+            len(table.indexes or [])
+            for table in (task.parameters.schema_requirements or [])
+        )
+        queries_optimized = len(
+            result_data.get("optimization_report", {}).get("query_patterns", {})
+        )
 
         return TaskResult(
             task_id=task.task_id,
@@ -785,15 +1051,18 @@ async def execute_task(task: Task, _: bool = Depends(verify_orchestrator)):
                 tables_designed=tables_designed,
                 migrations_generated=migrations_generated,
                 indexes_created=indexes_created,
-                queries_optimized=queries_optimized
-            )
+                queries_optimized=queries_optimized,
+            ),
         )
 
     except HTTPException as e:
         raise e
     except Exception as e:
         logger.error(f"Task {task.task_id} failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {str(e)}"
+        )
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8017))  # Default port for database-agent

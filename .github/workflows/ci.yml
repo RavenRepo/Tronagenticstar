@@ -1,0 +1,63 @@
+name: Constella CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-orchestrator:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Dependencies
+      run: |
+        cd packages/llm-core && npm install --legacy-peer-deps
+        cd ../orchestrator && npm install
+
+    - name: Build LLM Core
+      run: cd packages/llm-core && npm run build
+
+    - name: Run Orchestrator Tests
+      run: cd packages/orchestrator && npm test
+
+  test-api-gateway:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Dependencies
+      run: cd services/api-gateway && npm install
+
+    - name: Run API Gateway Tests
+      run: cd services/api-gateway && npm test
+
+  integration-tests:
+    needs: [test-orchestrator, test-api-gateway]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Test Dependencies
+      run: cd tests && npm install
+      
+    - name: Run Integration Tests
+      # Note: This will skip tests that require running services, but validates the suite runs
+      run: cd tests && npm run test:integration

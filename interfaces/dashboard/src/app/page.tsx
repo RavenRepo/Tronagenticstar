@@ -1,0 +1,1062 @@
+"use client";
+
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  Bot,
+  BrainCircuit,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Code2,
+  CpuIcon,
+  FileSearch,
+  Flame,
+  GaugeCircle,
+  Globe,
+  Loader2,
+  LucideIcon,
+  MessageSquare,
+  RefreshCw,
+  Search,
+  SendHorizonal,
+  Server,
+  Shield,
+  Sparkles,
+  Workflow,
+  XCircle,
+  Zap,
+} from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type AgentStatus = "healthy" | "degraded" | "unreachable" | "loading";
+
+interface AgentHealth {
+  id: string;
+  name: string;
+  description: string;
+  port: number;
+  icon: LucideIcon;
+  color: string;
+  status: AgentStatus;
+  latencyMs: number | null;
+  details: string | null;
+  capabilities: string[];
+  llmConfigured: boolean;
+}
+
+interface PlatformStats {
+  totalAgents: number;
+  healthyAgents: number;
+  degradedAgents: number;
+  unreachableAgents: number;
+  lastChecked: Date | null;
+}
+
+interface QuickAction {
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  agentId: string;
+  taskType: string;
+  color: string;
+}
+
+interface TaskExecution {
+  id: string;
+  agentId: string;
+  taskType: string;
+  status: "running" | "completed" | "failed";
+  startedAt: Date;
+  completedAt: Date | null;
+  durationMs: number | null;
+  resultPreview: string | null;
+  error: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Agent definitions
+// ---------------------------------------------------------------------------
+
+const AGENTS: Omit<AgentHealth, "status" | "latencyMs" | "details" | "capabilities" | "llmConfigured">[] = [
+  {
+    id: "codecraft",
+    name: "CodeCraft",
+    description: "Code generation, refactoring, and optimization",
+    port: 8012,
+    icon: Code2,
+    color: "from-blue-500 to-cyan-400",
+  },
+  {
+    id: "securishield",
+    name: "SecuriShield",
+    description: "Security scanning and vulnerability detection",
+    port: 8011,
+    icon: Shield,
+    color: "from-red-500 to-orange-400",
+  },
+  {
+    id: "designforge",
+    name: "DesignForge",
+    description: "Architecture analysis and diagram generation",
+    port: 8010,
+    icon: BrainCircuit,
+    color: "from-purple-500 to-pink-400",
+  },
+  {
+    id: "perfpulse",
+    name: "PerfPulse",
+    description: "Performance optimization and profiling",
+    port: 8013,
+    icon: Zap,
+    color: "from-yellow-500 to-amber-400",
+  },
+  {
+    id: "evaluator",
+    name: "Evaluator",
+    description: "Code quality assessment and testing",
+    port: 8014,
+    icon: GaugeCircle,
+    color: "from-green-500 to-emerald-400",
+  },
+  {
+    id: "expressops",
+    name: "ExpressOps",
+    description: "Express.js and Node.js backend specialist",
+    port: 8015,
+    icon: Server,
+    color: "from-lime-500 to-green-400",
+  },
+  {
+    id: "mobilefirstops",
+    name: "MobileFirstOps",
+    description: "React Native and Flutter mobile development",
+    port: 8016,
+    icon: Globe,
+    color: "from-sky-500 to-indigo-400",
+  },
+  {
+    id: "database-agent",
+    name: "Database Agent",
+    description: "Database design, schema, and query optimization",
+    port: 8017,
+    icon: CpuIcon,
+    color: "from-teal-500 to-cyan-400",
+  },
+  {
+    id: "soc2-compliance",
+    name: "SOC2 Compliance",
+    description: "Enterprise compliance verification and auditing",
+    port: 8020,
+    icon: FileSearch,
+    color: "from-slate-500 to-gray-400",
+  },
+];
+
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    label: "Generate Code",
+    description: "Create production-ready code from a prompt",
+    icon: Code2,
+    agentId: "codecraft",
+    taskType: "generate_code",
+    color: "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20",
+  },
+  {
+    label: "Security Scan",
+    description: "Scan code for vulnerabilities",
+    icon: Shield,
+    agentId: "securishield",
+    taskType: "scan_code",
+    color: "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
+  },
+  {
+    label: "Architecture Diagram",
+    description: "Generate system architecture diagrams",
+    icon: BrainCircuit,
+    agentId: "designforge",
+    taskType: "generate_diagram",
+    color: "bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/20",
+  },
+  {
+    label: "Code Review",
+    description: "Get a comprehensive design review",
+    icon: Search,
+    agentId: "designforge",
+    taskType: "design_review",
+    color: "bg-pink-500/10 text-pink-400 border-pink-500/20 hover:bg-pink-500/20",
+  },
+  {
+    label: "Write Tests",
+    description: "Auto-generate test suites for your code",
+    icon: CheckCircle2,
+    agentId: "codecraft",
+    taskType: "write_tests",
+    color: "bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20",
+  },
+  {
+    label: "Fix Bug",
+    description: "Analyze and fix bugs in your code",
+    icon: Flame,
+    agentId: "codecraft",
+    taskType: "fix_bug",
+    color: "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500/20",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
+
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:3000";
+
+function agentUrl(port: number): string {
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    return `/api/agents`;
+  }
+  return `http://localhost:${port}`;
+}
+
+async function fetchAgentHealth(agent: (typeof AGENTS)[number]): Promise<AgentHealth> {
+  const base: AgentHealth = {
+    ...agent,
+    status: "loading",
+    latencyMs: null,
+    details: null,
+    capabilities: [],
+    llmConfigured: false,
+  };
+
+  try {
+    const start = performance.now();
+    const url = `http://localhost:${agent.port}/health`;
+    const resp = await fetch(url, {
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
+    });
+    const latencyMs = Math.round(performance.now() - start);
+
+    if (!resp.ok) {
+      return { ...base, status: "degraded", latencyMs, details: `HTTP ${resp.status}` };
+    }
+
+    const data = await resp.json();
+    const status: AgentStatus =
+      data.status === "ok" || data.status === "healthy" ? "healthy" : "degraded";
+
+    let capabilities: string[] = [];
+    try {
+      const capResp = await fetch(`http://localhost:${agent.port}/capabilities`, {
+        signal: AbortSignal.timeout(5000),
+        cache: "no-store",
+      });
+      if (capResp.ok) {
+        const capData = await capResp.json();
+        capabilities = capData.capabilities || [];
+      }
+    } catch {
+      // non-critical
+    }
+
+    return {
+      ...base,
+      status,
+      latencyMs,
+      details: data.details || null,
+      capabilities,
+      llmConfigured: data.llm_configured ?? false,
+    };
+  } catch {
+    return { ...base, status: "unreachable", latencyMs: null, details: "Connection refused" };
+  }
+}
+
+async function executeQuickAction(
+  action: QuickAction,
+  prompt: string,
+): Promise<{ success: boolean; result?: any; error?: string }> {
+  const agentDef = AGENTS.find((a) => a.id === action.agentId);
+  if (!agentDef) return { success: false, error: "Agent not found" };
+
+  const taskId = `dash-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const params: Record<string, any> = {};
+
+  if (action.taskType === "generate_code") {
+    params.prompt = prompt;
+    params.language = "python";
+    params.style = "clean";
+  } else if (action.taskType === "scan_code") {
+    params.code = prompt;
+    params.language = "python";
+    params.severity_threshold = "LOW";
+    params.include_remediation = true;
+  } else if (action.taskType === "generate_diagram") {
+    params.system_name = prompt;
+    params.diagram_type = "c4_context";
+    params.diagram_format = "mermaid";
+  } else if (action.taskType === "design_review") {
+    params.code = prompt;
+    params.detail_level = "standard";
+  } else if (action.taskType === "write_tests") {
+    params.code = prompt;
+    params.language = "python";
+  } else if (action.taskType === "fix_bug") {
+    params.code = prompt;
+    params.language = "python";
+    params.bug_description = "Please analyze and fix any issues";
+  } else {
+    params.prompt = prompt;
+  }
+
+  try {
+    const resp = await fetch(`http://localhost:${agentDef.port}/execute_task`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        task_id: taskId,
+        task_type: action.taskType,
+        parameters: params,
+      }),
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({ detail: resp.statusText }));
+      return { success: false, error: errData.detail || `HTTP ${resp.status}` };
+    }
+
+    const data = await resp.json();
+    return { success: true, result: data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Request failed" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function StatusBadge({ status }: { status: AgentStatus }) {
+  const config = {
+    healthy: {
+      icon: CheckCircle2,
+      label: "Healthy",
+      classes: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+      dot: "bg-emerald-400",
+    },
+    degraded: {
+      icon: AlertTriangle,
+      label: "Degraded",
+      classes: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
+      dot: "bg-yellow-400",
+    },
+    unreachable: {
+      icon: XCircle,
+      label: "Offline",
+      classes: "bg-red-500/10 text-red-400 border-red-500/30",
+      dot: "bg-red-400",
+    },
+    loading: {
+      icon: Loader2,
+      label: "Checking...",
+      classes: "bg-gray-500/10 text-gray-400 border-gray-500/30",
+      dot: "bg-gray-400",
+    },
+  }[status];
+
+  const Icon = config.icon;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.classes}`}
+    >
+      {status === "loading" ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+      )}
+      {config.label}
+    </span>
+  );
+}
+
+function AgentCard({
+  agent,
+  onSelect,
+}: {
+  agent: AgentHealth;
+  onSelect: (agent: AgentHealth) => void;
+}) {
+  const Icon = agent.icon;
+
+  return (
+    <button
+      onClick={() => onSelect(agent)}
+      className="group relative flex flex-col rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 text-left transition-all hover:border-white/[0.12] hover:bg-white/[0.04] hover:shadow-lg hover:shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+    >
+      {/* Gradient glow behind icon */}
+      <div
+        className={`absolute -top-px left-6 h-px w-16 bg-gradient-to-r ${agent.color} opacity-0 transition-opacity group-hover:opacity-60`}
+      />
+
+      <div className="flex items-start justify-between">
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${agent.color} shadow-lg`}
+        >
+          <Icon className="h-5 w-5 text-white" />
+        </div>
+        <StatusBadge status={agent.status} />
+      </div>
+
+      <h3 className="mt-4 text-sm font-semibold text-white">{agent.name}</h3>
+      <p className="mt-1 text-xs leading-relaxed text-gray-400">{agent.description}</p>
+
+      <div className="mt-4 flex items-center gap-3 text-xs text-gray-500">
+        {agent.latencyMs !== null && (
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {agent.latencyMs}ms
+          </span>
+        )}
+        {agent.capabilities.length > 0 && (
+          <span className="flex items-center gap-1">
+            <Sparkles className="h-3 w-3" />
+            {agent.capabilities.length} tasks
+          </span>
+        )}
+        {agent.llmConfigured && (
+          <span className="flex items-center gap-1 text-emerald-500">
+            <Bot className="h-3 w-3" />
+            LLM
+          </span>
+        )}
+        <span className="ml-auto">:{agent.port}</span>
+      </div>
+
+      <div className="mt-3 flex items-center gap-1 text-xs font-medium text-blue-400 opacity-0 transition-opacity group-hover:opacity-100">
+        View details
+        <ChevronRight className="h-3 w-3" />
+      </div>
+    </button>
+  );
+}
+
+function StatsBar({ stats }: { stats: PlatformStats }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {[
+        {
+          label: "Total Agents",
+          value: stats.totalAgents,
+          icon: Bot,
+          color: "text-blue-400",
+          bg: "bg-blue-500/10",
+        },
+        {
+          label: "Healthy",
+          value: stats.healthyAgents,
+          icon: CheckCircle2,
+          color: "text-emerald-400",
+          bg: "bg-emerald-500/10",
+        },
+        {
+          label: "Degraded",
+          value: stats.degradedAgents,
+          icon: AlertTriangle,
+          color: "text-yellow-400",
+          bg: "bg-yellow-500/10",
+        },
+        {
+          label: "Offline",
+          value: stats.unreachableAgents,
+          icon: XCircle,
+          color: "text-red-400",
+          bg: "bg-red-500/10",
+        },
+      ].map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <div
+            key={stat.label}
+            className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+          >
+            <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.bg}`}>
+              <Icon className={`h-4 w-4 ${stat.color}`} />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-white">{stat.value}</p>
+              <p className="text-xs text-gray-500">{stat.label}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function QuickActionCard({
+  action,
+  onClick,
+}: {
+  action: QuickAction;
+  onClick: (action: QuickAction) => void;
+}) {
+  const Icon = action.icon;
+
+  return (
+    <button
+      onClick={() => onClick(action)}
+      className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${action.color} focus:outline-none focus:ring-2 focus:ring-blue-500/40`}
+    >
+      <Icon className="h-5 w-5 flex-shrink-0" />
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{action.label}</p>
+        <p className="truncate text-xs opacity-60">{action.description}</p>
+      </div>
+      <ArrowRight className="ml-auto h-4 w-4 flex-shrink-0 opacity-40" />
+    </button>
+  );
+}
+
+function AgentDetailPanel({
+  agent,
+  onClose,
+}: {
+  agent: AgentHealth;
+  onClose: () => void;
+}) {
+  const Icon = agent.icon;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#0f1117] p-6 shadow-2xl">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-gray-500 hover:text-white"
+        >
+          <XCircle className="h-5 w-5" />
+        </button>
+
+        <div className="flex items-center gap-4">
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${agent.color} shadow-lg`}
+          >
+            <Icon className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">{agent.name}</h2>
+            <p className="text-sm text-gray-400">{agent.description}</p>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-4">
+          {/* Status */}
+          <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <span className="text-sm text-gray-400">Status</span>
+            <StatusBadge status={agent.status} />
+          </div>
+
+          {/* Port */}
+          <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <span className="text-sm text-gray-400">Port</span>
+            <span className="font-mono text-sm text-white">{agent.port}</span>
+          </div>
+
+          {/* Latency */}
+          {agent.latencyMs !== null && (
+            <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+              <span className="text-sm text-gray-400">Latency</span>
+              <span className="font-mono text-sm text-white">{agent.latencyMs}ms</span>
+            </div>
+          )}
+
+          {/* LLM */}
+          <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <span className="text-sm text-gray-400">LLM Provider</span>
+            <span className={`text-sm font-medium ${agent.llmConfigured ? "text-emerald-400" : "text-yellow-400"}`}>
+              {agent.llmConfigured ? "Connected" : "Not initialized"}
+            </span>
+          </div>
+
+          {/* Capabilities */}
+          {agent.capabilities.length > 0 && (
+            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+              <p className="mb-2 text-sm text-gray-400">Capabilities</p>
+              <div className="flex flex-wrap gap-1.5">
+                {agent.capabilities.map((cap) => (
+                  <span
+                    key={cap}
+                    className="rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 font-mono text-xs text-gray-300"
+                  >
+                    {cap}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Details */}
+          {agent.details && (
+            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+              <p className="text-sm text-gray-400">Details</p>
+              <p className="mt-1 text-sm text-gray-300">{agent.details}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskModal({
+  action,
+  onClose,
+}: {
+  action: QuickAction;
+  onClose: () => void;
+}) {
+  const [input, setInput] = useState("");
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<TaskExecution | null>(null);
+
+  const Icon = action.icon;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || running) return;
+
+    const taskId = `dash-${Date.now()}`;
+    const now = new Date();
+
+    setRunning(true);
+    setResult({
+      id: taskId,
+      agentId: action.agentId,
+      taskType: action.taskType,
+      status: "running",
+      startedAt: now,
+      completedAt: null,
+      durationMs: null,
+      resultPreview: null,
+      error: null,
+    });
+
+    const response = await executeQuickAction(action, input.trim());
+    const duration = Date.now() - now.getTime();
+
+    if (response.success) {
+      const resultData = response.result;
+      let preview = "";
+
+      try {
+        const r = resultData?.result || resultData;
+        if (r.generated_code) preview = r.generated_code;
+        else if (r.refactored_code) preview = r.refactored_code;
+        else if (r.fixed_code) preview = r.fixed_code;
+        else if (r.test_code) preview = r.test_code;
+        else if (r.diagram_code) preview = r.diagram_code;
+        else if (r.executive_summary) preview = r.executive_summary;
+        else if (r.vulnerabilities) preview = `Found ${r.vulnerabilities.length} vulnerabilities`;
+        else preview = JSON.stringify(r, null, 2).slice(0, 2000);
+      } catch {
+        preview = JSON.stringify(resultData, null, 2).slice(0, 2000);
+      }
+
+      setResult({
+        id: taskId,
+        agentId: action.agentId,
+        taskType: action.taskType,
+        status: "completed",
+        startedAt: now,
+        completedAt: new Date(),
+        durationMs: duration,
+        resultPreview: preview.slice(0, 4000),
+        error: null,
+      });
+    } else {
+      setResult({
+        id: taskId,
+        agentId: action.agentId,
+        taskType: action.taskType,
+        status: "failed",
+        startedAt: now,
+        completedAt: new Date(),
+        durationMs: duration,
+        resultPreview: null,
+        error: response.error || "Unknown error",
+      });
+    }
+
+    setRunning(false);
+  };
+
+  const needsCodeInput = ["scan_code", "design_review", "write_tests", "fix_bug"].includes(
+    action.taskType,
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="relative flex w-full max-w-2xl flex-col rounded-2xl border border-white/[0.08] bg-[#0f1117] shadow-2xl" style={{ maxHeight: "90vh" }}>
+        {/* Header */}
+        <div className="flex items-center gap-3 border-b border-white/[0.06] px-6 py-4">
+          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${action.color.split(" ")[0]}`}>
+            <Icon className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-white">{action.label}</h2>
+            <p className="text-xs text-gray-400">{action.description}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="ml-auto text-gray-500 hover:text-white"
+          >
+            <XCircle className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {!result ? (
+            <form onSubmit={handleSubmit}>
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                {needsCodeInput ? "Paste your code below" : "Describe what you need"}
+              </label>
+              <textarea
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-3 font-mono text-sm text-gray-200 placeholder-gray-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+                rows={needsCodeInput ? 12 : 4}
+                placeholder={
+                  needsCodeInput
+                    ? "def example():\n    # paste your code here\n    pass"
+                    : "e.g. Write a REST API endpoint for user authentication..."
+                }
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || running}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600"
+              >
+                {running ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <SendHorizonal className="h-4 w-4" />
+                    Execute
+                  </>
+                )}
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              {/* Status banner */}
+              <div
+                className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
+                  result.status === "running"
+                    ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
+                    : result.status === "completed"
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                      : "border-red-500/30 bg-red-500/10 text-red-400"
+                }`}
+              >
+                {result.status === "running" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : result.status === "completed" ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <XCircle className="h-4 w-4" />
+                )}
+                <span className="text-sm font-medium">
+                  {result.status === "running"
+                    ? "Executing task..."
+                    : result.status === "completed"
+                      ? `Completed in ${result.durationMs}ms`
+                      : "Task failed"}
+                </span>
+              </div>
+
+              {/* Error */}
+              {result.error && (
+                <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3">
+                  <p className="text-sm text-red-400">{result.error}</p>
+                </div>
+              )}
+
+              {/* Result preview */}
+              {result.resultPreview && (
+                <div className="rounded-lg border border-white/[0.06] bg-black/40">
+                  <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2">
+                    <span className="text-xs font-medium text-gray-400">Result</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(result.resultPreview || "");
+                      }}
+                      className="text-xs text-blue-400 hover:text-blue-300"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <pre className="max-h-80 overflow-auto px-4 py-3 font-mono text-xs leading-relaxed text-gray-300">
+                    {result.resultPreview}
+                  </pre>
+                </div>
+              )}
+
+              {/* Run another */}
+              {result.status !== "running" && (
+                <button
+                  onClick={() => {
+                    setResult(null);
+                    setInput("");
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/[0.06]"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Run another task
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Dashboard Page
+// ---------------------------------------------------------------------------
+
+export default function DashboardPage() {
+  const [agents, setAgents] = useState<AgentHealth[]>(
+    AGENTS.map((a) => ({
+      ...a,
+      status: "loading" as AgentStatus,
+      latencyMs: null,
+      details: null,
+      capabilities: [],
+      llmConfigured: false,
+    })),
+  );
+  const [stats, setStats] = useState<PlatformStats>({
+    totalAgents: AGENTS.length,
+    healthyAgents: 0,
+    degradedAgents: 0,
+    unreachableAgents: 0,
+    lastChecked: null,
+  });
+  const [selectedAgent, setSelectedAgent] = useState<AgentHealth | null>(null);
+  const [activeAction, setActiveAction] = useState<QuickAction | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const checkAllHealth = useCallback(async () => {
+    setRefreshing(true);
+    const results = await Promise.all(AGENTS.map(fetchAgentHealth));
+    setAgents(results);
+
+    const newStats: PlatformStats = {
+      totalAgents: results.length,
+      healthyAgents: results.filter((a) => a.status === "healthy").length,
+      degradedAgents: results.filter((a) => a.status === "degraded").length,
+      unreachableAgents: results.filter((a) => a.status === "unreachable").length,
+      lastChecked: new Date(),
+    };
+    setStats(newStats);
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    checkAllHealth();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(checkAllHealth, 30_000);
+    return () => clearInterval(interval);
+  }, [checkAllHealth]);
+
+  return (
+    <div className="min-h-screen bg-[#090b10] text-gray-100">
+      {/* Header */}
+      <header className="border-b border-white/[0.06] bg-[#0c0e14]">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
+              <Workflow className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-white">Constella</h1>
+              <p className="text-xs text-gray-500">AI Operating Platform</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {stats.lastChecked && (
+              <span className="hidden text-xs text-gray-500 sm:block">
+                Last checked:{" "}
+                {stats.lastChecked.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+              </span>
+            )}
+            <button
+              onClick={checkAllHealth}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/[0.06] disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Platform stats */}
+        <section className="mb-8">
+          <StatsBar stats={stats} />
+        </section>
+
+        {/* Quick Actions */}
+        <section className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Quick Actions</h2>
+              <p className="text-xs text-gray-500">Execute common tasks with one click</p>
+            </div>
+            <Sparkles className="h-4 w-4 text-gray-600" />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {QUICK_ACTIONS.map((action) => (
+              <QuickActionCard
+                key={`${action.agentId}-${action.taskType}`}
+                action={action}
+                onClick={setActiveAction}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Agent Grid */}
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Agent Fleet</h2>
+              <p className="text-xs text-gray-500">
+                {stats.healthyAgents} of {stats.totalAgents} agents online
+              </p>
+            </div>
+            <Activity className="h-4 w-4 text-gray-600" />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {agents.map((agent) => (
+              <AgentCard key={agent.id} agent={agent} onSelect={setSelectedAgent} />
+            ))}
+          </div>
+        </section>
+
+        {/* Infrastructure Status */}
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Infrastructure</h2>
+              <p className="text-xs text-gray-500">Core platform services</p>
+            </div>
+            <Server className="h-4 w-4 text-gray-600" />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                name: "API Gateway",
+                port: 3000,
+                icon: Globe,
+                description: "Request routing & auth",
+              },
+              {
+                name: "Orchestrator",
+                port: 8001,
+                icon: Workflow,
+                description: "Multi-agent coordination",
+              },
+              {
+                name: "Embedding",
+                port: 8004,
+                icon: MessageSquare,
+                description: "Vector embeddings",
+              },
+              {
+                name: "Retriever",
+                port: 8006,
+                icon: Search,
+                description: "Semantic search & RAG",
+              },
+            ].map((svc) => {
+              const SvcIcon = svc.icon;
+              const agentMatch = agents.find((a) => a.port === svc.port);
+              const status: AgentStatus = agentMatch?.status || "loading";
+
+              return (
+                <div
+                  key={svc.name}
+                  className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.05]">
+                    <SvcIcon className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-white">{svc.name}</p>
+                    <p className="text-xs text-gray-500">{svc.description}</p>
+                  </div>
+                  <span className="font-mono text-xs text-gray-600">:{svc.port}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="mt-12 border-t border-white/[0.04] pb-8 pt-6 text-center">
+          <p className="text-xs text-gray-600">
+            Constella AI Operating Platform &middot; v1.0.0 &middot;{" "}
+            <a
+              href="/api/health"
+              className="text-gray-500 hover:text-gray-300"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              API Health
+            </a>
+            {" "}&middot;{" "}
+            <a
+              href="/api/metrics"
+              className="text-gray-500 hover:text-gray-300"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Metrics
+            </a>
+          </p>
+        </footer>
+      </main>
+
+      {/* Modals */}
+      {selectedAgent && (
+        <AgentDetailPanel agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
+      )}
+      {activeAction && (
+        <TaskModal action={activeAction} onClose={() => setActiveAction(null)} />
+      )}
+    </div>
+  );
+}
