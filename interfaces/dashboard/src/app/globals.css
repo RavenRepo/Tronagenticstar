@@ -92,22 +92,22 @@
 
   /* ── Dark Mode (Notion-like dark) ────────────────────────────────── */
   .dark {
-    /* Backgrounds */
-    --color-bg-primary: 0 0% 12%; /* #1F1F1F */
-    --color-bg-secondary: 0 0% 16%; /* #292929 */
-    --color-bg-tertiary: 0 0% 20%; /* #333333 */
-    --color-bg-hover: 0 0% 18%;
-    --color-bg-active: 0 0% 22%;
+    /* Backgrounds: Deep Premium Dark */
+    --color-bg-primary: 240 10% 4%; /* #09090b - zinc-950 */
+    --color-bg-secondary: 240 4% 9%; /* #17171a */
+    --color-bg-tertiary: 240 5% 15%; /* #26262b */
+    --color-bg-hover: 240 4% 12%;
+    --color-bg-active: 240 5% 18%;
 
     /* Text */
-    --color-text-primary: 0 0% 100%; /* #FFFFFF */
-    --color-text-secondary: 0 0% 80%; /* #CCCCCC */
-    --color-text-tertiary: 0 0% 60%;
-    --color-text-disabled: 0 0% 40%;
+    --color-text-primary: 0 0% 98%; /* #FAFAFA */
+    --color-text-secondary: 240 5% 65%; /* #A1A1AA */
+    --color-text-tertiary: 240 4% 46%; /* #71717A */
+    --color-text-disabled: 240 4% 30%;
 
     /* Borders */
-    --color-border: 0 0% 22%; /* #383838 */
-    --color-border-light: 0 0% 26%;
+    --color-border: 240 6% 15%; /* #27272A */
+    --color-border-light: 240 6% 20%;
     --color-border-focus: 206 100% 50%;
 
     /* Brand */
@@ -291,6 +291,23 @@
   .card-glow:hover {
     border-color: hsl(var(--color-brand) / 0.4);
     box-shadow: var(--shadow-glow);
+  }
+
+  /* ── Glass Panel ─────────────────────────────────────────────────── */
+  .glass-panel {
+    background: hsl(var(--color-bg-secondary) / 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--color-border) / 0.5);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+  }
+
+  .glass-panel:hover {
+    background: hsl(var(--color-bg-hover) / 0.6);
+    border-color: hsl(var(--color-border-light) / 0.8);
+    box-shadow: var(--shadow-md);
   }
 
   /* ── Status Badge ───────────────────────────────────────────────── */

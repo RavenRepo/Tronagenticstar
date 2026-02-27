@@ -8,6 +8,20 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      animation: {
+        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
+        "grid": "grid 15s linear infinite",
+      },
+      keyframes: {
+        "border-beam": {
+          "100%": { "offset-distance": "100%" },
+        },
+        "grid": {
+          "0%": { transform: "translateY(-50%)" },
+          "100%": { transform: "translateY(0)" },
+        },
+      },
       colors: {
         brand: {
           DEFAULT: "hsl(var(--color-brand) / <alpha-value>)",

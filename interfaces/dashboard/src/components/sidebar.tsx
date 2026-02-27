@@ -28,7 +28,7 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export function Sidebar() {
   }, [isCollapsed, mounted]);
 
   return (
-    <aside className={`sidebar ${isCollapsed ? "sidebar-collapsed" : ""}`}>
+    <aside className={`sidebar bg-bg-secondary/40 backdrop-blur-xl border-r border-border/40 ${isCollapsed ? "sidebar-collapsed" : ""}`}>
       {/* Logo area */}
       <div className="flex h-14 items-center justify-between px-4 border-b border-border">
         {!isCollapsed && (
@@ -80,11 +80,20 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`sidebar-nav-item ${isActive ? "active" : ""}`}
-              title={isCollapsed ? item.name : undefined}
+              className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-300 ${
+                isActive 
+                  ? "bg-brand/10 text-brand-light shadow-[inset_2px_0_0_0_hsl(var(--color-brand))]" 
+                  : "text-text-secondary hover:bg-bg-hover hover:text-text-primary"
+              }`}
             >
-              <Icon className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span className="truncate">{item.name}</span>}
+              <Icon className={`h-5 w-5 shrink-0 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`} />
+              {!isCollapsed && <span className="truncate font-medium">{item.name}</span>}
+              {/* Tooltip for collapsed state */}
+              {isCollapsed && (
+                <div className="absolute left-full ml-4 hidden rounded-md bg-bg-secondary/90 backdrop-blur-md px-2.5 py-1.5 text-xs font-medium text-text-primary opacity-0 transition-all group-hover:block group-hover:opacity-100 border border-border/50 shadow-xl whitespace-nowrap z-50">
+                  {item.name}
+                </div>
+              )}
             </Link>
           );
         })}

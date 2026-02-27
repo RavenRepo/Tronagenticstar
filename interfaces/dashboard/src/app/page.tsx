@@ -25,6 +25,7 @@ import {
   Server,
   Shield,
   Sparkles,
+  Terminal,
   Workflow,
   XCircle,
   Zap,
@@ -398,50 +399,40 @@ function AgentCard({
   return (
     <button
       onClick={() => onSelect(agent)}
-      className="group relative flex flex-col rounded-xl border border-border bg-bg-secondary p-5 text-left transition-all hover:border-border-light hover:bg-bg-hover hover:shadow-lg hover:shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+      className="group relative flex flex-col glass-panel p-5 text-left focus:outline-none focus:ring-1 focus:ring-brand/50 overflow-hidden"
     >
-      {/* Gradient glow behind icon */}
+      {/* Animated glowing border effect on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_100%_100%_at_50%_-20%,rgba(0,153,255,0.1),transparent)] pointer-events-none" />
       <div
-        className={`absolute -top-px left-6 h-px w-16 bg-gradient-to-r ${agent.color} opacity-0 transition-opacity group-hover:opacity-60`}
+        className={`absolute -top-px left-[10%] h-px w-[80%] bg-gradient-to-r from-transparent via-${agent.color.split('-')[1]}-500/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
       />
 
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between relative z-10">
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${agent.color} shadow-lg`}
+          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${agent.color} shadow-lg ring-1 ring-white/10`}
         >
-          <Icon className="h-5 w-5 text-text-primary" />
+          <Icon className="h-6 w-6 text-white" />
         </div>
         <StatusBadge status={agent.status} />
       </div>
 
-      <h3 className="mt-4 text-sm font-semibold text-text-primary">{agent.name}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-text-secondary">{agent.description}</p>
+      <h3 className="mt-5 text-base font-semibold text-text-primary tracking-tight relative z-10">{agent.name}</h3>
+      <p className="mt-1.5 text-xs leading-relaxed text-text-secondary line-clamp-2 relative z-10">{agent.description}</p>
 
-      <div className="mt-4 flex items-center gap-3 text-xs text-text-tertiary">
+      <div className="mt-5 flex items-center gap-4 text-xs text-text-tertiary relative z-10">
         {agent.latencyMs !== null && (
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {agent.latencyMs}ms
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
+            <span className="font-mono">{agent.latencyMs}ms</span>
           </span>
         )}
         {agent.capabilities.length > 0 && (
-          <span className="flex items-center gap-1">
-            <Sparkles className="h-3 w-3" />
-            {agent.capabilities.length} tasks
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="font-mono">{agent.capabilities.length} tasks</span>
           </span>
         )}
-        {agent.llmConfigured && (
-          <span className="flex items-center gap-1 text-emerald-500">
-            <Bot className="h-3 w-3" />
-            LLM
-          </span>
-        )}
-        <span className="ml-auto">:{agent.port}</span>
-      </div>
-
-      <div className="mt-3 flex items-center gap-1 text-xs font-medium text-blue-400 opacity-0 transition-opacity group-hover:opacity-100">
-        View details
-        <ChevronRight className="h-3 w-3" />
+        <span className="ml-auto font-mono text-text-secondary bg-bg-primary/50 px-2 py-0.5 rounded border border-border/50">:{agent.port}</span>
       </div>
     </button>
   );
@@ -449,7 +440,7 @@ function AgentCard({
 
 function StatsBar({ stats }: { stats: PlatformStats }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
       {[
         {
           label: "Total Agents",
@@ -459,21 +450,21 @@ function StatsBar({ stats }: { stats: PlatformStats }) {
           bg: "bg-blue-500/10",
         },
         {
-          label: "Healthy",
+          label: "Healthy Agents",
           value: stats.healthyAgents,
           icon: CheckCircle2,
           color: "text-emerald-400",
           bg: "bg-emerald-500/10",
         },
         {
-          label: "Degraded",
+          label: "Degraded Status",
           value: stats.degradedAgents,
           icon: AlertTriangle,
           color: "text-yellow-400",
           bg: "bg-yellow-500/10",
         },
         {
-          label: "Offline",
+          label: "Offline Fleet",
           value: stats.unreachableAgents,
           icon: XCircle,
           color: "text-red-400",
@@ -484,14 +475,16 @@ function StatsBar({ stats }: { stats: PlatformStats }) {
         return (
           <div
             key={stat.label}
-            className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-4 py-3"
+            className="flex flex-col gap-3 glass-panel p-5 relative overflow-hidden group"
           >
-            <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.bg}`}>
-              <Icon className={`h-4 w-4 ${stat.color}`} />
+             {/* Subtle ambient gradient on hover */}
+             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.03),transparent)] pointer-events-none" />
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg} ring-1 ring-white/5`}>
+              <Icon className={`h-5 w-5 ${stat.color}`} />
             </div>
-            <div>
-              <p className="text-xl font-bold text-text-primary">{stat.value}</p>
-              <p className="text-xs text-text-tertiary">{stat.label}</p>
+            <div className="mt-1">
+              <p className="text-3xl font-bold text-text-primary tracking-tight font-mono">{stat.value}</p>
+              <p className="text-xs text-text-tertiary mt-1 font-medium tracking-wide uppercase">{stat.label}</p>
             </div>
           </div>
         );
@@ -837,7 +830,109 @@ function TaskModal({
 // Main Dashboard Page
 // ---------------------------------------------------------------------------
 
+
+// ---------------------------------------------------------------------------
+// Dashboard Sub-components (Bento)
+// ---------------------------------------------------------------------------
+
+function TopologyMap({ agents }: { agents: AgentHealth[] }) {
+  return (
+    <div className="relative w-full h-full min-h-[350px] flex items-center justify-center overflow-hidden mt-2">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,153,255,0.08)_0%,transparent_60%)] animate-pulse-slow pointer-events-none"></div>
+      
+      {/* Central Node */}
+      <div className="relative z-10 flex flex-col items-center justify-center p-5 glass-panel border-brand/40 shadow-[0_0_30px_rgba(0,153,255,0.3)] animate-pulse-slow pointer-events-none">
+        <Server className="w-8 h-8 text-brand" />
+        <span className="text-xs font-bold mt-3 text-text-primary tracking-widest uppercase">Orchestrator</span>
+      </div>
+
+      {/* Surrounding Nodes */}
+      {agents.slice(0, 8).map((agent, i) => {
+         const angle = (i / Math.min(8, agents.length)) * Math.PI * 2;
+         const radius = 140; // px
+         const x = Math.cos(angle) * radius;
+         const y = Math.sin(angle) * radius;
+         const Icon = agent.icon;
+         const isActive = agent.status === "healthy";
+         
+         return (
+           <React.Fragment key={agent.id}>
+             <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+               <line 
+                 x1="50%" y1="50%" 
+                 x2={`calc(50% + ${x}px)`} y2={`calc(50% + ${y}px)`} 
+                 stroke={isActive ? "hsl(var(--color-brand))" : "hsl(var(--color-border))"} 
+                 strokeWidth="1.5" 
+                 strokeDasharray={isActive ? "4 4" : "none"}
+                 className={isActive ? "animate-[border-beam_20s_linear_infinite]" : ""}
+                 opacity={isActive ? "0.6" : "0.3"}
+               />
+             </svg>
+             
+             <div 
+               className={`absolute z-10 flex h-12 w-12 items-center justify-center rounded-xl glass-panel transition-all hover:scale-110 cursor-pointer ${isActive ? "border-brand-light/40 shadow-[0_0_15px_rgba(0,153,255,0.2)]" : "border-border/40 opacity-50"}`}
+               style={{ transform: `translate(${x}px, ${y}px)` }}
+               title={agent.name}
+             >
+               <Icon className={`w-5 h-5 ${agent.color.includes('red') ? 'text-red-400' : isActive ? "text-text-primary" : "text-text-tertiary"}`} />
+             </div>
+           </React.Fragment>
+         );
+      })}
+    </div>
+  );
+}
+
+function LiveExecutionStream() {
+  const [logs, setLogs] = useState<{id: number, text: string, type: 'info'|'success'|'warn'}[]>([]);
+  
+  useEffect(() => {
+    const messages = [
+      "SecuriShield: Dependency scan completed. 0 criticals.",
+      "CodeCraft: Refactoring main loop in auth.ts",
+      "Orchestrator: Routing payload to CodeCraft.",
+      "DesignForge: Syncing C4 diagram with latest commit.",
+      "PerfPulse: Memory usage stabilized at 42%",
+      "Evaluator: E2E test suite passed (12ms).",
+      "Database Agent: Optimizing indices for Users table.",
+      "ExpressOps: Restarting worker processes.",
+      "Orchestrator: Health check verified. All systems nominal."
+    ];
+    let id = 0;
+    const interval = setInterval(() => {
+      const msg = messages[Math.floor(Math.random() * messages.length)];
+      setLogs(prev => {
+        const logType = Math.random() > 0.8 ? 'success' : 'info';
+        const next = [...prev, { id: id++, text: msg, type: logType as 'success' | 'info' }];
+        if (next.length > 7) return next.slice(next.length - 7);
+        return next;
+      });
+    }, 2800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex-1 w-full bg-[#030303]/80 border border-border/30 rounded-xl p-5 font-mono text-xs overflow-hidden relative shadow-inner mt-2">
+       <div className="flex gap-2 mb-4 opacity-50">
+         <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+         <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+         <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+       </div>
+       <div className="space-y-2.5 flex flex-col justify-end h-[calc(100%-2rem)]">
+         {logs.map((log) => (
+           <div key={log.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300 flex gap-3">
+             <span className="text-text-tertiary/50 shrink-0">[{new Date().toLocaleTimeString([], {hour12:false})}]</span>
+             <span className={log.type === 'success' ? 'text-emerald-400' : 'text-blue-300'}>{log.text}</span>
+           </div>
+         ))}
+         {logs.length === 0 && <span className="text-text-tertiary/50 animate-pulse">Establishing secure connection to swarm...</span>}
+       </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
+
   const [agents, setAgents] = useState<AgentHealth[]>(
     AGENTS.map((a) => ({
       ...a,
@@ -884,60 +979,43 @@ export default function DashboardPage() {
   }, [checkAllHealth]);
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary">
-      {/* Header */}
-      <header className="border-b border-border bg-bg-primary">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
-              <Workflow className="h-5 w-5 text-text-primary" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-text-primary">Constella</h1>
-              <p className="text-xs text-text-tertiary">AI Operating Platform</p>
-            </div>
+    <div className="min-h-screen text-text-primary pb-12">
+      {/* Main content */}
+      <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+        
+        {/* WAR ROOM BENTO GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+          
+          {/* Left Column (8 cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-6">
+            <StatsBar stats={stats} />
+            
+            <section className="flex-1 glass-panel p-6 relative group overflow-hidden flex flex-col min-h-[450px]">
+               <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2 tracking-wide uppercase">
+                 <Workflow className="w-4 h-4 text-brand"/> Swarm Topology
+               </h2>
+               <TopologyMap agents={agents} />
+            </section>
           </div>
 
-          <div className="flex items-center gap-3">
-            {stats.lastChecked && (
-              <span className="hidden text-xs text-text-tertiary sm:block">
-                Last checked:{" "}
-                {stats.lastChecked.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
-              </span>
-            )}
-            <button
-              onClick={checkAllHealth}
-              disabled={refreshing}
-              className="flex items-center gap-1.5 rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-              Refresh
-            </button>
+          {/* Right Column (4 cols) */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            <section className="flex-1 glass-panel p-6 flex flex-col min-h-[450px]">
+              <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2 mb-2 tracking-wide uppercase">
+                <Terminal className="w-4 h-4 text-brand"/> Thought Log
+              </h2>
+              <LiveExecutionStream />
+            </section>
           </div>
         </div>
-      </header>
 
-      {/* Main content */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Platform stats */}
-        <section className="mb-8">
-          <StatsBar stats={stats} />
-        </section>
-
-        {/* Quick Actions */}
-        <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-text-primary">Quick Actions</h2>
-              <p className="text-xs text-text-tertiary">Execute common tasks with one click</p>
-            </div>
-            <Sparkles className="h-4 w-4 text-text-tertiary" />
+        {/* Quick Actions Array */}
+        <section className="mb-10">
+          <div className="mb-4 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-brand" />
+            <h2 className="text-sm font-semibold text-text-primary tracking-wide uppercase">Command Shortcuts</h2>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {QUICK_ACTIONS.map((action) => (
               <QuickActionCard
                 key={`${action.agentId}-${action.taskType}`}
@@ -948,106 +1026,24 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Agent Grid */}
+        {/* Agent Fleet Grid */}
         <section>
           <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-text-primary">Agent Fleet</h2>
-              <p className="text-xs text-text-tertiary">
-                {stats.healthyAgents} of {stats.totalAgents} agents online
-              </p>
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-brand" />
+              <h2 className="text-sm font-semibold text-text-primary tracking-wide uppercase">Active Fleet</h2>
             </div>
-            <Activity className="h-4 w-4 text-text-tertiary" />
+            <p className="text-xs text-brand font-mono bg-brand/10 px-2 py-1 rounded">
+              {stats.healthyAgents}/{stats.totalAgents} ONLINE
+            </p>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {agents.map((agent) => (
               <AgentCard key={agent.id} agent={agent} onSelect={setSelectedAgent} />
             ))}
           </div>
         </section>
 
-        {/* Infrastructure Status */}
-        <section className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-text-primary">Infrastructure</h2>
-              <p className="text-xs text-text-tertiary">Core platform services</p>
-            </div>
-            <Server className="h-4 w-4 text-text-tertiary" />
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                name: "API Gateway",
-                port: 3000,
-                icon: Globe,
-                description: "Request routing & auth",
-              },
-              {
-                name: "Orchestrator",
-                port: 8001,
-                icon: Workflow,
-                description: "Multi-agent coordination",
-              },
-              {
-                name: "Embedding",
-                port: 8004,
-                icon: MessageSquare,
-                description: "Vector embeddings",
-              },
-              {
-                name: "Retriever",
-                port: 8006,
-                icon: Search,
-                description: "Semantic search & RAG",
-              },
-            ].map((svc) => {
-              const SvcIcon = svc.icon;
-              const agentMatch = agents.find((a) => a.port === svc.port);
-              const status: AgentStatus = agentMatch?.status || "loading";
-
-              return (
-                <div
-                  key={svc.name}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-4 py-3"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-bg-hover">
-                    <SvcIcon className="h-4 w-4 text-text-secondary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-text-primary">{svc.name}</p>
-                    <p className="text-xs text-text-tertiary">{svc.description}</p>
-                  </div>
-                  <span className="font-mono text-xs text-text-tertiary">:{svc.port}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="mt-12 border-t border-border pb-8 pt-6 text-center">
-          <p className="text-xs text-text-tertiary">
-            Constella AI Operating Platform &middot; v1.0.0 &middot;{" "}
-            <a
-              href="/api/health"
-              className="text-text-tertiary hover:text-text-secondary"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              API Health
-            </a>
-            {" "}&middot;{" "}
-            <a
-              href="/api/metrics"
-              className="text-text-tertiary hover:text-text-secondary"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Metrics
-            </a>
-          </p>
-        </footer>
       </main>
 
       {/* Modals */}
