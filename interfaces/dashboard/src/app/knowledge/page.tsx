@@ -151,7 +151,7 @@ const LABEL_COLORS: Record<
   },
   Directory: {
     bg: "bg-gray-500/10",
-    text: "text-gray-400",
+    text: "text-text-secondary",
     border: "border-gray-500/30",
   },
   DesignPattern: {
@@ -210,7 +210,7 @@ function getLabelStyle(label: string) {
   return (
     LABEL_COLORS[label] || {
       bg: "bg-gray-500/10",
-      text: "text-gray-400",
+      text: "text-text-secondary",
       border: "border-gray-500/30",
     }
   );
@@ -492,7 +492,7 @@ function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }}
-      className="rounded p-1 text-gray-500 transition-colors hover:bg-white/[0.06] hover:text-gray-300"
+      className="rounded p-1 text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-secondary"
       title="Copy"
     >
       {copied ? (
@@ -530,15 +530,15 @@ function StatCard({
   bg: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-4 py-3">
       <div
         className={`flex h-9 w-9 items-center justify-center rounded-lg ${bg}`}
       >
         <Icon className={`h-4 w-4 ${color}`} />
       </div>
       <div>
-        <p className="text-xl font-bold text-white">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-xl font-bold text-text-primary">{value}</p>
+        <p className="text-xs text-text-tertiary">{label}</p>
       </div>
     </div>
   );
@@ -657,8 +657,8 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
       </div>
 
       {/* Label distribution */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-        <h3 className="mb-3 text-sm font-semibold text-white">
+      <div className="rounded-xl border border-border bg-bg-secondary p-4">
+        <h3 className="mb-3 text-sm font-semibold text-text-primary">
           Node Label Distribution
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -682,29 +682,29 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
       </div>
 
       {/* Query Editor */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+      <div className="rounded-xl border border-border bg-bg-secondary p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">Cypher Query</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Cypher Query</h3>
           <div className="flex items-center gap-2">
             {/* Example queries dropdown */}
             <div className="relative group">
-              <button className="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-gray-400 transition-colors hover:bg-white/[0.06]">
+              <button className="flex items-center gap-1 rounded-lg border border-border-light bg-bg-secondary px-2.5 py-1.5 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover">
                 <Book className="h-3 w-3" />
                 Examples
               </button>
-              <div className="absolute right-0 top-full z-30 mt-1 hidden w-80 rounded-xl border border-white/[0.08] bg-zinc-900 p-2 shadow-xl group-hover:block">
+              <div className="absolute right-0 top-full z-30 mt-1 hidden w-80 rounded-xl border border-border-light bg-bg-primary p-2 shadow-xl group-hover:block">
                 {EXAMPLE_QUERIES.map((eq) => (
                   <button
                     key={eq.label}
                     onClick={() => {
                       setQuery(eq.query);
                     }}
-                    className="flex w-full flex-col rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/[0.06]"
+                    className="flex w-full flex-col rounded-lg px-3 py-2 text-left transition-colors hover:bg-bg-hover"
                   >
-                    <span className="text-xs font-medium text-gray-200">
+                    <span className="text-xs font-medium text-text-primary">
                       {eq.label}
                     </span>
-                    <span className="mt-0.5 truncate font-mono text-[10px] text-gray-500">
+                    <span className="mt-0.5 truncate font-mono text-[10px] text-text-tertiary">
                       {eq.query}
                     </span>
                   </button>
@@ -722,13 +722,13 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
               if ((e.metaKey || e.ctrlKey) && e.key === "Enter") executeQuery();
             }}
             rows={3}
-            className="flex-1 resize-none rounded-lg border border-white/[0.08] bg-black/30 px-4 py-3 font-mono text-sm text-gray-200 placeholder-gray-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
+            className="flex-1 resize-none rounded-lg border border-border-light bg-bg-secondary px-4 py-3 font-mono text-sm text-text-primary placeholder-gray-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
             placeholder="MATCH (n) RETURN n LIMIT 25"
           />
           <button
             onClick={executeQuery}
             disabled={running || !query.trim()}
-            className="flex h-auto items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 text-sm font-semibold text-white shadow-lg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-auto items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 text-sm font-semibold text-text-primary shadow-lg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {running ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -737,9 +737,9 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
             )}
           </button>
         </div>
-        <p className="mt-1.5 text-[10px] text-gray-600">
+        <p className="mt-1.5 text-[10px] text-text-tertiary">
           Press{" "}
-          <kbd className="rounded border border-white/[0.08] bg-white/[0.04] px-1 py-0.5 font-mono text-[9px]">
+          <kbd className="rounded border border-border-light bg-bg-hover px-1 py-0.5 font-mono text-[9px]">
             Ctrl+Enter
           </kbd>{" "}
           to execute
@@ -761,12 +761,12 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
 
       {/* Results */}
       {!error && (nodes.length > 0 || rawRows.length > 0) && (
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02]">
+        <div className="rounded-xl border border-border bg-bg-secondary">
           {/* Result header */}
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-white">Results</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-sm font-semibold text-text-primary">Results</span>
+              <span className="text-xs text-text-tertiary">
                 {nodes.length} nodes &middot; {relationships.length}{" "}
                 relationships &middot; {rawRows.length} rows
               </span>
@@ -776,8 +776,8 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
                 onClick={() => setViewMode("nodes")}
                 className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
                   viewMode === "nodes"
-                    ? "bg-white/[0.08] text-white"
-                    : "text-gray-500 hover:text-gray-300"
+                    ? "bg-bg-hover text-text-primary"
+                    : "text-text-tertiary hover:text-text-secondary"
                 }`}
               >
                 Nodes
@@ -786,8 +786,8 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
                 onClick={() => setViewMode("raw")}
                 className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
                   viewMode === "raw"
-                    ? "bg-white/[0.08] text-white"
-                    : "text-gray-500 hover:text-gray-300"
+                    ? "bg-bg-hover text-text-primary"
+                    : "text-text-tertiary hover:text-text-secondary"
                 }`}
               >
                 Raw
@@ -806,17 +806,17 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
                         selectedNode?.id === node.id ? null : node,
                       )
                     }
-                    className={`flex flex-col rounded-xl border p-4 text-left transition-all hover:bg-white/[0.04] ${
+                    className={`flex flex-col rounded-xl border p-4 text-left transition-all hover:bg-bg-hover ${
                       selectedNode?.id === node.id
                         ? "border-blue-500/40 bg-blue-500/5"
-                        : "border-white/[0.06] bg-white/[0.02]"
+                        : "border-border bg-bg-secondary"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="truncate text-sm font-semibold text-white">
+                      <p className="truncate text-sm font-semibold text-text-primary">
                         {node.name}
                       </p>
-                      <span className="shrink-0 font-mono text-[9px] text-gray-600">
+                      <span className="shrink-0 font-mono text-[9px] text-text-tertiary">
                         #{node.id}
                       </span>
                     </div>
@@ -826,12 +826,12 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
                       ))}
                     </div>
                     {Boolean(node.properties.description) && (
-                      <p className="mt-2 line-clamp-2 text-xs text-gray-400">
+                      <p className="mt-2 line-clamp-2 text-xs text-text-secondary">
                         {String(node.properties.description)}
                       </p>
                     )}
                     {Boolean(node.properties.port) && (
-                      <p className="mt-1 font-mono text-[10px] text-gray-500">
+                      <p className="mt-1 font-mono text-[10px] text-text-tertiary">
                         Port: {String(node.properties.port)}
                       </p>
                     )}
@@ -844,7 +844,7 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
               nodes.length === 0 &&
               rawRows.length > 0 && (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-text-secondary">
                     No graph nodes returned. Switch to <strong>Raw</strong> view
                     to see tabular results.
                   </p>
@@ -853,7 +853,7 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
 
             {viewMode === "raw" && rawRows.length > 0 && (
               <div className="max-h-96 overflow-auto">
-                <pre className="whitespace-pre-wrap break-words font-mono text-xs text-gray-300">
+                <pre className="whitespace-pre-wrap break-words font-mono text-xs text-text-secondary">
                   {JSON.stringify(rawRows, null, 2)}
                 </pre>
               </div>
@@ -868,7 +868,7 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CircleDot className="h-4 w-4 text-blue-400" />
-              <h3 className="text-sm font-semibold text-white">
+              <h3 className="text-sm font-semibold text-text-primary">
                 {selectedNode.name}
               </h3>
               {selectedNode.labels.map((l) => (
@@ -877,7 +877,7 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
             </div>
             <button
               onClick={() => setSelectedNode(null)}
-              className="rounded p-1 text-gray-500 hover:bg-white/[0.06] hover:text-gray-300"
+              className="rounded p-1 text-text-tertiary hover:bg-bg-hover hover:text-text-secondary"
             >
               <X className="h-4 w-4" />
             </button>
@@ -885,10 +885,10 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {Object.entries(selectedNode.properties).map(([key, value]) => (
               <div key={key} className="flex items-start gap-2">
-                <span className="shrink-0 font-mono text-[10px] text-gray-500">
+                <span className="shrink-0 font-mono text-[10px] text-text-tertiary">
                   {key}:
                 </span>
-                <span className="break-words font-mono text-[10px] text-gray-300">
+                <span className="break-words font-mono text-[10px] text-text-secondary">
                   {typeof value === "object"
                     ? JSON.stringify(value)
                     : String(value)}
@@ -906,7 +906,7 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
                   `MATCH (n)-[r]-(m) WHERE id(n) = ${selectedNode.id} RETURN n, r, m LIMIT 25`,
                 );
               }}
-              className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-gray-200"
+              className="rounded-lg border border-border-light bg-bg-secondary px-2.5 py-1 text-[10px] font-medium text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
             >
               Explore neighbors →
             </button>
@@ -916,8 +916,8 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
 
       {/* Relationships */}
       {relationships.length > 0 && (
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-          <h3 className="mb-3 text-sm font-semibold text-white">
+        <div className="rounded-xl border border-border bg-bg-secondary p-4">
+          <h3 className="mb-3 text-sm font-semibold text-text-primary">
             Relationships ({relationships.length})
           </h3>
           <div className="max-h-64 space-y-1.5 overflow-y-auto">
@@ -927,16 +927,16 @@ function GraphExplorer({ stats }: { stats: GraphStats }) {
               return (
                 <div
                   key={rel.id}
-                  className="flex items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-2 text-xs"
+                  className="flex items-center gap-2 rounded-lg bg-bg-secondary px-3 py-2 text-xs"
                 >
-                  <span className="truncate font-medium text-gray-300">
+                  <span className="truncate font-medium text-text-secondary">
                     {startNode?.name || `#${rel.startNode}`}
                   </span>
                   <span className="shrink-0 rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 font-mono text-[10px] text-violet-400">
                     {rel.type}
                   </span>
-                  <ArrowRight className="h-3 w-3 shrink-0 text-gray-600" />
-                  <span className="truncate font-medium text-gray-300">
+                  <ArrowRight className="h-3 w-3 shrink-0 text-text-tertiary" />
+                  <span className="truncate font-medium text-text-secondary">
                     {endNode?.name || `#${rel.endNode}`}
                   </span>
                 </div>
@@ -1042,13 +1042,13 @@ function VectorsExplorer() {
       </div>
 
       {/* Collections List */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+      <div className="rounded-xl border border-border bg-bg-secondary p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">Collections</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Collections</h3>
           <button
             onClick={loadCollections}
             disabled={loading}
-            className="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-[10px] text-gray-400 transition-colors hover:bg-white/[0.06]"
+            className="flex items-center gap-1 rounded-lg border border-border-light bg-bg-secondary px-2 py-1 text-[10px] text-text-secondary transition-colors hover:bg-bg-hover"
           >
             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -1058,12 +1058,12 @@ function VectorsExplorer() {
         {collections.length === 0 ? (
           <div className="py-8 text-center">
             <Database className="mx-auto h-10 w-10 text-gray-700" />
-            <p className="mt-3 text-sm text-gray-500">
+            <p className="mt-3 text-sm text-text-tertiary">
               No vector collections found.
             </p>
-            <p className="mt-1 text-xs text-gray-600">
+            <p className="mt-1 text-xs text-text-tertiary">
               Run{" "}
-              <code className="rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-gray-400">
+              <code className="rounded bg-bg-hover px-1.5 py-0.5 font-mono text-[10px] text-text-secondary">
                 python3 scripts/index_knowledge_graph_vectors.py
               </code>{" "}
               to seed embeddings.
@@ -1074,15 +1074,15 @@ function VectorsExplorer() {
             {collections.map((col) => (
               <div
                 key={col.name}
-                className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+                className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
                     <Database className="h-4 w-4 text-violet-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{col.name}</p>
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-sm font-medium text-text-primary">{col.name}</p>
+                    <p className="text-[10px] text-text-tertiary">
                       {col.vectorCount.toLocaleString()} vectors
                     </p>
                   </div>
@@ -1105,23 +1105,23 @@ function VectorsExplorer() {
       </div>
 
       {/* Semantic Search */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-        <h3 className="mb-3 text-sm font-semibold text-white">
+      <div className="rounded-xl border border-border bg-bg-secondary p-4">
+        <h3 className="mb-3 text-sm font-semibold text-text-primary">
           Semantic Search
         </h3>
 
         {collections.length > 0 && (
           <div className="mb-3">
-            <label className="mb-1 block text-[10px] font-medium text-gray-500">
+            <label className="mb-1 block text-[10px] font-medium text-text-tertiary">
               Collection
             </label>
             <select
               value={searchCollection}
               onChange={(e) => setSearchCollection(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-gray-200 outline-none transition-colors focus:border-blue-500/50"
+              className="w-full appearance-none rounded-lg border border-border-light bg-bg-secondary px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-blue-500/50"
             >
               {collections.map((c) => (
-                <option key={c.name} value={c.name} className="bg-zinc-900">
+                <option key={c.name} value={c.name} className="bg-bg-primary">
                   {c.name} ({c.vectorCount} vectors)
                 </option>
               ))}
@@ -1131,7 +1131,7 @@ function VectorsExplorer() {
 
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
             <input
               type="text"
               value={searchQuery}
@@ -1140,7 +1140,7 @@ function VectorsExplorer() {
                 if (e.key === "Enter") handleSearch();
               }}
               placeholder="Enter a natural language query…"
-              className="w-full rounded-lg border border-white/[0.08] bg-black/30 py-2.5 pl-9 pr-4 text-sm text-gray-200 placeholder-gray-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
+              className="w-full rounded-lg border border-border-light bg-bg-secondary py-2.5 pl-9 pr-4 text-sm text-text-primary placeholder-gray-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
             />
           </div>
           <button
@@ -1148,7 +1148,7 @@ function VectorsExplorer() {
             disabled={
               searching || !searchQuery.trim() || collections.length === 0
             }
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-semibold text-text-primary shadow-lg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {searching ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1167,16 +1167,16 @@ function VectorsExplorer() {
 
         {searchResults.length > 0 && (
           <div className="mt-4 space-y-2">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-text-tertiary">
               {searchResults.length} results
             </p>
             {searchResults.map((result, idx) => (
               <div
                 key={result.id}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4"
+                className="rounded-lg border border-border bg-bg-secondary p-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs text-gray-400">
+                  <span className="font-mono text-xs text-text-secondary">
                     #{idx + 1} &middot; ID: {result.id}
                   </span>
                   <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-400">
@@ -1184,11 +1184,11 @@ function VectorsExplorer() {
                   </span>
                 </div>
                 {Boolean(result.payload.content) && (
-                  <p className="mt-2 line-clamp-3 text-sm text-gray-200">
+                  <p className="mt-2 line-clamp-3 text-sm text-text-primary">
                     {String(result.payload.content)}
                   </p>
                 )}
-                <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/30 p-2 font-mono text-[10px] text-gray-400">
+                <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-bg-secondary p-2 font-mono text-[10px] text-text-secondary">
                   {JSON.stringify(result.payload, null, 2)}
                 </pre>
               </div>
@@ -1198,8 +1198,8 @@ function VectorsExplorer() {
       </div>
 
       {/* Connection info */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-        <h3 className="mb-3 text-sm font-semibold text-white">
+      <div className="rounded-xl border border-border bg-bg-secondary p-4">
+        <h3 className="mb-3 text-sm font-semibold text-text-primary">
           Connection Info
         </h3>
         <div className="space-y-2">
@@ -1210,9 +1210,9 @@ function VectorsExplorer() {
             { label: "Retriever Service", url: RETRIEVER_URL },
           ].map((ep) => (
             <div key={ep.label} className="flex items-center justify-between">
-              <span className="text-xs text-gray-400">{ep.label}</span>
+              <span className="text-xs text-text-secondary">{ep.label}</span>
               <div className="flex items-center gap-1">
-                <code className="rounded bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] text-gray-300">
+                <code className="rounded bg-bg-hover px-2 py-0.5 font-mono text-[10px] text-text-secondary">
                   {ep.url}
                 </code>
                 <CopyButton text={ep.url} />
@@ -1292,13 +1292,13 @@ function MemoryExplorer() {
         />
       </div>
 
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+      <div className="rounded-xl border border-border bg-bg-secondary p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">Memory Index</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Memory Index</h3>
           <button
             onClick={loadMemories}
             disabled={loading}
-            className="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-[10px] text-gray-400 transition-colors hover:bg-white/[0.06]"
+            className="flex items-center gap-1 rounded-lg border border-border-light bg-bg-secondary px-2 py-1 text-[10px] text-text-secondary transition-colors hover:bg-bg-hover"
           >
             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -1307,15 +1307,15 @@ function MemoryExplorer() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-text-tertiary" />
           </div>
         ) : memories.length === 0 ? (
           <div className="py-8 text-center">
             <BrainCircuit className="mx-auto h-10 w-10 text-gray-700" />
-            <p className="mt-3 text-sm text-gray-500">
+            <p className="mt-3 text-sm text-text-tertiary">
               No memory entries found in the knowledge graph.
             </p>
-            <p className="mt-1 text-xs text-gray-600">
+            <p className="mt-1 text-xs text-text-tertiary">
               Memory entries are created when agents process tasks and store
               context for future retrieval.
             </p>
@@ -1328,21 +1328,21 @@ function MemoryExplorer() {
                 onClick={() =>
                   setSelectedMemory(selectedMemory?.id === mem.id ? null : mem)
                 }
-                className={`w-full rounded-lg border p-4 text-left transition-all hover:bg-white/[0.04] ${
+                className={`w-full rounded-lg border p-4 text-left transition-all hover:bg-bg-hover ${
                   selectedMemory?.id === mem.id
                     ? "border-purple-500/30 bg-purple-500/5"
-                    : "border-white/[0.06] bg-white/[0.02]"
+                    : "border-border bg-bg-secondary"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="line-clamp-2 text-sm text-gray-200">
+                  <p className="line-clamp-2 text-sm text-text-primary">
                     {mem.content}
                   </p>
-                  <span className="shrink-0 font-mono text-[9px] text-gray-600">
+                  <span className="shrink-0 font-mono text-[9px] text-text-tertiary">
                     {mem.id}
                   </span>
                 </div>
-                <div className="mt-2 flex items-center gap-3 text-[10px] text-gray-500">
+                <div className="mt-2 flex items-center gap-3 text-[10px] text-text-tertiary">
                   <span className="flex items-center gap-1">
                     <Database className="h-2.5 w-2.5" />
                     {mem.source}
@@ -1369,40 +1369,40 @@ function MemoryExplorer() {
       {selectedMemory && (
         <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-white">Memory Detail</h3>
+            <h3 className="text-sm font-semibold text-text-primary">Memory Detail</h3>
             <button
               onClick={() => setSelectedMemory(null)}
-              className="rounded p-1 text-gray-500 hover:bg-white/[0.06] hover:text-gray-300"
+              className="rounded p-1 text-text-tertiary hover:bg-bg-hover hover:text-text-secondary"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
           <div className="space-y-3">
             <div>
-              <span className="text-[10px] font-medium text-gray-500">ID</span>
-              <p className="mt-0.5 font-mono text-xs text-gray-300">
+              <span className="text-[10px] font-medium text-text-tertiary">ID</span>
+              <p className="mt-0.5 font-mono text-xs text-text-secondary">
                 {selectedMemory.id}
               </p>
             </div>
             <div>
-              <span className="text-[10px] font-medium text-gray-500">
+              <span className="text-[10px] font-medium text-text-tertiary">
                 Content
               </span>
-              <p className="mt-0.5 text-sm leading-relaxed text-gray-200">
+              <p className="mt-0.5 text-sm leading-relaxed text-text-primary">
                 {selectedMemory.content}
               </p>
             </div>
             <div>
-              <span className="text-[10px] font-medium text-gray-500">
+              <span className="text-[10px] font-medium text-text-tertiary">
                 Source
               </span>
-              <p className="mt-0.5 text-xs text-gray-300">
+              <p className="mt-0.5 text-xs text-text-secondary">
                 {selectedMemory.source}
               </p>
             </div>
             {selectedMemory.tags.length > 0 && (
               <div>
-                <span className="text-[10px] font-medium text-gray-500">
+                <span className="text-[10px] font-medium text-text-tertiary">
                   Tags
                 </span>
                 <div className="mt-1 flex flex-wrap gap-1">
@@ -1417,8 +1417,8 @@ function MemoryExplorer() {
       )}
 
       {/* Architecture diagram */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-        <h3 className="mb-3 text-sm font-semibold text-white">
+      <div className="rounded-xl border border-border bg-bg-secondary p-4">
+        <h3 className="mb-3 text-sm font-semibold text-text-primary">
           Memory Architecture
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -1458,7 +1458,7 @@ function MemoryExplorer() {
             return (
               <div
                 key={store.name}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4"
+                className="rounded-lg border border-border bg-bg-secondary p-4"
               >
                 <div className="flex items-center gap-2">
                   <div
@@ -1467,16 +1467,16 @@ function MemoryExplorer() {
                     <StoreIcon className={`h-4 w-4 ${store.color}`} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-text-primary">
                       {store.name}
                     </p>
-                    <p className="text-[10px] text-gray-500">{store.role}</p>
+                    <p className="text-[10px] text-text-tertiary">{store.role}</p>
                   </div>
                 </div>
-                <p className="mt-2 text-xs leading-relaxed text-gray-400">
+                <p className="mt-2 text-xs leading-relaxed text-text-secondary">
                   {store.description}
                 </p>
-                <p className="mt-2 font-mono text-[10px] text-gray-600">
+                <p className="mt-2 font-mono text-[10px] text-text-tertiary">
                   Port: {store.port}
                 </p>
               </div>
@@ -1523,15 +1523,15 @@ export default function KnowledgeBasePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#090b10] text-gray-100">
+    <div className="min-h-screen bg-bg-primary text-text-primary">
       {/* Header */}
-      <header className="border-b border-white/[0.06] bg-[#0c0e14]">
+      <header className="border-b border-border bg-bg-primary">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">
+            <h1 className="text-lg font-bold tracking-tight text-text-primary">
               Knowledge Base
             </h1>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-text-tertiary">
               {stats.totalNodes.toLocaleString()} nodes &middot;{" "}
               {stats.totalRelationships.toLocaleString()} relationships &middot;{" "}
               {stats.nodeLabels.length} labels
@@ -1539,7 +1539,7 @@ export default function KnowledgeBasePage() {
           </div>
           <div className="flex items-center gap-2">
             {stats.lastUpdated && (
-              <span className="hidden text-[10px] text-gray-600 sm:block">
+              <span className="hidden text-[10px] text-text-tertiary sm:block">
                 Updated:{" "}
                 {stats.lastUpdated.toLocaleTimeString([], {
                   hour: "2-digit",
@@ -1550,7 +1550,7 @@ export default function KnowledgeBasePage() {
             <button
               onClick={loadStats}
               disabled={refreshing}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/[0.06] disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover disabled:opacity-50"
             >
               <RefreshCw
                 className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`}
@@ -1562,7 +1562,7 @@ export default function KnowledgeBasePage() {
       </header>
 
       {/* Tabs */}
-      <div className="border-b border-white/[0.06] bg-[#0c0e14]">
+      <div className="border-b border-border bg-bg-primary">
         <div className="mx-auto flex max-w-7xl gap-0 px-4 sm:px-6 lg:px-8">
           {tabs.map((tab) => {
             const TabIcon = tab.icon;
@@ -1572,8 +1572,8 @@ export default function KnowledgeBasePage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? "border-blue-500 text-white"
-                    : "border-transparent text-gray-500 hover:border-white/[0.08] hover:text-gray-300"
+                    ? "border-blue-500 text-text-primary"
+                    : "border-transparent text-text-tertiary hover:border-border-light hover:text-text-secondary"
                 }`}
               >
                 <TabIcon className="h-4 w-4" />
@@ -1588,7 +1588,7 @@ export default function KnowledgeBasePage() {
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {loading && activeTab === "graph" ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
           </div>
         ) : (
           <>

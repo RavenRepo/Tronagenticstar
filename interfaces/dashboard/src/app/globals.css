@@ -11,78 +11,120 @@
 
 @layer base {
   :root {
-    /* ── Brand Colors ─────────────────────────────────────────────────── */
-    --color-brand: 221 83% 53%;         /* #3b82f6 — Constella blue */
-    --color-brand-light: 217 91% 60%;   /* #60a5fa */
-    --color-brand-dark: 224 76% 48%;    /* #2563eb */
-    --color-brand-muted: 217 33% 17%;   /* dark blue tint */
+    /* ── Light Mode Base (Notion-like) ────────────────────────────────── */
+    /* Backgrounds */
+    --color-bg-primary: 0 0% 100%; /* #FFFFFF */
+    --color-bg-secondary: 60 5% 96%; /* #F7F7F5 — very light grey */
+    --color-bg-tertiary: 60 5% 90%; /* #EBEBE9 — elevated grey */
+    --color-bg-hover: 60 5% 93%; /* hover states */
+    --color-bg-active: 60 5% 88%; /* active/pressed */
 
-    /* ── Backgrounds ──────────────────────────────────────────────────── */
-    --color-bg-primary: 222 47% 6%;     /* #0a0e1a — deep navy black */
-    --color-bg-secondary: 222 41% 9%;   /* #0f1420 — card surfaces */
-    --color-bg-tertiary: 220 35% 12%;   /* #151c2c — elevated surfaces */
-    --color-bg-hover: 220 30% 15%;      /* #1a2236 — hover states */
-    --color-bg-active: 220 30% 18%;     /* #1f2940 — active/pressed */
+    /* Text */
+    --color-text-primary: 0 4% 22%; /* #37352F — dark charcoal */
+    --color-text-secondary: 0 2% 47%; /* #787774 — medium grey */
+    --color-text-tertiary: 0 2% 65%; /* dim text */
+    --color-text-disabled: 0 2% 75%; /* disabled text */
 
-    /* ── Borders ──────────────────────────────────────────────────────── */
-    --color-border: 220 20% 18%;        /* subtle borders */
-    --color-border-light: 220 20% 24%;  /* slightly more visible */
-    --color-border-focus: 221 83% 53%;  /* brand focus ring */
+    /* Borders */
+    --color-border: 60 4% 91%; /* #E9E9E7 */
+    --color-border-light: 60 4% 85%;
+    --color-border-focus: 206 100% 50%; /* #0099FF blue focus ring */
 
-    /* ── Text ─────────────────────────────────────────────────────────── */
-    --color-text-primary: 210 40% 98%;  /* #f8fafc — bright white */
-    --color-text-secondary: 215 20% 65%; /* #94a3b8 — muted text */
-    --color-text-tertiary: 215 16% 47%; /* #64748b — dim text */
-    --color-text-disabled: 215 14% 34%; /* #475569 */
+    /* ── Brand Colors (adapted for light theme) ───────────────────────── */
+    --color-brand: 206 100% 50%; /* #0099FF */
+    --color-brand-light: 206 100% 65%;
+    --color-brand-dark: 206 100% 40%;
+    --color-brand-muted: 206 100% 90%;
 
     /* ── Agent Status Colors ──────────────────────────────────────────── */
-    --color-agent-healthy: 142 71% 45%; /* #22c55e — green */
-    --color-agent-degraded: 38 92% 50%; /* #f59e0b — amber */
-    --color-agent-offline: 0 84% 60%;   /* #ef4444 — red */
-    --color-agent-busy: 221 83% 53%;    /* brand blue — processing */
+    --color-agent-healthy: 142 60% 45%; /* green */
+    --color-agent-degraded: 38 92% 50%; /* amber */
+    --color-agent-offline: 0 84% 60%; /* red */
+    --color-agent-busy: 206 100% 50%; /* brand blue */
 
     /* ── Severity / Risk Colors ───────────────────────────────────────── */
-    --color-severity-critical: 0 84% 60%;    /* red */
-    --color-severity-high: 25 95% 53%;       /* orange */
-    --color-severity-medium: 38 92% 50%;     /* amber */
-    --color-severity-low: 142 71% 45%;       /* green */
-    --color-severity-info: 199 89% 48%;      /* cyan */
+    --color-severity-critical: 0 84% 60%;
+    --color-severity-high: 25 95% 53%;
+    --color-severity-medium: 38 92% 50%;
+    --color-severity-low: 142 60% 45%;
+    --color-severity-info: 199 89% 48%;
 
     /* ── Agent Identity Colors (unique per agent) ─────────────────────── */
-    --color-codecraft: 271 81% 56%;     /* purple — code generation */
-    --color-securishield: 0 84% 60%;    /* red — security */
-    --color-designforge: 199 89% 48%;   /* cyan — architecture */
-    --color-perfpulse: 38 92% 50%;      /* amber — performance */
-    --color-evaluator: 142 71% 45%;     /* green — quality */
-    --color-expressops: 25 95% 53%;     /* orange — Express.js */
-    --color-mobilefirstops: 280 68% 58%;/* violet — mobile */
-    --color-database: 190 95% 39%;      /* teal — database */
-    --color-soc2: 328 81% 51%;          /* pink — compliance */
-    --color-orchestrator: 221 83% 53%;  /* blue — orchestrator */
+    --color-codecraft: 271 81% 56%; /* purple — code generation */
+    --color-securishield: 0 84% 60%; /* red — security */
+    --color-designforge: 199 89% 48%; /* cyan — architecture */
+    --color-perfpulse: 38 92% 50%; /* amber — performance */
+    --color-evaluator: 142 71% 45%; /* green — quality */
+    --color-expressops: 25 95% 53%; /* orange — Express.js */
+    --color-mobilefirstops: 280 68% 58%; /* violet — mobile */
+    --color-database: 190 95% 39%; /* teal — database */
+    --color-soc2: 328 81% 51%; /* pink — compliance */
+    --color-orchestrator: 221 83% 53%; /* blue — orchestrator */
 
     /* ── Spacing & Sizing ─────────────────────────────────────────────── */
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 64px;
     --header-height: 56px;
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
     --radius-full: 9999px;
 
-    /* ── Shadows ──────────────────────────────────────────────────────── */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-    --shadow-glow: 0 0 20px -5px hsl(var(--color-brand) / 0.3);
-    --shadow-glow-sm: 0 0 10px -3px hsl(var(--color-brand) / 0.2);
+    /* ── Shadows (Notion style: very subtle) ──────────────────────────── */
+    --shadow-sm: 0 1px 2px 0 rgb(15 15 15 / 0.05);
+    --shadow-md:
+      rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px,
+      rgba(15, 15, 15, 0.2) 0px 9px 24px;
+    --shadow-lg:
+      0 10px 15px -3px rgb(15 15 15 / 0.1), 0 4px 6px -4px rgb(15 15 15 / 0.05);
+    --shadow-xl:
+      0 20px 25px -5px rgb(15 15 15 / 0.1), 0 8px 10px -6px rgb(15 15 15 / 0.05);
+    --shadow-glow: 0 0 20px -5px hsl(var(--color-brand) / 0.2);
+    --shadow-glow-sm: 0 0 10px -3px hsl(var(--color-brand) / 0.1);
 
     /* ── Transitions ──────────────────────────────────────────────────── */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  /* ── Dark Mode (Notion-like dark) ────────────────────────────────── */
+  .dark {
+    /* Backgrounds */
+    --color-bg-primary: 0 0% 12%; /* #1F1F1F */
+    --color-bg-secondary: 0 0% 16%; /* #292929 */
+    --color-bg-tertiary: 0 0% 20%; /* #333333 */
+    --color-bg-hover: 0 0% 18%;
+    --color-bg-active: 0 0% 22%;
+
+    /* Text */
+    --color-text-primary: 0 0% 100%; /* #FFFFFF */
+    --color-text-secondary: 0 0% 80%; /* #CCCCCC */
+    --color-text-tertiary: 0 0% 60%;
+    --color-text-disabled: 0 0% 40%;
+
+    /* Borders */
+    --color-border: 0 0% 22%; /* #383838 */
+    --color-border-light: 0 0% 26%;
+    --color-border-focus: 206 100% 50%;
+
+    /* Brand */
+    --color-brand: 206 100% 50%;
+    --color-brand-light: 206 100% 65%;
+    --color-brand-dark: 206 100% 40%;
+    --color-brand-muted: 217 33% 17%;
+
+    /* Shadows for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md:
+      rgba(0, 0, 0, 0.2) 0px 0px 0px 1px, rgba(0, 0, 0, 0.3) 0px 3px 6px,
+      rgba(0, 0, 0, 0.4) 0px 9px 24px;
+    --shadow-lg:
+      0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-xl:
+      0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
   }
 
   /* ── Light mode overrides (future) ───────────────────────────────── */
@@ -110,8 +152,16 @@
   body {
     background-color: hsl(var(--color-bg-primary));
     color: hsl(var(--color-text-primary));
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system,
-      BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    font-family:
+      "Inter",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
       sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     min-height: 100vh;
@@ -169,17 +219,25 @@
   }
 
   /* Headings */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-weight: 600;
     letter-spacing: -0.02em;
     color: hsl(var(--color-text-primary));
   }
 
   /* Code blocks */
-  code, kbd, samp, pre {
-    font-family: "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace,
-      SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-      "Courier New", monospace;
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family:
+      "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, SFMono-Regular,
+      Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 0.875em;
   }
 
@@ -210,8 +268,9 @@
     border: 1px solid hsl(var(--color-border));
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
-    transition: border-color var(--transition-base),
-                box-shadow var(--transition-base);
+    transition:
+      border-color var(--transition-base),
+      box-shadow var(--transition-base);
   }
 
   .card:hover {
@@ -224,8 +283,9 @@
     border: 1px solid hsl(var(--color-border));
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
-    transition: border-color var(--transition-base),
-                box-shadow var(--transition-slow);
+    transition:
+      border-color var(--transition-base),
+      box-shadow var(--transition-slow);
   }
 
   .card-glow:hover {
@@ -313,11 +373,12 @@
     line-height: 1.25rem;
     white-space: nowrap;
     cursor: pointer;
-    transition: background-color var(--transition-fast),
-                color var(--transition-fast),
-                border-color var(--transition-fast),
-                box-shadow var(--transition-fast),
-                transform var(--transition-fast);
+    transition:
+      background-color var(--transition-fast),
+      color var(--transition-fast),
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast),
+      transform var(--transition-fast);
     user-select: none;
     border: 1px solid transparent;
   }
@@ -407,8 +468,9 @@
     color: hsl(var(--color-text-primary));
     font-size: 0.875rem;
     line-height: 1.5;
-    transition: border-color var(--transition-fast),
-                box-shadow var(--transition-fast);
+    transition:
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast);
   }
 
   .input::placeholder {
@@ -454,8 +516,9 @@
     color: hsl(var(--color-text-secondary));
     font-size: 0.875rem;
     font-weight: 500;
-    transition: background-color var(--transition-fast),
-                color var(--transition-fast);
+    transition:
+      background-color var(--transition-fast),
+      color var(--transition-fast);
     cursor: pointer;
     text-decoration: none;
   }
@@ -550,9 +613,10 @@
     background: hsl(var(--color-bg-secondary));
     border: 1px solid hsl(var(--color-border));
     border-radius: var(--radius-lg);
-    transition: border-color var(--transition-base),
-                box-shadow var(--transition-base),
-                transform var(--transition-fast);
+    transition:
+      border-color var(--transition-base),
+      box-shadow var(--transition-base),
+      transform var(--transition-fast);
     cursor: pointer;
   }
 
@@ -751,8 +815,9 @@
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
-    transition: opacity var(--transition-fast),
-                transform var(--transition-fast);
+    transition:
+      opacity var(--transition-fast),
+      transform var(--transition-fast);
     z-index: 50;
     box-shadow: var(--shadow-lg);
   }
@@ -855,16 +920,36 @@
   }
 
   /* Staggered animation delays for lists */
-  .stagger-1 { animation-delay: 50ms; }
-  .stagger-2 { animation-delay: 100ms; }
-  .stagger-3 { animation-delay: 150ms; }
-  .stagger-4 { animation-delay: 200ms; }
-  .stagger-5 { animation-delay: 250ms; }
-  .stagger-6 { animation-delay: 300ms; }
-  .stagger-7 { animation-delay: 350ms; }
-  .stagger-8 { animation-delay: 400ms; }
-  .stagger-9 { animation-delay: 450ms; }
-  .stagger-10 { animation-delay: 500ms; }
+  .stagger-1 {
+    animation-delay: 50ms;
+  }
+  .stagger-2 {
+    animation-delay: 100ms;
+  }
+  .stagger-3 {
+    animation-delay: 150ms;
+  }
+  .stagger-4 {
+    animation-delay: 200ms;
+  }
+  .stagger-5 {
+    animation-delay: 250ms;
+  }
+  .stagger-6 {
+    animation-delay: 300ms;
+  }
+  .stagger-7 {
+    animation-delay: 350ms;
+  }
+  .stagger-8 {
+    animation-delay: 400ms;
+  }
+  .stagger-9 {
+    animation-delay: 450ms;
+  }
+  .stagger-10 {
+    animation-delay: 500ms;
+  }
 
   /* ── Tabular numbers for metrics ────────────────────────────────── */
   .tabular-nums {

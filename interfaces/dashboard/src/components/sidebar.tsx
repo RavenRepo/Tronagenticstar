@@ -14,6 +14,7 @@ import {
   ChevronRight,
   ShieldAlert,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -51,13 +52,13 @@ export function Sidebar() {
   return (
     <aside className={`sidebar ${isCollapsed ? "sidebar-collapsed" : ""}`}>
       {/* Logo area */}
-      <div className="flex h-14 items-center justify-between px-4 border-b border-white/[0.06]">
+      <div className="flex h-14 items-center justify-between px-4 border-b border-border">
         {!isCollapsed && (
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
               <Workflow className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold tracking-tight text-white truncate">
+            <span className="font-bold tracking-tight text-text-primary truncate">
               Constella
             </span>
           </div>
@@ -89,8 +90,11 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer / Collapse toggle */}
-      <div className="p-3 border-t border-white/[0.06]">
+      {/* Footer / Toggle & Collapse */}
+      <div className="p-3 border-t border-border flex flex-col gap-2">
+        <div className="flex justify-center w-full">
+            <ThemeToggle />
+        </div>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="sidebar-nav-item w-full justify-center sm:justify-start"

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Sidebar } from "@/components/sidebar";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "Constella AI — Dashboard",
@@ -18,39 +19,46 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased font-sans">
-        {/* ── Toast notifications (top-right) ── */}
-        <Toaster
-          position="top-right"
-          richColors
-          closeButton
-          theme="dark"
-          toastOptions={{
-            className:
-              "bg-zinc-900 border-zinc-800 text-zinc-100 shadow-xl",
-          }}
-        />
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-bg-primary text-text-primary antialiased font-sans">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {/* ── Toast notifications (top-right) ── */}
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            theme="system"
+            toastOptions={{
+              className:
+                "bg-bg-secondary border-border text-text-primary shadow-xl",
+            }}
+          />
 
-        {/* ── App shell: sidebar + main content ── */}
-        <div className="flex h-screen overflow-hidden">
-          {/* Sidebar navigation */}
-          <Sidebar />
+          {/* ── App shell: sidebar + main content ── */}
+          <div className="flex h-screen overflow-hidden">
+            {/* Sidebar navigation */}
+            <Sidebar />
 
-          {/* Main content area */}
-          <main className="flex-1 overflow-y-auto">
-            {/* Top ambient glow line */}
-            <div
-              aria-hidden
-              className="pointer-events-none fixed top-0 left-64 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent z-50"
-            />
+            {/* Main content area */}
+            <main className="flex-1 overflow-y-auto">
+              {/* Top ambient glow line */}
+              <div
+                aria-hidden
+                className="pointer-events-none fixed top-0 left-64 right-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent z-50"
+              />
 
-            {/* Page content */}
-            <div className="relative min-h-full">
-              {children}
-            </div>
-          </main>
-        </div>
+              {/* Page content */}
+              <div className="relative min-h-full">
+                {children}
+              </div>
+            </main>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

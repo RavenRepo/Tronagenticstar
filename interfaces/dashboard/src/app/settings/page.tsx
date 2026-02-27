@@ -556,7 +556,7 @@ function generateIntegrations(): IntegrationConfig[] {
       name: "GitHub",
       description: "Source code repository integration",
       icon: Code2,
-      color: "text-gray-300",
+      color: "text-text-secondary",
       connected: false,
       url: "",
       status: "unconfigured",
@@ -607,7 +607,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="rounded p-1 text-gray-500 transition-colors hover:bg-white/[0.06] hover:text-gray-300"
+      className="rounded p-1 text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-secondary"
       title="Copy to clipboard"
     >
       {copied ? (
@@ -633,7 +633,7 @@ function ToggleSwitch({
       onClick={() => !disabled && onChange(!enabled)}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        enabled ? "bg-blue-600" : "bg-zinc-700"
+        enabled ? "bg-blue-600" : "bg-text-tertiary"
       } ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
     >
       <span
@@ -657,15 +657,15 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#0c0e14] overflow-hidden">
-      <div className="flex items-start gap-3 border-b border-white/[0.04] px-5 py-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
-          <Icon className="h-4 w-4 text-gray-400" />
+    <div className="rounded-xl border border-border bg-bg-primary overflow-hidden">
+      <div className="flex items-start gap-3 border-b border-border px-5 py-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-bg-hover">
+          <Icon className="h-4 w-4 text-text-secondary" />
         </div>
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-white">{title}</h3>
+          <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
           {description && (
-            <p className="mt-0.5 text-xs text-gray-500">{description}</p>
+            <p className="mt-0.5 text-xs text-text-tertiary">{description}</p>
           )}
         </div>
       </div>
@@ -684,11 +684,11 @@ function FieldRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3 border-b border-white/[0.03] last:border-b-0">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3 border-b border-border last:border-b-0">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-200">{label}</p>
+        <p className="text-sm font-medium text-text-primary">{label}</p>
         {description && (
-          <p className="mt-0.5 text-xs text-gray-500">{description}</p>
+          <p className="mt-0.5 text-xs text-text-tertiary">{description}</p>
         )}
       </div>
       <div className="shrink-0">{children}</div>
@@ -715,7 +715,7 @@ function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-gray-200 placeholder-gray-600 outline-none transition-colors focus:border-blue-500/40 focus:bg-white/[0.05] ${className || "w-full sm:w-64"}`}
+      className={`rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-sm text-text-primary placeholder-gray-600 outline-none transition-colors focus:border-blue-500/40 focus:bg-bg-hover ${className || "w-full sm:w-64"}`}
     />
   );
 }
@@ -741,7 +741,7 @@ function NumberInput({
       min={min}
       max={max}
       step={step}
-      className="w-28 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-gray-200 outline-none transition-colors focus:border-blue-500/40 focus:bg-white/[0.05] tabular-nums"
+      className="w-28 rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-sm text-text-primary outline-none transition-colors focus:border-blue-500/40 focus:bg-bg-hover tabular-nums"
     />
   );
 }
@@ -1076,16 +1076,16 @@ function ApiKeysTab({
             return (
               <div
                 key={key.id}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.01] p-4 transition-colors hover:bg-white/[0.02]"
+                className="rounded-lg border border-border bg-bg-secondary p-4 transition-colors hover:bg-bg-secondary"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bg-hover">
                       <Icon className={`h-4 w-4 ${key.color}`} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-white">
+                        <p className="text-sm font-semibold text-text-primary">
                           {key.name}
                         </p>
                         <StatusDot status={key.status} />
@@ -1097,7 +1097,7 @@ function ApiKeysTab({
                                 ? "text-amber-400"
                                 : key.status === "invalid"
                                   ? "text-red-400"
-                                  : "text-gray-600"
+                                  : "text-text-tertiary"
                           }`}
                         >
                           {key.status}
@@ -1111,12 +1111,12 @@ function ApiKeysTab({
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             placeholder={`Enter ${key.name} API key…`}
-                            className="w-full max-w-md rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-1.5 font-mono text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50"
+                            className="w-full max-w-md rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-1.5 font-mono text-xs text-text-primary placeholder-gray-600 outline-none focus:border-blue-500/50"
                             autoFocus
                           />
                           <button
                             onClick={() => saveEdit(key.id)}
-                            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-500"
+                            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-blue-500"
                           >
                             Save
                           </button>
@@ -1125,19 +1125,19 @@ function ApiKeysTab({
                               setEditingKey(null);
                               setEditValue("");
                             }}
-                            className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-white/[0.06]"
+                            className="rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover"
                           >
                             Cancel
                           </button>
                         </div>
                       ) : key.isConfigured ? (
                         <div className="mt-1 flex items-center gap-2">
-                          <code className="font-mono text-xs text-gray-500">
+                          <code className="font-mono text-xs text-text-tertiary">
                             {isRevealed ? key.rawValue : key.maskedValue}
                           </code>
                           <button
                             onClick={() => toggleReveal(key.id)}
-                            className="text-gray-600 hover:text-gray-400"
+                            className="text-text-tertiary hover:text-text-secondary"
                           >
                             {isRevealed ? (
                               <EyeOff className="h-3.5 w-3.5" />
@@ -1148,13 +1148,13 @@ function ApiKeysTab({
                           <CopyButton text={key.rawValue} />
                         </div>
                       ) : (
-                        <p className="mt-1 text-xs text-gray-600">
+                        <p className="mt-1 text-xs text-text-tertiary">
                           No API key configured
                         </p>
                       )}
 
                       {key.lastUsed && (
-                        <p className="mt-1 text-[10px] text-gray-600">
+                        <p className="mt-1 text-[10px] text-text-tertiary">
                           Last used: {timeAgo(key.lastUsed)}
                         </p>
                       )}
@@ -1164,7 +1164,7 @@ function ApiKeysTab({
                   <div className="flex shrink-0 items-center gap-1.5">
                     <button
                       onClick={() => startEdit(key)}
-                      className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-gray-200"
+                      className="rounded-lg border border-border-light bg-bg-secondary px-2.5 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
                     >
                       {key.isConfigured ? "Update" : "Configure"}
                     </button>
@@ -1263,7 +1263,7 @@ function AgentsTab({
                 className={`rounded-lg border transition-colors ${
                   isExpanded
                     ? "border-blue-500/20 bg-blue-500/[0.03]"
-                    : "border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.02]"
+                    : "border-border bg-bg-secondary hover:bg-bg-secondary"
                 }`}
               >
                 {/* Header row */}
@@ -1274,24 +1274,24 @@ function AgentsTab({
                   className="flex w-full items-center gap-3 px-4 py-3 text-left"
                 >
                   <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${agent.enabled ? "bg-white/[0.04]" : "bg-white/[0.02]"}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${agent.enabled ? "bg-bg-hover" : "bg-bg-secondary"}`}
                   >
                     <Icon
-                      className={`h-4 w-4 ${agent.enabled ? agent.color : "text-gray-600"}`}
+                      className={`h-4 w-4 ${agent.enabled ? agent.color : "text-text-tertiary"}`}
                     />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-sm font-semibold ${agent.enabled ? "text-white" : "text-gray-500"}`}
+                        className={`text-sm font-semibold ${agent.enabled ? "text-text-primary" : "text-text-tertiary"}`}
                       >
                         {agent.name}
                       </span>
-                      <span className="text-[10px] font-mono text-gray-600">
+                      <span className="text-[10px] font-mono text-text-tertiary">
                         :{agent.port}
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-500">
+                    <p className="text-[11px] text-text-tertiary">
                       {agent.llmProvider}/{agent.model} · T={agent.temperature} ·
                       {agent.maxTokens} tokens
                     </p>
@@ -1302,18 +1302,18 @@ function AgentsTab({
                       onChange={(v) => updateAgent(agent.id, { enabled: v })}
                     />
                     <ChevronRight
-                      className={`h-4 w-4 text-gray-600 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                      className={`h-4 w-4 text-text-tertiary transition-transform ${isExpanded ? "rotate-90" : ""}`}
                     />
                   </div>
                 </button>
 
                 {/* Expanded config */}
                 {isExpanded && (
-                  <div className="border-t border-white/[0.04] px-4 py-4 space-y-4">
+                  <div className="border-t border-border px-4 py-4 space-y-4">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {/* LLM Provider */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-400">
+                        <label className="text-xs font-medium text-text-secondary">
                           LLM Provider
                         </label>
                         <select
@@ -1325,7 +1325,7 @@ function AgentsTab({
                                 MODELS[e.target.value]?.[0] || agent.model,
                             })
                           }
-                          className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500/40"
+                          className="w-full rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-sm text-text-primary outline-none focus:border-blue-500/40"
                         >
                           {LLM_PROVIDERS.map((p) => (
                             <option key={p} value={p}>
@@ -1337,7 +1337,7 @@ function AgentsTab({
 
                       {/* Model */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-400">
+                        <label className="text-xs font-medium text-text-secondary">
                           Model
                         </label>
                         <select
@@ -1345,7 +1345,7 @@ function AgentsTab({
                           onChange={(e) =>
                             updateAgent(agent.id, { model: e.target.value })
                           }
-                          className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-blue-500/40"
+                          className="w-full rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-sm text-text-primary outline-none focus:border-blue-500/40"
                         >
                           {(MODELS[agent.llmProvider] || [agent.model]).map(
                             (m) => (
@@ -1359,7 +1359,7 @@ function AgentsTab({
 
                       {/* Port */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-400">
+                        <label className="text-xs font-medium text-text-secondary">
                           Port
                         </label>
                         <NumberInput
@@ -1372,7 +1372,7 @@ function AgentsTab({
 
                       {/* Temperature */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-400">
+                        <label className="text-xs font-medium text-text-secondary">
                           Temperature
                         </label>
                         <div className="flex items-center gap-2">
@@ -1389,7 +1389,7 @@ function AgentsTab({
                             }
                             className="flex-1 accent-blue-500"
                           />
-                          <span className="w-8 text-right font-mono text-xs text-gray-400 tabular-nums">
+                          <span className="w-8 text-right font-mono text-xs text-text-secondary tabular-nums">
                             {agent.temperature.toFixed(1)}
                           </span>
                         </div>
@@ -1397,7 +1397,7 @@ function AgentsTab({
 
                       {/* Max Tokens */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-400">
+                        <label className="text-xs font-medium text-text-secondary">
                           Max Tokens
                         </label>
                         <NumberInput
@@ -1413,7 +1413,7 @@ function AgentsTab({
 
                       {/* Timeout */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-400">
+                        <label className="text-xs font-medium text-text-secondary">
                           Timeout (seconds)
                         </label>
                         <NumberInput
@@ -1428,7 +1428,7 @@ function AgentsTab({
 
                       {/* Retries */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-400">
+                        <label className="text-xs font-medium text-text-secondary">
                           Retries
                         </label>
                         <NumberInput
@@ -1443,7 +1443,7 @@ function AgentsTab({
 
                       {/* Rate Limit */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-400">
+                        <label className="text-xs font-medium text-text-secondary">
                           Rate Limit (req/min)
                         </label>
                         <NumberInput
@@ -1495,19 +1495,19 @@ function NotificationsTab({
             return (
               <div
                 key={ch.id}
-                className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.01] p-3"
+                className="flex items-center gap-3 rounded-lg border border-border bg-bg-secondary p-3"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-bg-hover">
                   <Icon className={`h-4 w-4 ${ch.color}`} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-white">{ch.name}</p>
-                    <span className="rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono text-gray-500">
+                    <p className="text-sm font-medium text-text-primary">{ch.name}</p>
+                    <span className="rounded bg-bg-hover px-1.5 py-0.5 text-[10px] font-mono text-text-tertiary">
                       {ch.type}
                     </span>
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-gray-500">
+                  <p className="mt-0.5 truncate text-xs text-text-tertiary">
                     {ch.target}
                   </p>
                 </div>
@@ -1535,7 +1535,7 @@ function NotificationsTab({
         <div className="space-y-3">
           {rules.map((rule) => {
             const severityColors: Record<string, string> = {
-              all: "text-gray-400 bg-gray-500/10 border-gray-500/20",
+              all: "text-text-secondary bg-gray-500/10 border-gray-500/20",
               warn: "text-amber-400 bg-amber-500/10 border-amber-500/20",
               error: "text-red-400 bg-red-500/10 border-red-500/20",
               critical:
@@ -1545,12 +1545,12 @@ function NotificationsTab({
             return (
               <div
                 key={rule.id}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.01] p-4"
+                className="rounded-lg border border-border bg-bg-secondary p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-white">
+                      <p className="text-sm font-semibold text-text-primary">
                         {rule.event}
                       </p>
                       <span
@@ -1561,7 +1561,7 @@ function NotificationsTab({
                           : rule.severity.toUpperCase()}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-500">
+                    <p className="mt-0.5 text-xs text-text-tertiary">
                       {rule.description}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -1572,7 +1572,7 @@ function NotificationsTab({
                         return (
                           <span
                             key={chId}
-                            className={`inline-flex items-center gap-1 rounded-md bg-white/[0.04] px-2 py-0.5 text-[11px] ${ch.enabled ? "text-gray-300" : "text-gray-600 line-through"}`}
+                            className={`inline-flex items-center gap-1 rounded-md bg-bg-hover px-2 py-0.5 text-[11px] ${ch.enabled ? "text-text-secondary" : "text-text-tertiary line-through"}`}
                           >
                             <ChIcon className="h-3 w-3" />
                             {ch.name}
@@ -1644,7 +1644,7 @@ function AppearanceTab() {
       >
         <div className="space-y-0">
           <FieldRow label="Color Mode" description="Select light, dark, or system preference">
-            <div className="flex rounded-lg border border-white/[0.08] bg-white/[0.02]">
+            <div className="flex rounded-lg border border-border-light bg-bg-secondary">
               {themes.map((t) => {
                 const TIcon = t.icon;
                 return (
@@ -1654,7 +1654,7 @@ function AppearanceTab() {
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
                       theme === t.id
                         ? "bg-blue-500/15 text-blue-400"
-                        : "text-gray-500 hover:text-gray-300"
+                        : "text-text-tertiary hover:text-text-secondary"
                     }`}
                   >
                     <TIcon className="h-3.5 w-3.5" />
@@ -1682,7 +1682,7 @@ function AppearanceTab() {
                   title={c.label}
                 >
                   {accentColor === c.id && (
-                    <Check className="h-3.5 w-3.5 text-white" />
+                    <Check className="h-3.5 w-3.5 text-text-primary" />
                   )}
                 </button>
               ))}
@@ -1693,7 +1693,7 @@ function AppearanceTab() {
             label="Font Size"
             description="Base font size for UI elements"
           >
-            <div className="flex rounded-lg border border-white/[0.08] bg-white/[0.02]">
+            <div className="flex rounded-lg border border-border-light bg-bg-secondary">
               {fontSizes.map((f) => (
                 <button
                   key={f.id}
@@ -1701,7 +1701,7 @@ function AppearanceTab() {
                   className={`px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg ${
                     fontSize === f.id
                       ? "bg-blue-500/15 text-blue-400"
-                      : "text-gray-500 hover:text-gray-300"
+                      : "text-text-tertiary hover:text-text-secondary"
                   }`}
                 >
                   {f.label}
@@ -1807,22 +1807,22 @@ function IntegrationsTab({
               unreachable:
                 "border-red-500/20 text-red-400",
               unconfigured:
-                "border-gray-600/20 text-gray-600",
+                "border-gray-600/20 text-text-tertiary",
             };
             const isTesting = testing === integration.id;
 
             return (
               <div
                 key={integration.id}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.01] p-4 transition-colors hover:bg-white/[0.02]"
+                className="rounded-lg border border-border bg-bg-secondary p-4 transition-colors hover:bg-bg-secondary"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-bg-hover">
                     <Icon className={`h-5 w-5 ${integration.color}`} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-white">
+                      <p className="text-sm font-semibold text-text-primary">
                         {integration.name}
                       </p>
                       <span
@@ -1832,16 +1832,16 @@ function IntegrationsTab({
                         {integration.status}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-500">
+                    <p className="mt-0.5 text-xs text-text-tertiary">
                       {integration.description}
                     </p>
                     {integration.url && (
-                      <p className="mt-1 font-mono text-[11px] text-gray-600">
+                      <p className="mt-1 font-mono text-[11px] text-text-tertiary">
                         {integration.url}
                       </p>
                     )}
                     {integration.lastCheck && (
-                      <p className="mt-0.5 text-[10px] text-gray-600">
+                      <p className="mt-0.5 text-[10px] text-text-tertiary">
                         Last checked: {timeAgo(integration.lastCheck)}
                       </p>
                     )}
@@ -1849,7 +1849,7 @@ function IntegrationsTab({
                   <button
                     onClick={() => testConnection(integration.id)}
                     disabled={isTesting}
-                    className="shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-gray-200 disabled:opacity-50"
+                    className="shrink-0 rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-50"
                   >
                     {isTesting ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1937,22 +1937,22 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#090b10] text-gray-100">
+    <div className="min-h-screen bg-bg-primary text-text-primary">
       {/* Header */}
-      <header className="border-b border-white/[0.06] bg-[#0c0e14]">
+      <header className="border-b border-border bg-bg-primary">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">
+            <h1 className="text-lg font-bold tracking-tight text-text-primary">
               Settings
             </h1>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-text-tertiary">
               Platform configuration, API keys, and preferences
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleReset}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/[0.06]"
+              className="flex items-center gap-1.5 rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Reset
@@ -1960,7 +1960,7 @@ export default function SettingsPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-500 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-text-primary shadow-lg shadow-blue-600/20 transition-colors hover:bg-blue-500 disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1974,7 +1974,7 @@ export default function SettingsPage() {
       </header>
 
       {/* Tabs */}
-      <div className="border-b border-white/[0.06] bg-[#0c0e14]">
+      <div className="border-b border-border bg-bg-primary">
         <div className="mx-auto flex max-w-7xl gap-0 overflow-x-auto px-4 sm:px-6 lg:px-8">
           {tabs.map((tab) => {
             const TabIcon = tab.icon;
@@ -1984,8 +1984,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex shrink-0 items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? "border-blue-500 text-white"
-                    : "border-transparent text-gray-500 hover:border-white/[0.08] hover:text-gray-300"
+                    ? "border-blue-500 text-text-primary"
+                    : "border-transparent text-text-tertiary hover:border-border-light hover:text-text-secondary"
                 }`}
               >
                 <TabIcon className="h-4 w-4" />
@@ -2038,14 +2038,14 @@ export default function SettingsPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleReset}
-                className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-xs font-medium text-gray-300 transition-colors hover:bg-white/[0.06]"
+                className="rounded-lg border border-border-light bg-bg-secondary px-3 py-1 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover"
               >
                 Discard
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+                className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-text-primary transition-colors hover:bg-blue-500 disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Save"}
               </button>

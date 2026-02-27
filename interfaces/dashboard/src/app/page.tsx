@@ -365,7 +365,7 @@ function StatusBadge({ status }: { status: AgentStatus }) {
     loading: {
       icon: Loader2,
       label: "Checking...",
-      classes: "bg-gray-500/10 text-gray-400 border-gray-500/30",
+      classes: "bg-gray-500/10 text-text-secondary border-gray-500/30",
       dot: "bg-gray-400",
     },
   }[status];
@@ -398,7 +398,7 @@ function AgentCard({
   return (
     <button
       onClick={() => onSelect(agent)}
-      className="group relative flex flex-col rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 text-left transition-all hover:border-white/[0.12] hover:bg-white/[0.04] hover:shadow-lg hover:shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+      className="group relative flex flex-col rounded-xl border border-border bg-bg-secondary p-5 text-left transition-all hover:border-border-light hover:bg-bg-hover hover:shadow-lg hover:shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
     >
       {/* Gradient glow behind icon */}
       <div
@@ -409,15 +409,15 @@ function AgentCard({
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${agent.color} shadow-lg`}
         >
-          <Icon className="h-5 w-5 text-white" />
+          <Icon className="h-5 w-5 text-text-primary" />
         </div>
         <StatusBadge status={agent.status} />
       </div>
 
-      <h3 className="mt-4 text-sm font-semibold text-white">{agent.name}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-gray-400">{agent.description}</p>
+      <h3 className="mt-4 text-sm font-semibold text-text-primary">{agent.name}</h3>
+      <p className="mt-1 text-xs leading-relaxed text-text-secondary">{agent.description}</p>
 
-      <div className="mt-4 flex items-center gap-3 text-xs text-gray-500">
+      <div className="mt-4 flex items-center gap-3 text-xs text-text-tertiary">
         {agent.latencyMs !== null && (
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
@@ -484,14 +484,14 @@ function StatsBar({ stats }: { stats: PlatformStats }) {
         return (
           <div
             key={stat.label}
-            className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+            className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-4 py-3"
           >
             <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.bg}`}>
               <Icon className={`h-4 w-4 ${stat.color}`} />
             </div>
             <div>
-              <p className="text-xl font-bold text-white">{stat.value}</p>
-              <p className="text-xs text-gray-500">{stat.label}</p>
+              <p className="text-xl font-bold text-text-primary">{stat.value}</p>
+              <p className="text-xs text-text-tertiary">{stat.label}</p>
             </div>
           </div>
         );
@@ -535,10 +535,10 @@ function AgentDetailPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#0f1117] p-6 shadow-2xl">
+      <div className="relative w-full max-w-lg rounded-2xl border border-border-light bg-bg-primary p-6 shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-white"
+          className="absolute right-4 top-4 text-text-tertiary hover:text-text-primary"
         >
           <XCircle className="h-5 w-5" />
         </button>
@@ -547,38 +547,38 @@ function AgentDetailPanel({
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${agent.color} shadow-lg`}
           >
-            <Icon className="h-6 w-6 text-white" />
+            <Icon className="h-6 w-6 text-text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">{agent.name}</h2>
-            <p className="text-sm text-gray-400">{agent.description}</p>
+            <h2 className="text-lg font-bold text-text-primary">{agent.name}</h2>
+            <p className="text-sm text-text-secondary">{agent.description}</p>
           </div>
         </div>
 
         <div className="mt-6 space-y-4">
           {/* Status */}
-          <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-            <span className="text-sm text-gray-400">Status</span>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3">
+            <span className="text-sm text-text-secondary">Status</span>
             <StatusBadge status={agent.status} />
           </div>
 
           {/* Port */}
-          <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-            <span className="text-sm text-gray-400">Port</span>
-            <span className="font-mono text-sm text-white">{agent.port}</span>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3">
+            <span className="text-sm text-text-secondary">Port</span>
+            <span className="font-mono text-sm text-text-primary">{agent.port}</span>
           </div>
 
           {/* Latency */}
           {agent.latencyMs !== null && (
-            <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-              <span className="text-sm text-gray-400">Latency</span>
-              <span className="font-mono text-sm text-white">{agent.latencyMs}ms</span>
+            <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3">
+              <span className="text-sm text-text-secondary">Latency</span>
+              <span className="font-mono text-sm text-text-primary">{agent.latencyMs}ms</span>
             </div>
           )}
 
           {/* LLM */}
-          <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-            <span className="text-sm text-gray-400">LLM Provider</span>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3">
+            <span className="text-sm text-text-secondary">LLM Provider</span>
             <span className={`text-sm font-medium ${agent.llmConfigured ? "text-emerald-400" : "text-yellow-400"}`}>
               {agent.llmConfigured ? "Connected" : "Not initialized"}
             </span>
@@ -586,13 +586,13 @@ function AgentDetailPanel({
 
           {/* Capabilities */}
           {agent.capabilities.length > 0 && (
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-              <p className="mb-2 text-sm text-gray-400">Capabilities</p>
+            <div className="rounded-lg border border-border bg-bg-secondary px-4 py-3">
+              <p className="mb-2 text-sm text-text-secondary">Capabilities</p>
               <div className="flex flex-wrap gap-1.5">
                 {agent.capabilities.map((cap) => (
                   <span
                     key={cap}
-                    className="rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 font-mono text-xs text-gray-300"
+                    className="rounded-md border border-border-light bg-bg-hover px-2 py-0.5 font-mono text-xs text-text-secondary"
                   >
                     {cap}
                   </span>
@@ -603,9 +603,9 @@ function AgentDetailPanel({
 
           {/* Details */}
           {agent.details && (
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-              <p className="text-sm text-gray-400">Details</p>
-              <p className="mt-1 text-sm text-gray-300">{agent.details}</p>
+            <div className="rounded-lg border border-border bg-bg-secondary px-4 py-3">
+              <p className="text-sm text-text-secondary">Details</p>
+              <p className="mt-1 text-sm text-text-secondary">{agent.details}</p>
             </div>
           )}
         </div>
@@ -702,19 +702,19 @@ function TaskModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="relative flex w-full max-w-2xl flex-col rounded-2xl border border-white/[0.08] bg-[#0f1117] shadow-2xl" style={{ maxHeight: "90vh" }}>
+      <div className="relative flex w-full max-w-2xl flex-col rounded-2xl border border-border-light bg-bg-primary shadow-2xl" style={{ maxHeight: "90vh" }}>
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-white/[0.06] px-6 py-4">
+        <div className="flex items-center gap-3 border-b border-border px-6 py-4">
           <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${action.color.split(" ")[0]}`}>
             <Icon className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white">{action.label}</h2>
-            <p className="text-xs text-gray-400">{action.description}</p>
+            <h2 className="text-base font-semibold text-text-primary">{action.label}</h2>
+            <p className="text-xs text-text-secondary">{action.description}</p>
           </div>
           <button
             onClick={onClose}
-            className="ml-auto text-gray-500 hover:text-white"
+            className="ml-auto text-text-tertiary hover:text-text-primary"
           >
             <XCircle className="h-5 w-5" />
           </button>
@@ -724,11 +724,11 @@ function TaskModal({
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {!result ? (
             <form onSubmit={handleSubmit}>
-              <label className="mb-2 block text-sm font-medium text-gray-300">
+              <label className="mb-2 block text-sm font-medium text-text-secondary">
                 {needsCodeInput ? "Paste your code below" : "Describe what you need"}
               </label>
               <textarea
-                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-3 font-mono text-sm text-gray-200 placeholder-gray-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+                className="w-full rounded-lg border border-border-light bg-bg-secondary px-4 py-3 font-mono text-sm text-text-primary placeholder-gray-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
                 rows={needsCodeInput ? 12 : 4}
                 placeholder={
                   needsCodeInput
@@ -742,7 +742,7 @@ function TaskModal({
               <button
                 type="submit"
                 disabled={!input.trim() || running}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600"
               >
                 {running ? (
                   <>
@@ -794,9 +794,9 @@ function TaskModal({
 
               {/* Result preview */}
               {result.resultPreview && (
-                <div className="rounded-lg border border-white/[0.06] bg-black/40">
-                  <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2">
-                    <span className="text-xs font-medium text-gray-400">Result</span>
+                <div className="rounded-lg border border-border bg-bg-secondary">
+                  <div className="flex items-center justify-between border-b border-border px-4 py-2">
+                    <span className="text-xs font-medium text-text-secondary">Result</span>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(result.resultPreview || "");
@@ -806,7 +806,7 @@ function TaskModal({
                       Copy
                     </button>
                   </div>
-                  <pre className="max-h-80 overflow-auto px-4 py-3 font-mono text-xs leading-relaxed text-gray-300">
+                  <pre className="max-h-80 overflow-auto px-4 py-3 font-mono text-xs leading-relaxed text-text-secondary">
                     {result.resultPreview}
                   </pre>
                 </div>
@@ -819,7 +819,7 @@ function TaskModal({
                     setResult(null);
                     setInput("");
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/[0.06]"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border-light bg-bg-secondary px-4 py-2.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover"
                 >
                   <RefreshCw className="h-4 w-4" />
                   Run another task
@@ -884,23 +884,23 @@ export default function DashboardPage() {
   }, [checkAllHealth]);
 
   return (
-    <div className="min-h-screen bg-[#090b10] text-gray-100">
+    <div className="min-h-screen bg-bg-primary text-text-primary">
       {/* Header */}
-      <header className="border-b border-white/[0.06] bg-[#0c0e14]">
+      <header className="border-b border-border bg-bg-primary">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
-              <Workflow className="h-5 w-5 text-white" />
+              <Workflow className="h-5 w-5 text-text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-white">Constella</h1>
-              <p className="text-xs text-gray-500">AI Operating Platform</p>
+              <h1 className="text-lg font-bold tracking-tight text-text-primary">Constella</h1>
+              <p className="text-xs text-text-tertiary">AI Operating Platform</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {stats.lastChecked && (
-              <span className="hidden text-xs text-gray-500 sm:block">
+              <span className="hidden text-xs text-text-tertiary sm:block">
                 Last checked:{" "}
                 {stats.lastChecked.toLocaleTimeString([], {
                   hour: "2-digit",
@@ -912,7 +912,7 @@ export default function DashboardPage() {
             <button
               onClick={checkAllHealth}
               disabled={refreshing}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/[0.06] disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
               Refresh
@@ -932,10 +932,10 @@ export default function DashboardPage() {
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-white">Quick Actions</h2>
-              <p className="text-xs text-gray-500">Execute common tasks with one click</p>
+              <h2 className="text-sm font-semibold text-text-primary">Quick Actions</h2>
+              <p className="text-xs text-text-tertiary">Execute common tasks with one click</p>
             </div>
-            <Sparkles className="h-4 w-4 text-gray-600" />
+            <Sparkles className="h-4 w-4 text-text-tertiary" />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {QUICK_ACTIONS.map((action) => (
@@ -952,12 +952,12 @@ export default function DashboardPage() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-white">Agent Fleet</h2>
-              <p className="text-xs text-gray-500">
+              <h2 className="text-sm font-semibold text-text-primary">Agent Fleet</h2>
+              <p className="text-xs text-text-tertiary">
                 {stats.healthyAgents} of {stats.totalAgents} agents online
               </p>
             </div>
-            <Activity className="h-4 w-4 text-gray-600" />
+            <Activity className="h-4 w-4 text-text-tertiary" />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {agents.map((agent) => (
@@ -970,10 +970,10 @@ export default function DashboardPage() {
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-white">Infrastructure</h2>
-              <p className="text-xs text-gray-500">Core platform services</p>
+              <h2 className="text-sm font-semibold text-text-primary">Infrastructure</h2>
+              <p className="text-xs text-text-tertiary">Core platform services</p>
             </div>
-            <Server className="h-4 w-4 text-gray-600" />
+            <Server className="h-4 w-4 text-text-tertiary" />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -1009,16 +1009,16 @@ export default function DashboardPage() {
               return (
                 <div
                   key={svc.name}
-                  className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-4 py-3"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.05]">
-                    <SvcIcon className="h-4 w-4 text-gray-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-bg-hover">
+                    <SvcIcon className="h-4 w-4 text-text-secondary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-white">{svc.name}</p>
-                    <p className="text-xs text-gray-500">{svc.description}</p>
+                    <p className="truncate text-sm font-medium text-text-primary">{svc.name}</p>
+                    <p className="text-xs text-text-tertiary">{svc.description}</p>
                   </div>
-                  <span className="font-mono text-xs text-gray-600">:{svc.port}</span>
+                  <span className="font-mono text-xs text-text-tertiary">:{svc.port}</span>
                 </div>
               );
             })}
@@ -1026,12 +1026,12 @@ export default function DashboardPage() {
         </section>
 
         {/* Footer */}
-        <footer className="mt-12 border-t border-white/[0.04] pb-8 pt-6 text-center">
-          <p className="text-xs text-gray-600">
+        <footer className="mt-12 border-t border-border pb-8 pt-6 text-center">
+          <p className="text-xs text-text-tertiary">
             Constella AI Operating Platform &middot; v1.0.0 &middot;{" "}
             <a
               href="/api/health"
-              className="text-gray-500 hover:text-gray-300"
+              className="text-text-tertiary hover:text-text-secondary"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -1040,7 +1040,7 @@ export default function DashboardPage() {
             {" "}&middot;{" "}
             <a
               href="/api/metrics"
-              className="text-gray-500 hover:text-gray-300"
+              className="text-text-tertiary hover:text-text-secondary"
               target="_blank"
               rel="noopener noreferrer"
             >

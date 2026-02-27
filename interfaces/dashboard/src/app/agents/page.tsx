@@ -266,7 +266,7 @@ function StatusBadge({ status }: { status: AgentStatus }) {
     },
     loading: {
       label: "Checking…",
-      classes: "bg-gray-500/10 text-gray-400 border-gray-500/30",
+      classes: "bg-gray-500/10 text-text-secondary border-gray-500/30",
       dot: "bg-gray-400",
     },
   }[status];
@@ -297,7 +297,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="rounded p-1 text-gray-500 transition-colors hover:bg-white/[0.06] hover:text-gray-300"
+      className="rounded p-1 text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-secondary"
       title="Copy"
     >
       {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
@@ -369,39 +369,39 @@ function AgentDrawer({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="relative z-10 flex h-full w-full max-w-lg flex-col overflow-hidden border-l border-white/[0.06] bg-[#0c0e14] shadow-2xl">
+      <div className="relative z-10 flex h-full w-full max-w-lg flex-col overflow-hidden border-l border-border bg-bg-primary shadow-2xl">
         {/* Header */}
-        <div className="flex items-center gap-4 border-b border-white/[0.06] px-6 py-5">
+        <div className="flex items-center gap-4 border-b border-border px-6 py-5">
           <div
             className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${agent.color} shadow-lg`}
           >
-            <Icon className="h-6 w-6 text-white" />
+            <Icon className="h-6 w-6 text-text-primary" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
-              <h2 className="truncate text-lg font-bold text-white">{agent.name}</h2>
+              <h2 className="truncate text-lg font-bold text-text-primary">{agent.name}</h2>
               <StatusBadge status={agent.status} />
             </div>
-            <p className="text-sm text-gray-400">{agent.description}</p>
+            <p className="text-sm text-text-secondary">{agent.description}</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white/[0.06] hover:text-gray-300"
+            className="rounded-lg p-1.5 text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-secondary"
           >
             <XCircle className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-white/[0.06]">
+        <div className="flex border-b border-border">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? "border-b-2 border-blue-500 text-white"
-                  : "text-gray-500 hover:text-gray-300"
+                  ? "border-b-2 border-blue-500 text-text-primary"
+                  : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
               {tab.label}
@@ -415,52 +415,52 @@ function AgentDrawer({
             <div className="space-y-5">
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="rounded-xl border border-border bg-bg-secondary p-4">
+                  <div className="flex items-center gap-2 text-xs text-text-tertiary">
                     <Cpu className="h-3.5 w-3.5" />
                     Port
                   </div>
-                  <p className="mt-1 font-mono text-lg font-bold text-white">{agent.port}</p>
+                  <p className="mt-1 font-mono text-lg font-bold text-text-primary">{agent.port}</p>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="rounded-xl border border-border bg-bg-secondary p-4">
+                  <div className="flex items-center gap-2 text-xs text-text-tertiary">
                     <Clock className="h-3.5 w-3.5" />
                     Latency
                   </div>
-                  <p className="mt-1 text-lg font-bold text-white">
+                  <p className="mt-1 text-lg font-bold text-text-primary">
                     {agent.latencyMs !== null ? `${agent.latencyMs}ms` : "—"}
                   </p>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="rounded-xl border border-border bg-bg-secondary p-4">
+                  <div className="flex items-center gap-2 text-xs text-text-tertiary">
                     <Activity className="h-3.5 w-3.5" />
                     Uptime
                   </div>
-                  <p className="mt-1 text-lg font-bold text-white">{agent.uptime || "—"}</p>
+                  <p className="mt-1 text-lg font-bold text-text-primary">{agent.uptime || "—"}</p>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="rounded-xl border border-border bg-bg-secondary p-4">
+                  <div className="flex items-center gap-2 text-xs text-text-tertiary">
                     <BarChart3 className="h-3.5 w-3.5" />
                     Version
                   </div>
-                  <p className="mt-1 text-lg font-bold text-white">{agent.version || "—"}</p>
+                  <p className="mt-1 text-lg font-bold text-text-primary">{agent.version || "—"}</p>
                 </div>
               </div>
 
               {/* LLM Status */}
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <h3 className="text-sm font-semibold text-white">LLM Integration</h3>
+              <div className="rounded-xl border border-border bg-bg-secondary p-4">
+                <h3 className="text-sm font-semibold text-text-primary">LLM Integration</h3>
                 <div className="mt-2 flex items-center gap-2">
-                  <Bot className={`h-4 w-4 ${agent.llmConfigured ? "text-emerald-400" : "text-gray-600"}`} />
-                  <span className={`text-sm ${agent.llmConfigured ? "text-emerald-400" : "text-gray-500"}`}>
+                  <Bot className={`h-4 w-4 ${agent.llmConfigured ? "text-emerald-400" : "text-text-tertiary"}`} />
+                  <span className={`text-sm ${agent.llmConfigured ? "text-emerald-400" : "text-text-tertiary"}`}>
                     {agent.llmConfigured ? "LLM Provider Connected" : "No LLM provider configured"}
                   </span>
                 </div>
               </div>
 
               {/* Endpoints */}
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <h3 className="mb-3 text-sm font-semibold text-white">Endpoints</h3>
+              <div className="rounded-xl border border-border bg-bg-secondary p-4">
+                <h3 className="mb-3 text-sm font-semibold text-text-primary">Endpoints</h3>
                 <div className="space-y-2">
                   {[
                     { label: "Health", path: `/health` },
@@ -470,9 +470,9 @@ function AgentDrawer({
                     const fullUrl = `${agentUrl(agent.port)}${ep.path}`;
                     return (
                       <div key={ep.label} className="flex items-center justify-between">
-                        <span className="text-xs text-gray-400">{ep.label}</span>
+                        <span className="text-xs text-text-secondary">{ep.label}</span>
                         <div className="flex items-center gap-1">
-                          <code className="rounded bg-white/[0.04] px-2 py-0.5 font-mono text-xs text-gray-300">
+                          <code className="rounded bg-bg-hover px-2 py-0.5 font-mono text-xs text-text-secondary">
                             {fullUrl}
                           </code>
                           <CopyButton text={fullUrl} />
@@ -485,9 +485,9 @@ function AgentDrawer({
 
               {/* Details */}
               {agent.details && (
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                  <h3 className="mb-2 text-sm font-semibold text-white">Health Details</h3>
-                  <pre className="whitespace-pre-wrap break-words font-mono text-xs text-gray-400">
+                <div className="rounded-xl border border-border bg-bg-secondary p-4">
+                  <h3 className="mb-2 text-sm font-semibold text-text-primary">Health Details</h3>
+                  <pre className="whitespace-pre-wrap break-words font-mono text-xs text-text-secondary">
                     {agent.details}
                   </pre>
                 </div>
@@ -497,22 +497,22 @@ function AgentDrawer({
 
           {activeTab === "tasks" && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-400">
-                This agent supports <span className="font-semibold text-white">{agent.taskTypes.length}</span>{" "}
+              <p className="text-sm text-text-secondary">
+                This agent supports <span className="font-semibold text-text-primary">{agent.taskTypes.length}</span>{" "}
                 task types and exposes{" "}
-                <span className="font-semibold text-white">{agent.capabilities.length}</span> capabilities.
+                <span className="font-semibold text-text-primary">{agent.capabilities.length}</span> capabilities.
               </p>
 
               <div>
-                <h3 className="mb-3 text-sm font-semibold text-white">Task Types</h3>
+                <h3 className="mb-3 text-sm font-semibold text-text-primary">Task Types</h3>
                 <div className="space-y-2">
                   {agent.taskTypes.map((tt) => (
                     <div
                       key={tt}
-                      className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+                      className="flex items-center gap-3 rounded-lg border border-border bg-bg-secondary px-4 py-3"
                     >
-                      <Terminal className="h-4 w-4 shrink-0 text-gray-500" />
-                      <code className="font-mono text-sm text-gray-200">{tt}</code>
+                      <Terminal className="h-4 w-4 shrink-0 text-text-tertiary" />
+                      <code className="font-mono text-sm text-text-primary">{tt}</code>
                     </div>
                   ))}
                 </div>
@@ -520,12 +520,12 @@ function AgentDrawer({
 
               {agent.capabilities.length > 0 && (
                 <div>
-                  <h3 className="mb-3 text-sm font-semibold text-white">Capabilities</h3>
+                  <h3 className="mb-3 text-sm font-semibold text-text-primary">Capabilities</h3>
                   <div className="flex flex-wrap gap-2">
                     {agent.capabilities.map((cap) => (
                       <span
                         key={cap}
-                        className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-xs text-gray-300"
+                        className="rounded-full border border-border-light bg-bg-secondary px-3 py-1 text-xs text-text-secondary"
                       >
                         {cap}
                       </span>
@@ -540,32 +540,32 @@ function AgentDrawer({
             <div className="space-y-4">
               {/* Task type selector */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-400">Task Type</label>
+                <label className="mb-1.5 block text-xs font-medium text-text-secondary">Task Type</label>
                 <div className="relative">
                   <select
                     value={taskType}
                     onChange={(e) => setTaskType(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 pr-10 font-mono text-sm text-gray-200 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
+                    className="w-full appearance-none rounded-lg border border-border-light bg-bg-secondary px-4 py-2.5 pr-10 font-mono text-sm text-text-primary outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
                   >
                     {agent.taskTypes.map((tt) => (
-                      <option key={tt} value={tt} className="bg-zinc-900">
+                      <option key={tt} value={tt} className="bg-bg-primary">
                         {tt}
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
                 </div>
               </div>
 
               {/* Input */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-400">Prompt / Code</label>
+                <label className="mb-1.5 block text-xs font-medium text-text-secondary">Prompt / Code</label>
                 <textarea
                   value={taskInput}
                   onChange={(e) => setTaskInput(e.target.value)}
                   placeholder="Enter your prompt or paste code here…"
                   rows={8}
-                  className="w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-3 font-mono text-sm text-gray-200 placeholder-gray-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
+                  className="w-full resize-none rounded-lg border border-border-light bg-bg-secondary px-4 py-3 font-mono text-sm text-text-primary placeholder-gray-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
                 />
               </div>
 
@@ -573,7 +573,7 @@ function AgentDrawer({
               <button
                 onClick={handleExecute}
                 disabled={executing || !taskInput.trim() || agent.status === "unreachable"}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-text-primary shadow-lg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {executing ? (
                   <>
@@ -606,15 +606,15 @@ function AgentDrawer({
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-sm font-medium text-emerald-400">Result</p>
                     {taskResult.execution_time_ms && (
-                      <span className="text-xs text-gray-500">{taskResult.execution_time_ms.toFixed(0)}ms</span>
+                      <span className="text-xs text-text-tertiary">{taskResult.execution_time_ms.toFixed(0)}ms</span>
                     )}
                   </div>
                   {taskResult.confidence_score !== undefined && (
-                    <p className="mb-2 text-xs text-gray-400">
-                      Confidence: <span className="text-white">{(taskResult.confidence_score * 100).toFixed(0)}%</span>
+                    <p className="mb-2 text-xs text-text-secondary">
+                      Confidence: <span className="text-text-primary">{(taskResult.confidence_score * 100).toFixed(0)}%</span>
                     </p>
                   )}
-                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/30 p-3 font-mono text-xs text-gray-300">
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-bg-secondary p-3 font-mono text-xs text-text-secondary">
                     {JSON.stringify(taskResult.result, null, 2)}
                   </pre>
                 </div>
@@ -645,7 +645,7 @@ function FilterBar({
   agentCounts: Record<string, number>;
 }) {
   const filters: { id: AgentStatus | "all"; label: string; color: string }[] = [
-    { id: "all", label: "All", color: "text-gray-300" },
+    { id: "all", label: "All", color: "text-text-secondary" },
     { id: "healthy", label: "Healthy", color: "text-emerald-400" },
     { id: "degraded", label: "Degraded", color: "text-yellow-400" },
     { id: "unreachable", label: "Offline", color: "text-red-400" },
@@ -661,8 +661,8 @@ function FilterBar({
             onClick={() => setFilter(f.id)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               filter === f.id
-                ? "bg-white/[0.08] text-white"
-                : "text-gray-500 hover:bg-white/[0.04] hover:text-gray-300"
+                ? "bg-bg-hover text-text-primary"
+                : "text-text-tertiary hover:bg-bg-hover hover:text-text-secondary"
             }`}
           >
             {f.label}
@@ -677,13 +677,13 @@ function FilterBar({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search agents…"
-          className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] py-2 pl-9 pr-4 text-sm text-gray-200 placeholder-gray-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 sm:w-64"
+          className="w-full rounded-lg border border-border-light bg-bg-secondary py-2 pl-9 pr-4 text-sm text-text-primary placeholder-gray-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 sm:w-64"
         />
       </div>
     </div>
@@ -706,7 +706,7 @@ function AgentCard({
   return (
     <button
       onClick={() => onSelect(agent)}
-      className="group relative flex flex-col rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 text-left transition-all hover:border-white/[0.12] hover:bg-white/[0.04] hover:shadow-lg hover:shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+      className="group relative flex flex-col rounded-xl border border-border bg-bg-secondary p-5 text-left transition-all hover:border-border-light hover:bg-bg-hover hover:shadow-lg hover:shadow-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
     >
       {/* Gradient glow */}
       <div
@@ -717,15 +717,15 @@ function AgentCard({
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${agent.color} shadow-lg`}
         >
-          <Icon className="h-5 w-5 text-white" />
+          <Icon className="h-5 w-5 text-text-primary" />
         </div>
         <StatusBadge status={agent.status} />
       </div>
 
-      <h3 className="mt-4 text-sm font-semibold text-white">{agent.name}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-gray-400">{agent.description}</p>
+      <h3 className="mt-4 text-sm font-semibold text-text-primary">{agent.name}</h3>
+      <p className="mt-1 text-xs leading-relaxed text-text-secondary">{agent.description}</p>
 
-      <div className="mt-4 flex items-center gap-3 text-xs text-gray-500">
+      <div className="mt-4 flex items-center gap-3 text-xs text-text-tertiary">
         {agent.latencyMs !== null && (
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
@@ -808,13 +808,13 @@ export default function AgentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090b10] text-gray-100">
+    <div className="min-h-screen bg-bg-primary text-text-primary">
       {/* Header */}
-      <header className="border-b border-white/[0.06] bg-[#0c0e14]">
+      <header className="border-b border-border bg-bg-primary">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">Agents</h1>
-            <p className="text-xs text-gray-500">
+            <h1 className="text-lg font-bold tracking-tight text-text-primary">Agents</h1>
+            <p className="text-xs text-text-tertiary">
               {counts.total} agents &middot; {counts.healthy} healthy &middot; {counts.degraded} degraded &middot;{" "}
               {counts.unreachable} offline
             </p>
@@ -822,7 +822,7 @@ export default function AgentsPage() {
           <button
             onClick={checkAll}
             disabled={refreshing}
-            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/[0.06] disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg border border-border-light bg-bg-secondary px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-hover disabled:opacity-50"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
             Refresh
@@ -850,7 +850,7 @@ export default function AgentsPage() {
         {filtered.length === 0 && (
           <div className="mt-12 text-center">
             <Bot className="mx-auto h-12 w-12 text-gray-700" />
-            <p className="mt-3 text-sm text-gray-500">No agents match your filters.</p>
+            <p className="mt-3 text-sm text-text-tertiary">No agents match your filters.</p>
           </div>
         )}
       </main>
