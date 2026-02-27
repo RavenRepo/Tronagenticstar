@@ -15,7 +15,7 @@ import { createAgentsRouter } from "./routes/agents";
 import { createHealthRouter } from "./routes/health";
 import { createMetricsRouter } from "./routes/metrics";
 
-const app = express();
+const app: express.Application = express();
 
 // Security Headers
 app.use(

@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Development stage
 FROM base AS development
@@ -31,7 +31,7 @@ COPY . .
 RUN pnpm run build
 
 # Production dependencies only
-RUN pnpm install --frozen-lockfile --production
+RUN pnpm install --production
 
 # Production stage
 FROM node:18-alpine AS production

@@ -1,5 +1,9 @@
 Method,Name,Error,Occurrences
-POST,/soc2-compliance/execute_task,CatchResponseError('Failed with status 0: '),6
-POST,/perfpulse/execute_task,CatchResponseError('Failed with status 0: '),9
-GET,/evaluator/capabilities,"ConnectionRefusedError(111, 'Connection refused')",1
-GET,/health,"ConnectionRefusedError(111, 'Connection refused')",10
+GET,/codecraft/capabilities,"ConnectionRefusedError(111, 'Connection refused')",1
+POST,/soc2-compliance/execute_task,CatchResponseError('Failed with status 0: '),11
+GET,/soc2-compliance/capabilities,"ConnectionRefusedError(111, 'Connection refused')",2
+GET,/perfpulse/capabilities,"ConnectionRefusedError(111, 'Connection refused')",1
+POST,/perfpulse/execute_task,CatchResponseError('Failed with status 0: '),30
+GET,/evaluator/capabilities,"ConnectionRefusedError(111, 'Connection refused')",5
+GET,/health,"ConnectionRefusedError(111, 'Connection refused')",44
+GET,/securishield/capabilities,"ConnectionRefusedError(111, 'Connection refused')",2
