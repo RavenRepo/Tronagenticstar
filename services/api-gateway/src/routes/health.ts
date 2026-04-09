@@ -2,6 +2,7 @@ import express, { Router, Request, Response } from 'express';
 import { logger } from '../utils/logger';
 import { config } from '../config';
 import axios, { AxiosError } from 'axios';
+import * as os from 'os';
 
 export interface HealthCheckResult {
   service: string;
@@ -10,6 +11,34 @@ export interface HealthCheckResult {
   error?: string;
   lastChecked: string;
   details?: Record<string, any>;
+}
+
+export interface MemoryStatus {
+  heapUsedMB: number;
+  heapTotalMB: number;
+  heapUsagePercent: number;
+  rssMB: number;
+  externalMB: number;
+  systemTotalMB: number;
+  systemFreeMB: number;
+  systemUsagePercent: number;
+  status: 'healthy' | 'warning' | 'critical';
+}
+
+export interface ConnectionPoolStatus {
+  activeConnections: number;
+  maxConnections: number;
+  availableConnections: number;
+  utilizationPercent: number;
+  status: 'healthy' | 'warning' | 'critical';
+}
+
+export interface OrchestratorConnectivity {
+  status: 'connected' | 'disconnected' | 'degraded';
+  url: string;
+  lastSuccessfulConnection?: string;
+  responseTimeMs?: number;
+  error?: string;
 }
 
 export interface SystemHealthResponse {
@@ -29,6 +58,135 @@ export interface SystemHealthResponse {
       usage: number;
     };
   };
+}
+
+// Connection pool tracking (simulated - in production, integrate with actual pool)
+let connectionPoolStats = {
+  activeConnections: 0,
+  maxConnections: parseInt(process.env.MAX_CONNECTIONS || '100'),
+  lastUpdated: new Date().toISOString(),
+};
+
+// Track orchestrator connectivity
+let orchestratorLastSuccess: string | undefined;
+
+/**
+ * Get detailed memory status with health thresholds
+ */
+function getMemoryStatus(): MemoryStatus {
+  const memoryUsage = process.memoryUsage();
+  const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
+  const heapTotalMB = memoryUsage.heapTotal / 1024 / 1024;
+  const heapUsagePercent = (heapUsedMB / heapTotalMB) * 100;
+  const rssMB = memoryUsage.rss / 1024 / 1024;
+  const externalMB = memoryUsage.external / 1024 / 1024;
+  const systemTotalMB = os.totalmem() / 1024 / 1024;
+  const systemFreeMB = os.freemem() / 1024 / 1024;
+  const systemUsagePercent = ((systemTotalMB - systemFreeMB) / systemTotalMB) * 100;
+
+  // Determine memory health status
+  const heapThresholdWarning = parseFloat(process.env.MEMORY_WARNING_THRESHOLD || '70');
+  const heapThresholdCritical = parseFloat(process.env.MEMORY_CRITICAL_THRESHOLD || '90');
+
+  let status: 'healthy' | 'warning' | 'critical' = 'healthy';
+  if (heapUsagePercent >= heapThresholdCritical) {
+    status = 'critical';
+  } else if (heapUsagePercent >= heapThresholdWarning) {
+    status = 'warning';
+  }
+
+  return {
+    heapUsedMB: Math.round(heapUsedMB * 100) / 100,
+    heapTotalMB: Math.round(heapTotalMB * 100) / 100,
+    heapUsagePercent: Math.round(heapUsagePercent * 100) / 100,
+    rssMB: Math.round(rssMB * 100) / 100,
+    externalMB: Math.round(externalMB * 100) / 100,
+    systemTotalMB: Math.round(systemTotalMB * 100) / 100,
+    systemFreeMB: Math.round(systemFreeMB * 100) / 100,
+    systemUsagePercent: Math.round(systemUsagePercent * 100) / 100,
+    status,
+  };
+}
+
+/**
+ * Get connection pool status
+ */
+function getConnectionPoolStatus(): ConnectionPoolStatus {
+  const { activeConnections, maxConnections } = connectionPoolStats;
+  const availableConnections = maxConnections - activeConnections;
+  const utilizationPercent = (activeConnections / maxConnections) * 100;
+
+  const utilizationWarning = parseFloat(process.env.POOL_WARNING_THRESHOLD || '70');
+  const utilizationCritical = parseFloat(process.env.POOL_CRITICAL_THRESHOLD || '90');
+
+  let status: 'healthy' | 'warning' | 'critical' = 'healthy';
+  if (utilizationPercent >= utilizationCritical) {
+    status = 'critical';
+  } else if (utilizationPercent >= utilizationWarning) {
+    status = 'warning';
+  }
+
+  return {
+    activeConnections,
+    maxConnections,
+    availableConnections,
+    utilizationPercent: Math.round(utilizationPercent * 100) / 100,
+    status,
+  };
+}
+
+/**
+ * Check orchestrator connectivity
+ */
+async function checkOrchestratorConnectivity(): Promise<OrchestratorConnectivity> {
+  const orchestratorService = config.services.find(s => s.name === 'orchestrator');
+  
+  if (!orchestratorService) {
+    return {
+      status: 'disconnected',
+      url: 'not configured',
+      error: 'Orchestrator service not configured',
+    };
+  }
+
+  const startTime = Date.now();
+  
+  try {
+    await axios.get(`${orchestratorService.url}${orchestratorService.healthPath}`, {
+      timeout: 5000,
+      headers: {
+        'user-agent': 'AgentForge-Gateway-HealthCheck/1.0.0',
+      },
+    });
+
+    const responseTimeMs = Date.now() - startTime;
+    orchestratorLastSuccess = new Date().toISOString();
+
+    return {
+      status: 'connected',
+      url: orchestratorService.url,
+      lastSuccessfulConnection: orchestratorLastSuccess,
+      responseTimeMs,
+    };
+  } catch (error) {
+    const responseTimeMs = Date.now() - startTime;
+    
+    return {
+      status: 'disconnected',
+      url: orchestratorService.url,
+      lastSuccessfulConnection: orchestratorLastSuccess,
+      responseTimeMs,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Update connection pool stats (call this from request middleware)
+ */
+export function updateConnectionPool(active: number): void {
+  connectionPoolStats.activeConnections = active;
+  connectionPoolStats.lastUpdated = new Date().toISOString();
 }
 
 /**

@@ -1,0 +1,34 @@
+# Python coverage configuration
+# Minimum thresholds: 70% line, 60% branch
+
+[run]
+source = services
+branch = True
+omit =
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */test_venv/*
+    */.pytest_cache/*
+    */node_modules/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    raise AssertionError
+    if TYPE_CHECKING:
+
+# Coverage thresholds
+fail_under = 70
+show_missing = True
+precision = 2
+
+[html]
+directory = coverage_html_report
+
+[xml]
+output = coverage.xml

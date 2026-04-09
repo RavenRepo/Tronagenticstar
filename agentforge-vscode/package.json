@@ -1,9 +1,9 @@
 {
-  "name": "agentforge",
-  "displayName": "AgentForge - AI Agent Orchestration",
-  "description": "Orchestrate AI agents for comprehensive software development",
-  "version": "0.1.0",
-  "publisher": "agentforge",
+  "name": "tronagenticstar",
+  "displayName": "Tronagenticstar - AI Agent Orchestration",
+  "description": "Orchestrate AI agents for comprehensive software development with skills, MCP tools, and advanced agent types",
+  "version": "0.2.0",
+  "publisher": "tronagenticstar",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -15,7 +15,9 @@
     "agents",
     "orchestration",
     "development",
-    "automation"
+    "automation",
+    "skills",
+    "mcp"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -24,72 +26,126 @@
   "contributes": {
     "commands": [
       {
-        "command": "agentforge.showActivity",
+        "command": "tronagenticstar.showActivity",
         "title": "Show Agent Activity",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(pulse)"
       },
       {
-        "command": "agentforge.openChat",
+        "command": "tronagenticstar.openChat",
         "title": "Chat with Agents",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(comment-discussion)"
       },
       {
-        "command": "agentforge.showDashboard",
+        "command": "tronagenticstar.showDashboard",
         "title": "Project Dashboard",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(dashboard)"
       },
       {
-        "command": "agentforge.showSettings",
+        "command": "tronagenticstar.showSettings",
         "title": "Settings",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "agentforge.triggerArchitectureAnalysis",
+        "command": "tronagenticstar.triggerArchitectureAnalysis",
         "title": "Analyze Architecture",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(graph)"
       },
       {
-        "command": "agentforge.triggerSecurityScan",
+        "command": "tronagenticstar.triggerSecurityScan",
         "title": "Security Scan",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(shield)"
       },
       {
-        "command": "agentforge.triggerQualityCheck",
+        "command": "tronagenticstar.triggerQualityCheck",
         "title": "Quality Check",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(verified)"
       },
       {
-        "command": "agentforge.generateAgent",
+        "command": "tronagenticstar.generateAgent",
         "title": "Generate New Agent",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(add)"
       },
       {
-        "command": "agentforge.refreshActivity",
+        "command": "tronagenticstar.refreshActivity",
         "title": "Refresh",
-        "category": "AgentForge",
+        "category": "Tronagenticstar",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "tronagenticstar.executeTool",
+        "title": "Execute Tool",
+        "category": "Tronagenticstar | Tools",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "tronagenticstar.listTools",
+        "title": "List Available Tools",
+        "category": "Tronagenticstar | Tools",
+        "icon": "$(list)"
+      },
+      {
+        "command": "tronagenticstar.forkAgent",
+        "title": "Fork Subagent",
+        "category": "Tronagenticstar | Agents",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "tronagenticstar.exploreFiles",
+        "title": "Explore Files",
+        "category": "Tronagenticstar | Agents",
+        "icon": "$(files)"
+      },
+      {
+        "command": "tronagenticstar.verifyChanges",
+        "title": "Verify Changes",
+        "category": "Tronagenticstar | Agents",
+        "icon": "$(check)"
+      },
+      {
+        "command": "tronagenticstar.listSkills",
+        "title": "List Skills",
+        "category": "Tronagenticstar | Skills",
+        "icon": "$(package)"
+      },
+      {
+        "command": "tronagenticstar.executeSkill",
+        "title": "Execute Skill",
+        "category": "Tronagenticstar | Skills",
+        "icon": "$(play)"
+      },
+      {
+        "command": "tronagenticstar.connectMCP",
+        "title": "Connect MCP Server",
+        "category": "Tronagenticstar | MCP",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "tronagenticstar.listMCPTools",
+        "title": "List MCP Tools",
+        "category": "Tronagenticstar | MCP",
+        "icon": "$(list-flat)"
       }
     ],
     "views": {
-      "agentforge": [
+      "tronagenticstar": [
         {
-          "id": "agentforge.activity",
+          "id": "tronagenticstar.activity",
           "name": "Agent Activity",
-          "when": "agentforge.enabled",
+          "when": "tronagenticstar.enabled",
           "icon": "$(pulse)"
         },
         {
-          "id": "agentforge.agents",
+          "id": "tronagenticstar.agents",
           "name": "Available Agents",
-          "when": "agentforge.enabled",
+          "when": "tronagenticstar.enabled",
           "icon": "$(robot)"
         }
       ]
@@ -97,8 +153,8 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "agentforge",
-          "title": "AgentForge",
+          "id": "tronagenticstar",
+          "title": "Tronagenticstar",
           "icon": "$(robot)"
         }
       ]
@@ -106,51 +162,87 @@
     "menus": {
       "view/title": [
         {
-          "command": "agentforge.refreshActivity",
-          "when": "view == agentforge.activity",
+          "command": "tronagenticstar.refreshActivity",
+          "when": "view == tronagenticstar.activity",
           "group": "navigation"
         }
       ],
       "commandPalette": [
         {
-          "command": "agentforge.showActivity",
-          "when": "agentforge.enabled"
+          "command": "tronagenticstar.showActivity",
+          "when": "tronagenticstar.enabled"
         },
         {
-          "command": "agentforge.openChat",
-          "when": "agentforge.enabled"
+          "command": "tronagenticstar.openChat",
+          "when": "tronagenticstar.enabled"
         },
         {
-          "command": "agentforge.showDashboard",
-          "when": "agentforge.enabled"
+          "command": "tronagenticstar.showDashboard",
+          "when": "tronagenticstar.enabled"
         },
         {
-          "command": "agentforge.triggerArchitectureAnalysis",
-          "when": "agentforge.enabled"
+          "command": "tronagenticstar.triggerArchitectureAnalysis",
+          "when": "tronagenticstar.enabled"
         },
         {
-          "command": "agentforge.triggerSecurityScan",
-          "when": "agentforge.enabled"
+          "command": "tronagenticstar.triggerSecurityScan",
+          "when": "tronagenticstar.enabled"
         },
         {
-          "command": "agentforge.triggerQualityCheck",
-          "when": "agentforge.enabled"
+          "command": "tronagenticstar.triggerQualityCheck",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.executeTool",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.listTools",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.forkAgent",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.exploreFiles",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.verifyChanges",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.listSkills",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.executeSkill",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.connectMCP",
+          "when": "tronagenticstar.enabled"
+        },
+        {
+          "command": "tronagenticstar.listMCPTools",
+          "when": "tronagenticstar.enabled"
         }
       ]
     },
     "configuration": {
-      "title": "AgentForge",
+      "title": "Tronagenticstar",
       "properties": {
-        "agentforge.gatewayUrl": {
+        "tronagenticstar.gatewayUrl": {
           "type": "string",
           "default": "http://localhost:3000",
-          "description": "URL of the Constella API Gateway"
+          "description": "URL of the Tronagenticstar API Gateway"
         },
-        "agentforge.apiKey": {
+        "tronagenticstar.apiKey": {
           "type": "string",
           "description": "API key for gateway authentication (or JWT token)"
         },
-        "agentforge.authType": {
+        "tronagenticstar.authType": {
           "type": "string",
           "enum": [
             "apikey",
@@ -159,27 +251,27 @@
           "default": "apikey",
           "description": "Authentication type for API Gateway"
         },
-        "agentforge.enableRealTimeUpdates": {
+        "tronagenticstar.enableRealTimeUpdates": {
           "type": "boolean",
           "default": true,
           "description": "Enable real-time updates via WebSocket"
         },
-        "agentforge.rateLimitWarning": {
+        "tronagenticstar.rateLimitWarning": {
           "type": "boolean",
           "default": true,
           "description": "Show warnings when approaching rate limits"
         },
-        "agentforge.autoRetry": {
+        "tronagenticstar.autoRetry": {
           "type": "boolean",
           "default": true,
           "description": "Automatically retry failed requests with exponential backoff"
         },
-        "agentforge.requestTimeout": {
+        "tronagenticstar.requestTimeout": {
           "type": "number",
           "default": 30000,
           "description": "Request timeout in milliseconds"
         },
-        "agentforge.logLevel": {
+        "tronagenticstar.logLevel": {
           "type": "string",
           "enum": [
             "debug",
@@ -188,12 +280,38 @@
             "error"
           ],
           "default": "info",
-          "description": "Logging level for AgentForge extension"
+          "description": "Logging level for Tronagenticstar extension"
         },
-        "agentforge.enableServiceProxy": {
+        "tronagenticstar.enableServiceProxy": {
           "type": "boolean",
           "default": false,
           "description": "Enable direct service proxy features (advanced)"
+        },
+        "tronagenticstar.enableTeamMemory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable team memory for shared context between agents"
+        },
+        "tronagenticstar.enableHooks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hook system for custom event handling"
+        },
+        "tronagenticstar.defaultAgentType": {
+          "type": "string",
+          "enum": [
+            "generalPurpose",
+            "explore",
+            "plan",
+            "verification"
+          ],
+          "default": "generalPurpose",
+          "description": "Default agent type for new agents"
+        },
+        "tronagenticstar.mcpServers": {
+          "type": "array",
+          "default": [],
+          "description": "MCP server configurations"
         }
       }
     }
@@ -226,10 +344,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/agentforge-vscode.git"
+    "url": "https://github.com/your-org/tronagenticstar.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/agentforge-vscode/issues"
+    "url": "https://github.com/your-org/tronagenticstar/issues"
   },
-  "homepage": "https://github.com/your-org/agentforge-vscode#readme"
+  "homepage": "https://github.com/your-org/tronagenticstar#readme"
 }

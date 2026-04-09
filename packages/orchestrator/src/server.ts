@@ -1,28 +1,40 @@
-import express from 'express';
-import cors from 'cors';
-import { ChiefArchitect } from './chiefArchitect.js';
-import { AgentFactory } from './agentFactory.js';
-import { ArchitectureAgent, SecurityAgent, QualityAgent } from './concreteAgents.js';
-import { TaskType } from './types.js';
-import axios from 'axios';
+import express from "express";
+import cors from "cors";
+import { ChiefArchitect } from "./chiefArchitect.js";
+import { AgentFactory } from "./agentFactory.js";
+import {
+  ArchitectureAgent,
+  SecurityAgent,
+  QualityAgent,
+} from "./concreteAgents.js";
+import { TaskType } from "./types.js";
+import { SwarmOrchestrator } from "./swarmOrchestrator.js";
+import axios from "axios";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // Simple API key authentication middleware (optional)
-const API_KEYS = (process.env.API_KEYS || process.env.API_KEY || '').split(',').map((k) => k.trim()).filter(Boolean);
+const API_KEYS = (process.env.API_KEYS || process.env.API_KEY || "")
+  .split(",")
+  .map((k) => k.trim())
+  .filter(Boolean);
 app.use((req, res, next) => {
-  if (req.path === '/health' || req.path === '/' || req.path.startsWith('/api/codecraft')) {
+  if (
+    req.path === "/health" ||
+    req.path === "/" ||
+    req.path.startsWith("/api/codecraft")
+  ) {
     // Allow health, root, and legacy thin endpoints without API key
     return next();
   }
   if (API_KEYS.length === 0) {
     return next();
   }
-  const key = (req.headers['x-api-key'] as string) || '';
+  const key = (req.headers["x-api-key"] as string) || "";
   if (!key || !API_KEYS.includes(key)) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: "Unauthorized" });
   }
   return next();
 });
@@ -30,40 +42,137 @@ app.use((req, res, next) => {
 // Initialize in-memory orchestrator
 const orchestrator = new ChiefArchitect();
 
+// ── Swarm Orchestrator (LLM-driven multi-agent intelligence) ────────────────
+// This is the brain that takes natural language and decides which agents to call.
+// Falls back gracefully if no LLM API keys are configured.
+let swarm: SwarmOrchestrator | null = null;
+
+function initializeSwarmOrchestrator(): void {
+  const llmApiKeys = {
+    openai: process.env.OPENAI_API_KEY,
+    anthropic: process.env.ANTHROPIC_API_KEY,
+    gemini: process.env.GEMINI_API_KEY,
+    openrouter: process.env.OPENROUTER_API_KEY,
+  };
+
+  // Need at least one LLM key to enable the swarm orchestrator
+  const hasAnyKey = Object.values(llmApiKeys).some(
+    (k) => k && k.trim().length > 0,
+  );
+  if (!hasAnyKey) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[SwarmOrchestrator] No LLM API keys found. /v1/chat endpoint will return 503. " +
+        "Set OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or OPENROUTER_API_KEY to enable.",
+    );
+    return;
+  }
+
+  try {
+    const router = (orchestrator as any).router;
+    const registry = orchestrator.getRegistry();
+    const memoryBank = orchestrator.getMemoryBank();
+
+    swarm = new SwarmOrchestrator(
+      {
+        llmApiKeys,
+        maxAgentCalls: Number(process.env.SWARM_MAX_AGENT_CALLS || 5),
+        pipelineTimeoutMs: Number(
+          process.env.SWARM_PIPELINE_TIMEOUT_MS || 120000,
+        ),
+        useMemoryContext: process.env.SWARM_USE_MEMORY !== "false",
+      },
+      router,
+      registry,
+      memoryBank,
+    );
+
+    // Wire up observability events
+    swarm.on("pipeline_start", (e) => {
+      // eslint-disable-next-line no-console
+      console.log(`[Swarm] Pipeline start: "${e.userMessage.slice(0, 80)}..."`);
+    });
+    swarm.on("planning_complete", (e) => {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[Swarm] Plan: ${e.plan.complexity} — ${e.plan.steps.length} step(s), confidence ${e.plan.confidence}`,
+      );
+    });
+    swarm.on("step_start", (e) => {
+      // eslint-disable-next-line no-console
+      console.log(`[Swarm]   → Step ${e.stepIndex}: ${e.agentId}.${e.action}`);
+    });
+    swarm.on("step_complete", (e) => {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[Swarm]   ✓ Step ${e.stepIndex}: ${e.agentId} (${e.durationMs}ms)`,
+      );
+    });
+    swarm.on("step_error", (e) => {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[Swarm]   ✗ Step ${e.stepIndex}: ${e.agentId} — ${e.error}`,
+      );
+    });
+    swarm.on("pipeline_complete", (e) => {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[Swarm] Pipeline complete: ${e.agentsUsed.join(", ")} — ${e.successCount}/${e.stepCount} steps — ${e.totalDurationMs}ms`,
+      );
+    });
+    swarm.on("pipeline_error", (e) => {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[Swarm] Pipeline error: ${e.error} (${e.totalDurationMs}ms)`,
+      );
+    });
+    swarm.on("planning_fallback", (e) => {
+      // eslint-disable-next-line no-console
+      console.warn(`[Swarm] Planning fell back to heuristics: ${e.error}`);
+    });
+
+    // eslint-disable-next-line no-console
+    console.log("[SwarmOrchestrator] Initialized — /v1/chat is live");
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error("[SwarmOrchestrator] Failed to initialize:", e);
+  }
+}
+
 async function registerDefaultAgents() {
   try {
     // Register available agent classes with the factory
-    AgentFactory.registerAgentType('architecture', ArchitectureAgent);
-    AgentFactory.registerAgentType('security', SecurityAgent);
-    AgentFactory.registerAgentType('quality', QualityAgent);
+    AgentFactory.registerAgentType("architecture", ArchitectureAgent);
+    AgentFactory.registerAgentType("security", SecurityAgent);
+    AgentFactory.registerAgentType("quality", QualityAgent);
 
     // Architecture
     await orchestrator.registerAgent(
-      'architecture-agent-001',
-      'architecture',
+      "architecture-agent-001",
+      "architecture",
       TaskType.ARCHITECTURE,
-      ['analyze_architecture', 'generate_c4_model', 'suggest_patterns'],
-      {}
+      ["analyze_architecture", "generate_c4_model", "suggest_patterns"],
+      {},
     );
     // Security
     await orchestrator.registerAgent(
-      'security-agent-001',
-      'security',
+      "security-agent-001",
+      "security",
       TaskType.SECURITY,
-      ['security_scan', 'policy_check', 'vulnerability_assessment'],
-      {}
+      ["security_scan", "policy_check", "vulnerability_assessment"],
+      {},
     );
     // Quality
     await orchestrator.registerAgent(
-      'quality-agent-001',
-      'quality',
+      "quality-agent-001",
+      "quality",
       TaskType.QUALITY,
-      ['code_quality_check', 'run_tests', 'analyze_coverage'],
-      {}
+      ["code_quality_check", "run_tests", "analyze_coverage"],
+      {},
     );
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.error('Agent registration failed', e);
+    console.error("Agent registration failed", e);
   }
 }
 registerDefaultAgents();
@@ -71,18 +180,22 @@ registerDefaultAgents();
 // Optionally discover external HTTP agents (ADR-012 compliant)
 async function registerExternalAgents() {
   const endpoints = [
-    process.env.CODECRAFT_URL || 'http://localhost:8012',
-    process.env.SECURISHIELD_URL || 'http://localhost:8011',
-    process.env.PERFPULSE_URL || 'http://localhost:8013',
-    process.env.DESIGNFORGE_URL || 'http://localhost:8010',
-    process.env.EVALUATOR_URL || 'http://localhost:8014',
+    process.env.CODECRAFT_URL || "http://localhost:8012",
+    process.env.SECURISHIELD_URL || "http://localhost:8011",
+    process.env.PERFPULSE_URL || "http://localhost:8013",
+    process.env.DESIGNFORGE_URL || "http://localhost:8010",
+    process.env.EVALUATOR_URL || "http://localhost:8014",
   ];
   for (const url of endpoints) {
     try {
-      const info = await orchestrator.getRegistry().discoverAndRegisterAgent(url);
+      const info = await orchestrator
+        .getRegistry()
+        .discoverAndRegisterAgent(url);
       if (info) {
         // eslint-disable-next-line no-console
-        console.log(`Discovered external agent at ${url}: ${info.id} (${info.specialization})`);
+        console.log(
+          `Discovered external agent at ${url}: ${info.id} (${info.specialization})`,
+        );
       } else {
         // eslint-disable-next-line no-console
         console.warn(`No capabilities discovered at ${url}`);
@@ -96,38 +209,38 @@ async function registerExternalAgents() {
 registerExternalAgents();
 
 // Root - simple index
-app.get('/', (_req, res) => {
+app.get("/", (_req, res) => {
   res.status(200).json({
-    message: 'AgentForge Orchestrator',
-    status: 'ok',
-    endpoints: ['/health', '/api/agents', '/api/activity', '/api/metrics']
+    message: "AgentForge Orchestrator",
+    status: "ok",
+    endpoints: ["/health", "/api/agents", "/api/activity", "/api/metrics"],
   });
 });
 
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok' });
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
 // Lightweight agents listing from registry
-app.get('/api/agents', (_req, res) => {
+app.get("/api/agents", (_req, res) => {
   const agents = orchestrator.getRegistry().getAllAgents();
   res.json(agents);
 });
 
 // Recent activity placeholder (returns memory summary)
-app.get('/api/activity', (_req, res) => {
+app.get("/api/activity", (_req, res) => {
   const mem = orchestrator.getMemoryBank().getSharedContext(undefined, 50);
   res.json(mem);
 });
 
 // Metrics placeholder (error stats + memory stats)
-app.get('/api/metrics', async (_req, res) => {
+app.get("/api/metrics", async (_req, res) => {
   const health = await orchestrator.getSystemHealth();
   res.json({ health });
 });
 
 // Trigger an agent task from the extension
-app.post('/api/agents/:name/trigger', async (req, res) => {
+app.post("/api/agents/:name/trigger", async (req, res) => {
   const { name } = req.params;
   const { action, parameters = {} } = req.body || {};
 
@@ -146,8 +259,8 @@ app.post('/api/agents/:name/trigger', async (req, res) => {
 
   // Normalize action mismatches for quality
   let normalizedAction = action;
-  if (taskType === TaskType.QUALITY && action === 'quality_check') {
-    normalizedAction = 'code_quality_check';
+  if (taskType === TaskType.QUALITY && action === "quality_check") {
+    normalizedAction = "code_quality_check";
   }
 
   const taskId = `task_${Date.now()}`;
@@ -157,22 +270,27 @@ app.post('/api/agents/:name/trigger', async (req, res) => {
       type: taskType,
       parameters: { ...parameters, action: normalizedAction },
       priority: 5,
-      manifestHash: 'vscode',
+      manifestHash: "vscode",
     } as any);
-    res.json({ taskId, status: 'accepted', result });
+    res.json({ taskId, status: "accepted", result });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || 'failed' });
+    res.status(500).json({ error: err?.message || "failed" });
   }
 });
 
 // Stub for agent generation
-app.post('/api/agents/generate', (_req, res) => {
-  res.json({ status: 'ok' });
+app.post("/api/agents/generate", (_req, res) => {
+  res.json({ status: "ok" });
 });
 
 // Minimal vertical slice endpoints for CodeCraft (external HTTP agent)
-app.post('/api/codecraft/generate', async (req, res) => {
-  const { prompt, language = 'python', style = 'clean', max_lines = 100 } = req.body || {};
+app.post("/api/codecraft/generate", async (req, res) => {
+  const {
+    prompt,
+    language = "python",
+    style = "clean",
+    max_lines = 100,
+  } = req.body || {};
   if (!prompt) {
     return res.status(422).json({ error: "'prompt' is required" });
   }
@@ -181,18 +299,24 @@ app.post('/api/codecraft/generate', async (req, res) => {
     const result = await orchestrator.handleRequest({
       id: taskId,
       type: TaskType.CODE_GENERATION,
-      parameters: { prompt, language, style, max_lines, action: 'generate_code' },
+      parameters: {
+        prompt,
+        language,
+        style,
+        max_lines,
+        action: "generate_code",
+      },
       priority: 5,
-      manifestHash: 'api',
+      manifestHash: "api",
     } as any);
     res.json({ taskId, result });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || 'failed' });
+    res.status(500).json({ error: err?.message || "failed" });
   }
 });
 
 // Additional thin endpoints for other agents
-app.post('/api/securishield/scan', async (req, res) => {
+app.post("/api/securishield/scan", async (req, res) => {
   const { target } = req.body || {};
   if (!target) return res.status(422).json({ error: "'target' is required" });
   const taskId = `sec_scan_${Date.now()}`;
@@ -200,104 +324,128 @@ app.post('/api/securishield/scan', async (req, res) => {
     const result = await orchestrator.handleRequest({
       id: taskId,
       type: TaskType.SECURITY,
-      parameters: { target, action: 'scan_target' },
+      parameters: { target, action: "scan_target" },
     } as any);
     res.json({ taskId, result });
   } catch (err: any) {
     try {
-      const url = process.env.SECURISHIELD_URL || 'http://localhost:8011';
-      const resp = await axios.post(`${url}/execute_task`, {
-        task_id: taskId,
-        task_type: 'scan_target',
-        parameters: { target },
-      }, { timeout: 10000 });
+      const url = process.env.SECURISHIELD_URL || "http://localhost:8011";
+      const resp = await axios.post(
+        `${url}/execute_task`,
+        {
+          task_id: taskId,
+          task_type: "scan_target",
+          parameters: { target },
+        },
+        { timeout: 10000 },
+      );
       res.json({ taskId, result: resp.data });
     } catch (e: any) {
-      res.status(500).json({ error: e?.message || err?.message || 'failed' });
+      res.status(500).json({ error: e?.message || err?.message || "failed" });
     }
   }
 });
 
-app.post('/api/perfpulse/analyze', async (req, res) => {
+app.post("/api/perfpulse/analyze", async (req, res) => {
   const { service_name, metrics } = req.body || {};
-  if (!service_name || !metrics) return res.status(422).json({ error: "'service_name' and 'metrics' are required" });
+  if (!service_name || !metrics)
+    return res
+      .status(422)
+      .json({ error: "'service_name' and 'metrics' are required" });
   const taskId = `perf_${Date.now()}`;
   try {
     const result = await orchestrator.handleRequest({
       id: taskId,
       type: TaskType.PERFORMANCE_ANALYSIS,
-      parameters: { service_name, metrics, action: 'analyze_performance' },
+      parameters: { service_name, metrics, action: "analyze_performance" },
     } as any);
     res.json({ taskId, result });
   } catch (err: any) {
     try {
-      const url = process.env.PERFPULSE_URL || 'http://localhost:8013';
-      const resp = await axios.post(`${url}/execute_task`, {
-        task_id: taskId,
-        task_type: 'analyze_performance',
-        parameters: { service_name, metrics },
-      }, { timeout: 10000 });
+      const url = process.env.PERFPULSE_URL || "http://localhost:8013";
+      const resp = await axios.post(
+        `${url}/execute_task`,
+        {
+          task_id: taskId,
+          task_type: "analyze_performance",
+          parameters: { service_name, metrics },
+        },
+        { timeout: 10000 },
+      );
       res.json({ taskId, result: resp.data });
     } catch (e: any) {
-      res.status(500).json({ error: e?.message || err?.message || 'failed' });
+      res.status(500).json({ error: e?.message || err?.message || "failed" });
     }
   }
 });
 
-app.post('/api/designforge/diagram', async (req, res) => {
+app.post("/api/designforge/diagram", async (req, res) => {
   const { system_name } = req.body || {};
-  if (!system_name) return res.status(422).json({ error: "'system_name' is required" });
+  if (!system_name)
+    return res.status(422).json({ error: "'system_name' is required" });
   const taskId = `design_${Date.now()}`;
   try {
     const result = await orchestrator.handleRequest({
       id: taskId,
       type: TaskType.DESIGN,
-      parameters: { system_name, action: 'generate_diagram' },
+      parameters: { system_name, action: "generate_diagram" },
     } as any);
     res.json({ taskId, result });
   } catch (err: any) {
     try {
-      const url = process.env.DESIGNFORGE_URL || 'http://localhost:8010';
-      const resp = await axios.post(`${url}/execute_task`, {
-        task_id: taskId,
-        task_type: 'generate_diagram',
-        parameters: { system_name },
-      }, { timeout: 10000 });
+      const url = process.env.DESIGNFORGE_URL || "http://localhost:8010";
+      const resp = await axios.post(
+        `${url}/execute_task`,
+        {
+          task_id: taskId,
+          task_type: "generate_diagram",
+          parameters: { system_name },
+        },
+        { timeout: 10000 },
+      );
       res.json({ taskId, result: resp.data });
     } catch (e: any) {
-      res.status(500).json({ error: e?.message || err?.message || 'failed' });
+      res.status(500).json({ error: e?.message || err?.message || "failed" });
     }
   }
 });
 
-app.post('/api/evaluator/quality', async (req, res) => {
-  const { code, language = 'python' } = req.body || {};
+app.post("/api/evaluator/quality", async (req, res) => {
+  const { code, language = "python" } = req.body || {};
   if (!code) return res.status(422).json({ error: "'code' is required" });
   const taskId = `eval_q_${Date.now()}`;
   try {
     const result = await orchestrator.handleRequest({
       id: taskId,
       type: TaskType.EVALUATION,
-      parameters: { code, language, action: 'evaluate_quality' },
+      parameters: { code, language, action: "evaluate_quality" },
     } as any);
     res.json({ taskId, result });
   } catch (err: any) {
     try {
-      const url = process.env.EVALUATOR_URL || 'http://localhost:8014';
-      const resp = await axios.post(`${url}/execute_task`, {
-        task_id: taskId,
-        task_type: 'evaluate_quality',
-        parameters: { code, language },
-      }, { timeout: 10000 });
+      const url = process.env.EVALUATOR_URL || "http://localhost:8014";
+      const resp = await axios.post(
+        `${url}/execute_task`,
+        {
+          task_id: taskId,
+          task_type: "evaluate_quality",
+          parameters: { code, language },
+        },
+        { timeout: 10000 },
+      );
       res.json({ taskId, result: resp.data });
     } catch (e: any) {
-      res.status(500).json({ error: e?.message || err?.message || 'failed' });
+      res.status(500).json({ error: e?.message || err?.message || "failed" });
     }
   }
 });
 
-app.post('/api/codecraft/refactor', async (req, res) => {
-  const { code, language = 'python', refactor_type = 'optimize' } = req.body || {};
+app.post("/api/codecraft/refactor", async (req, res) => {
+  const {
+    code,
+    language = "python",
+    refactor_type = "optimize",
+  } = req.body || {};
   if (!code) {
     return res.status(422).json({ error: "'code' is required" });
   }
@@ -306,30 +454,32 @@ app.post('/api/codecraft/refactor', async (req, res) => {
     const result = await orchestrator.handleRequest({
       id: taskId,
       type: TaskType.REFACTOR,
-      parameters: { code, language, refactor_type, action: 'refactor_code' },
+      parameters: { code, language, refactor_type, action: "refactor_code" },
       priority: 5,
-      manifestHash: 'api',
+      manifestHash: "api",
     } as any);
     res.json({ taskId, result });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || 'failed' });
+    res.status(500).json({ error: err?.message || "failed" });
   }
 });
 
 // --- Unified API v1 (Gateway-lite) ---
 
 // List all available agents (registry view)
-app.get('/v1/agents', (_req, res) => {
+app.get("/v1/agents", (_req, res) => {
   const agents = orchestrator.getRegistry().getAllAgents();
   res.json({ agents });
 });
 
 // Trigger agent by id or name with action
-app.post('/v1/agents/:agentId/trigger', async (req, res) => {
+app.post("/v1/agents/:agentId/trigger", async (req, res) => {
   const { agentId } = req.params;
   const { action, parameters = {} } = req.body || {};
   const agents = orchestrator.getRegistry().getAllAgents();
-  const target = agents.find((a) => a.id === agentId || (a.metadata as any)?.name === agentId);
+  const target = agents.find(
+    (a) => a.id === agentId || (a.metadata as any)?.name === agentId,
+  );
   if (!target) {
     return res.status(404).json({ error: `Agent not found: ${agentId}` });
   }
@@ -340,18 +490,31 @@ app.post('/v1/agents/:agentId/trigger', async (req, res) => {
       type: target.specialization,
       parameters: { ...parameters, action },
       priority: 5,
-      manifestHash: 'v1',
+      manifestHash: "v1",
     } as any);
     res.json({ task_id: taskId, success: true, result });
   } catch (err: any) {
-    res.status(500).json({ task_id: taskId, success: false, error: err?.message || 'failed' });
+    res
+      .status(500)
+      .json({
+        task_id: taskId,
+        success: false,
+        error: err?.message || "failed",
+      });
   }
 });
 
 // Proxy to retriever service for semantic search
-app.post('/v1/search', async (req, res) => {
-  const retrieverUrl = process.env.RETRIEVER_URL || 'http://localhost:8006';
-  const { query, filters, domain, max_results = 10, min_score = 0, include_context = true } = req.body || {};
+app.post("/v1/search", async (req, res) => {
+  const retrieverUrl = process.env.RETRIEVER_URL || "http://localhost:8006";
+  const {
+    query,
+    filters,
+    domain,
+    max_results = 10,
+    min_score = 0,
+    include_context = true,
+  } = req.body || {};
   if (!query) return res.status(422).json({ error: "'query' is required" });
   try {
     const bearer = process.env.AGENT_BEARER || process.env.CODECRAFT_TOKEN;
@@ -359,26 +522,27 @@ app.post('/v1/search', async (req, res) => {
       `${retrieverUrl}/execute_task`,
       {
         task_id: `search_${Date.now()}`,
-        task_type: 'retrieve_memories',
+        task_type: "retrieve_memories",
         parameters: { query, top_k: max_results, filters, domain, min_score },
       },
       {
         timeout: 30000,
         headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}) },
-      }
+      },
     );
     res.json(resp.data);
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'search failed' });
+    res.status(500).json({ error: e?.message || "search failed" });
   }
 });
 
 // Proxy to embedding service for single/batch embeddings
-app.post('/v1/embed', async (req, res) => {
-  const embeddingUrl = process.env.EMBEDDING_URL || 'http://localhost:8004';
+app.post("/v1/embed", async (req, res) => {
+  const embeddingUrl = process.env.EMBEDDING_URL || "http://localhost:8004";
   const { text, texts } = req.body || {};
-  if (!text && !texts) return res.status(422).json({ error: "'text' or 'texts' is required" });
-  const taskType = text ? 'generate_embedding' : 'generate_embedding_batch';
+  if (!text && !texts)
+    return res.status(422).json({ error: "'text' or 'texts' is required" });
+  const taskType = text ? "generate_embedding" : "generate_embedding_batch";
   try {
     const bearer = process.env.AGENT_BEARER || process.env.CODECRAFT_TOKEN;
     const resp = await axios.post(
@@ -391,29 +555,119 @@ app.post('/v1/embed', async (req, res) => {
       {
         timeout: 30000,
         headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}) },
-      }
+      },
     );
     res.json(resp.data);
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'embedding failed' });
+    res.status(500).json({ error: e?.message || "embedding failed" });
   }
+});
+
+// ─── /v1/chat — Natural Language Intelligence Endpoint ──────────────────────
+//
+// This is the single most important endpoint in the platform.
+// Send natural language → get an intelligent, multi-agent answer.
+//
+// Before this, every endpoint required the caller to know WHICH agent to call
+// and WHAT action to request. Now the LLM decides.
+//
+// POST /v1/chat
+// Body: { "message": "Review my Express API for security issues and suggest architecture improvements" }
+// Returns: { "answer": "...", "plan": {...}, "agents_used": [...], "duration_ms": 1234 }
+//
+app.post("/v1/chat", async (req, res) => {
+  const { message } = req.body || {};
+
+  if (!message || typeof message !== "string" || message.trim().length === 0) {
+    return res.status(422).json({
+      error: "'message' is required and must be a non-empty string",
+      example: {
+        message: "Review my Express API for security vulnerabilities",
+      },
+    });
+  }
+
+  if (!swarm) {
+    return res.status(503).json({
+      error: "Swarm orchestrator is not available",
+      reason:
+        "No LLM API keys configured. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, " +
+        "GEMINI_API_KEY, or OPENROUTER_API_KEY to enable the /v1/chat endpoint.",
+    });
+  }
+
+  try {
+    const result = await swarm.chat(message.trim());
+
+    res.json({
+      answer: result.answer,
+      plan: {
+        summary: result.plan.summary,
+        complexity: result.plan.complexity,
+        confidence: result.plan.confidence,
+        steps: result.plan.steps.map((s) => ({
+          agent: s.agentId,
+          action: s.action,
+          reason: s.reason,
+        })),
+      },
+      agents_used: result.agentsUsed,
+      step_results: result.stepResults.map((r) => ({
+        agent: r.agentId,
+        action: r.action,
+        success: r.success,
+        duration_ms: r.durationMs,
+        ...(r.error ? { error: r.error } : {}),
+      })),
+      duration_ms: result.totalDurationMs,
+      success: result.success,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || "Orchestration failed" });
+  }
+});
+
+// GET /v1/chat/agents — See what agents the planner knows about
+app.get("/v1/chat/agents", (_req, res) => {
+  if (!swarm) {
+    return res
+      .status(503)
+      .json({ error: "Swarm orchestrator is not available" });
+  }
+  const catalog = swarm.getAgentCatalog();
+  const agents = Object.entries(catalog).map(([id, info]) => ({
+    id,
+    taskType: info.taskType,
+    actions: info.actions,
+    description: info.description,
+  }));
+  res.json({ agents, total: agents.length });
 });
 
 async function start() {
   const port = Number(process.env.PORT || 3000);
   await registerDefaultAgents();
   await registerExternalAgents();
+
+  // Initialize the swarm orchestrator after agents are registered
+  initializeSwarmOrchestrator();
+
   app.listen(port, () => {
     // eslint-disable-next-line no-console
     console.log(`Orchestrator HTTP server listening on :${port}`);
+    // eslint-disable-next-line no-console
+    console.log(
+      `  /v1/chat   → ${swarm ? "LIVE (LLM-powered)" : "DISABLED (no API keys)"}`,
+    );
+    // eslint-disable-next-line no-console
+    console.log(`  /v1/agents → agent registry`);
   });
 }
 
 start().catch((e) => {
   // eslint-disable-next-line no-console
-  console.error('Failed to start server', e);
+  console.error("Failed to start server", e);
   process.exit(1);
 });
 
 export default app;
-

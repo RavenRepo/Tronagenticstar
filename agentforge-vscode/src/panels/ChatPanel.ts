@@ -7,13 +7,35 @@ export class ChatPanel {
     public static currentPanel: ChatPanel | undefined;
     private _panel?: vscode.WebviewPanel;
     private _disposables: vscode.Disposable[] = [];
+    private skills: any[] = [];
+    private mcpTools: any[] = [];
 
     constructor(
         private context: vscode.ExtensionContext,
         private orchestratorAPI: OrchestratorAPI,
         private wsManager: WebSocketManager
     ) {
-        // Panel will be created in show method
+        this._loadSkillsAndMCP();
+    }
+
+    private async _loadSkillsAndMCP() {
+        try {
+            this.skills = await this.orchestratorAPI.listSkills();
+        } catch {
+            this.skills = [
+                { name: 'agentflow', description: 'Orchestrate agents in dependency graphs' },
+                { name: 'apex-architect', description: 'Strategy & market intelligence' },
+                { name: 'context7-mcp', description: 'Library documentation & examples' },
+                { name: 'find-skills', description: 'Discover available skills' },
+                { name: 'hindsight-docs', description: 'Hindsight architecture docs' }
+            ];
+        }
+        
+        try {
+            this.mcpTools = await this.orchestratorAPI.listMCPTools();
+        } catch {
+            this.mcpTools = [];
+        }
     }
 
     public show() {
@@ -21,13 +43,11 @@ export class ChatPanel {
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
 
-        // If we already have a panel, show it
         if (ChatPanel.currentPanel?._panel) {
             ChatPanel.currentPanel._panel.reveal(column);
             return;
         }
 
-        // Otherwise, create a new panel
         const panel = vscode.window.createWebviewPanel(
             'agentChat',
             'Chat with Agents',
@@ -44,13 +64,10 @@ export class ChatPanel {
         this._panel = panel;
         ChatPanel.currentPanel = this;
 
-        // Set the webview's initial html content
         this._update();
 
-        // Listen for when the panel is disposed
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
-        // Update the content based on view changes
         this._panel.onDidChangeViewState(
             () => {
                 if (this._panel?.visible) {
@@ -61,7 +78,6 @@ export class ChatPanel {
             this._disposables
         );
 
-        // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             (message: any) => {
                 this._handleMessage(message);
@@ -73,8 +89,6 @@ export class ChatPanel {
 
     public dispose() {
         ChatPanel.currentPanel = undefined;
-
-        // Clean up our resources
         this._panel?.dispose();
 
         while (this._disposables.length) {
@@ -93,19 +107,16 @@ export class ChatPanel {
     }
 
     private async _getHtmlForWebview(webview: vscode.Webview): Promise<string> {
-        // Get available agents from API
         let agents: any[] = [];
         try {
             agents = await this.orchestratorAPI.getAgents();
         } catch (error) {
             logger.error('Failed to load agents for chat', error);
-            // Fallback to default agents if API is unavailable
             agents = [
-                { id: 'designforge', name: 'DesignForge', status: 'active', description: 'Architecture & Design Assistant' },
-                { id: 'securishield', name: 'SecuriShield', status: 'active', description: 'Security Analysis Expert' },
-                { id: 'codecraft', name: 'CodeCraft', status: 'active', description: 'Code Quality & Refactoring' },
-                { id: 'perfpulse', name: 'PerfPulse', status: 'active', description: 'Performance Optimization' },
-                { id: 'evaluator', name: 'Evaluator', status: 'active', description: 'Code Quality Assessment & Technical Debt Analysis' }
+                { id: 'generalPurpose', name: 'General Purpose', type: 'generalPurpose', description: 'Versatile agent for any task' },
+                { id: 'explore', name: 'Explorer Agent', type: 'explore', description: 'File system exploration & analysis' },
+                { id: 'plan', name: 'Planner Agent', type: 'plan', description: 'Task planning & coordination' },
+                { id: 'verification', name: 'Verifier Agent', type: 'verification', description: 'Code verification & testing' }
             ];
         }
 
@@ -118,16 +129,28 @@ export class ChatPanel {
 
     private _generateHtml(styleUri: string, agents: any[]): string {
         const agentOptions = agents.map(agent => `
-            <option value="${agent.id}" data-status="${agent.status}" data-description="${agent.description || ''}">
+            <option value="${agent.id}" data-type="${agent.type || ''}" data-status="${agent.status}" data-description="${agent.description || ''}">
                 ${agent.name} ${agent.status === 'active' ? '🟢' : agent.status === 'idle' ? '🟡' : '🔴'}
             </option>
         `).join('');
+
+        const skillOptions = this.skills.map(skill => `
+            <option value="${skill.name}">/${skill.name} - ${skill.description}</option>
+        `).join('');
+
+        const mcpToolCards = this.mcpTools.length > 0 ? this.mcpTools.map(tool => `
+            <div class="mcp-tool-card" onclick="selectMCPTool('${tool.name}')">
+                <div class="tool-name">${tool.name}</div>
+                <div class="tool-desc">${tool.description || 'MCP Tool'}</div>
+                <div class="tool-server">${tool.server}</div>
+            </div>
+        `).join('') : '<div class="no-tools">No MCP tools connected</div>';
 
         const agentCards = agents.map(agent => `
             <div class="agent-card" onclick="selectAgent('${agent.id}')">
                 <div class="agent-name">${agent.name}</div>
                 <div class="agent-desc">${agent.description || 'AI Assistant'}</div>
-                <div class="agent-status status-${agent.status}">${agent.status}</div>
+                <div class="agent-type">${agent.type || 'generalPurpose'}</div>
             </div>
         `).join('');
 
@@ -142,78 +165,112 @@ export class ChatPanel {
         <body>
             <div class="container">
                 <div class="chat-header">
-                    <h1>🤖 Agent Chat Interface</h1>
-                    <div class="agent-selector">
-                        <select id="agentSelect">
-                            <option value="">Select an agent to chat with...</option>
-                            ${agentOptions}
-                        </select>
-                        <div id="agentInfo" class="agent-info" style="display: none;">
-                            <span id="agentDescription"></span>
-                            <button id="clearChat" onclick="clearChat()">Clear Chat</button>
+                    <h1>🤖 Tronagenticstar Chat</h1>
+                    <div class="header-controls">
+                        <div class="agent-selector">
+                            <select id="agentSelect">
+                                <option value="">Select an agent...</option>
+                                ${agentOptions}
+                            </select>
+                            <select id="agentTypeSelect" style="display: none;">
+                                <option value="generalPurpose">General Purpose</option>
+                                <option value="explore">Explorer</option>
+                                <option value="plan">Planner</option>
+                                <option value="verification">Verifier</option>
+                            </select>
+                        </div>
+                        <div class="mode-toggle">
+                            <button class="mode-btn active" id="chatModeBtn" onclick="setMode('chat')">💬 Chat</button>
+                            <button class="mode-btn" id="skillModeBtn" onclick="setMode('skill')">⚡ Skills</button>
+                            <button class="mode-btn" id="mcpModeBtn" onclick="setMode('mcp')">🔌 MCP</button>
+                        </div>
+                    </div>
+                    <div id="agentInfo" class="agent-info" style="display: none;">
+                        <span id="agentDescription"></span>
+                        <button id="clearChat" onclick="clearChat()">Clear Chat</button>
+                    </div>
+                </div>
+                
+                <div class="mode-content" id="chatContent">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="welcome-message">
+                                <div class="welcome-content">
+                                    <h3>🎯 Welcome to Tronagenticstar!</h3>
+                                    <p>Select an agent or use /skill-name to execute a skill.</p>
+                                    <div class="agent-preview">
+                                        ${agentCards}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-input-container">
+                            <div class="input-wrapper">
+                                <textarea id="messageInput" placeholder="Type your message or /skill-name..." disabled rows="1"></textarea>
+                                <div class="input-buttons">
+                                    <button id="insertCodeButton" onclick="insertCurrentCode()" disabled title="Insert current selection">
+                                        📝 Code
+                                    </button>
+                                    <button id="attachFileButton" onclick="attachFile()" disabled title="Attach current file context">
+                                        📎 File
+                                    </button>
+                                    <button id="sendButton" onclick="sendMessage()" disabled>
+                                        <span class="send-icon">📤</span>
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chat-features">
+                                <button class="feature-btn" onclick="insertTemplate('architecture')" disabled id="archBtn">
+                                    🏗️ Analyze
+                                </button>
+                                <button class="feature-btn" onclick="insertTemplate('security')" disabled id="secBtn">
+                                    🛡️ Security
+                                </button>
+                                <button class="feature-btn" onclick="insertTemplate('quality')" disabled id="qualBtn">
+                                    ⭐ Review
+                                </button>
+                                <button class="feature-btn" onclick="insertTemplate('performance')" disabled id="perfBtn">
+                                    ⚡ Performance
+                                </button>
+                                <button class="feature-btn" onclick="insertTemplate('verify')" disabled id="verifyBtn">
+                                    ✅ Verify
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="chat-container">
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="welcome-message">
-                            <div class="welcome-content">
-                                <h3>🎯 Welcome to AgentForge Chat!</h3>
-                                <p>Select an agent from the dropdown above to start an intelligent conversation.</p>
-                                <div class="agent-preview">
-                                    ${agentCards}
-                                </div>
-                            </div>
+                <div class="mode-content" id="skillContent" style="display: none;">
+                    <div class="skills-panel">
+                        <h3>⚡ Available Skills</h3>
+                        <div class="skill-list">
+                            <select id="skillSelect">
+                                <option value="">Select a skill...</option>
+                                ${skillOptions}
+                            </select>
+                            <button onclick="executeSelectedSkill()" id="executeSkillBtn" disabled>Execute Skill</button>
+                        </div>
+                        <div class="skill-output" id="skillOutput">
+                            <div class="output-header">Skill Output</div>
+                            <div class="output-content" id="outputContent"></div>
                         </div>
                     </div>
-                    
-                    <div class="chat-input-container">
-                        <div class="input-wrapper">
-                            <textarea id="messageInput" placeholder="Type your message..." disabled rows="1"></textarea>
-                            <div class="input-buttons">
-                                <button id="insertCodeButton" onclick="insertCurrentCode()" disabled title="Insert current selection">
-                                    📝 Code
-                                </button>
-                                <button id="attachFileButton" onclick="attachFile()" disabled title="Attach current file context">
-                                    📎 File
-                                </button>
-                                <button id="sendButton" onclick="sendMessage()" disabled>
-                                    <span class="send-icon">📤</span>
-                                    Send
-                                </button>
+                </div>
+                
+                <div class="mode-content" id="mcpContent" style="display: none;">
+                    <div class="mcp-panel">
+                        <h3>🔌 MCP Tools</h3>
+                        <div class="mcp-tools-grid">
+                            ${mcpToolCards}
+                        </div>
+                        <div class="mcp-tool-details" id="mcpToolDetails" style="display: none;">
+                            <h4 id="selectedMcpToolName"></h4>
+                            <div class="tool-inputs">
+                                <textarea id="mcpToolArgs" placeholder='Enter arguments JSON: {"path": "/file"}'></textarea>
+                                <button onclick="executeMCPTool()" id="executeMcpBtn">Execute</button>
                             </div>
-                        </div>
-                        <div class="chat-features">
-                            <button class="feature-btn" onclick="insertTemplate('architecture')" disabled id="archBtn">
-                                🏗️ Analyze Architecture
-                            </button>
-                            <button class="feature-btn" onclick="insertTemplate('security')" disabled id="secBtn">
-                                🛡️ Security Scan
-                            </button>
-                            <button class="feature-btn" onclick="insertTemplate('quality')" disabled id="qualBtn">
-                                ⭐ Code Review
-                            </button>
-                            <button class="feature-btn" onclick="insertTemplate('performance')" disabled id="perfBtn">
-                                ⚡ Performance Check
-                            </button>
-                            <button class="feature-btn" onclick="insertTemplate('explain')" disabled id="explainBtn">
-                                💡 Explain Code
-                            </button>
-                            <button class="feature-btn" onclick="insertTemplate('refactor')" disabled id="refactorBtn">
-                                🔄 Refactor
-                            </button>
-                        </div>
-                        <div class="chat-tools">
-                            <button class="tool-btn" onclick="exportChat()" disabled id="exportBtn">
-                                💾 Export Chat
-                            </button>
-                            <button class="tool-btn" onclick="toggleAgentMetrics()" id="metricsBtn">
-                                📊 Metrics
-                            </button>
-                            <button class="tool-btn" onclick="showKeyboardShortcuts()" id="shortcutsBtn">
-                                ⌨️ Shortcuts
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -228,10 +285,11 @@ export class ChatPanel {
         return `<script>
             const vscode = acquireVsCodeApi();
             let currentAgent = null;
+            let currentMode = 'chat';
             let messageCount = 0;
             let sessionStartTime = Date.now();
+            let selectedMCPTool = null;
             
-            // Load previous state
             const state = vscode.getState() || {};
             if (state.chatHistory) {
                 restoreChatHistory(state.chatHistory);
@@ -240,7 +298,6 @@ export class ChatPanel {
                 selectAgent(state.selectedAgent, false);
             }
             
-            // Event listeners
             document.getElementById('agentSelect').addEventListener('change', function(e) {
                 const agentId = e.target.value;
                 if (agentId) {
@@ -250,10 +307,14 @@ export class ChatPanel {
                 }
             });
             
-            // Auto-resize textarea
+            document.getElementById('skillSelect').addEventListener('change', function(e) {
+                document.getElementById('executeSkillBtn').disabled = !e.target.value;
+            });
+            
             const messageInput = document.getElementById('messageInput');
             messageInput.addEventListener('input', function() {
                 autoResizeTextarea(this);
+                checkSkillCommand(this.value);
             });
             
             messageInput.addEventListener('keypress', function(e) {
@@ -263,19 +324,26 @@ export class ChatPanel {
                 }
             });
             
-            // Keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                if (e.ctrlKey && e.key === 'k') {
-                    e.preventDefault();
-                    messageInput.focus();
-                } else if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-                    e.preventDefault();
-                    insertCurrentCode();
-                } else if (e.ctrlKey && e.shiftKey && e.key === 'E') {
-                    e.preventDefault();
-                    exportChat();
+            function checkSkillCommand(value) {
+                if (value.startsWith('/')) {
+                    const skillName = value.substring(1).split(' ')[0];
+                    const skillSelect = document.getElementById('skillSelect');
+                    if (skillSelect.querySelector('option[value="' + skillName + '"]')) {
+                        skillSelect.value = skillName;
+                        document.getElementById('executeSkillBtn').disabled = false;
+                    }
                 }
-            });
+            }
+            
+            function setMode(mode) {
+                currentMode = mode;
+                document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(mode + 'ModeBtn').classList.add('active');
+                
+                document.getElementById('chatContent').style.display = mode === 'chat' ? 'block' : 'none';
+                document.getElementById('skillContent').style.display = mode === 'skill' ? 'block' : 'none';
+                document.getElementById('mcpContent').style.display = mode === 'mcp' ? 'block' : 'none';
+            }
             
             function selectAgent(agentId, showWelcome = true) {
                 const select = document.getElementById('agentSelect');
@@ -286,7 +354,6 @@ export class ChatPanel {
                 select.value = agentId;
                 currentAgent = agentId;
                 
-                // Update UI
                 const messageInput = document.getElementById('messageInput');
                 const sendButton = document.getElementById('sendButton');
                 const agentInfo = document.getElementById('agentInfo');
@@ -296,18 +363,14 @@ export class ChatPanel {
                 sendButton.disabled = false;
                 document.getElementById('insertCodeButton').disabled = false;
                 document.getElementById('attachFileButton').disabled = false;
-                document.getElementById('exportBtn').disabled = false;
-                messageInput.placeholder = 'Chat with ' + option.text + '...';
+                messageInput.placeholder = 'Chat with ' + option.text.split(' ')[0] + '...';
                 messageInput.focus();
                 
-                // Enable feature buttons based on agent
                 enableFeatureButtons(agentId);
                 
-                // Show agent info
                 agentInfo.style.display = 'block';
                 agentDescription.textContent = option.dataset.description;
                 
-                // Hide welcome message and show agent greeting
                 const welcomeMessage = document.querySelector('.welcome-message');
                 if (welcomeMessage) {
                     welcomeMessage.style.display = 'none';
@@ -315,10 +378,9 @@ export class ChatPanel {
                 
                 if (showWelcome) {
                     const agentName = option.text.split(' ')[0];
-                    addAgentMessage(agentName, 'Hello! I am ' + agentName + ', your ' + option.dataset.description + '. How can I help you today?');
+                    addAgentMessage(agentName, 'Hello! I am ' + agentName + '. ' + (option.dataset.description || 'How can I help you today?'));
                 }
                 
-                // Save state
                 vscode.setState({ 
                     ...vscode.getState(), 
                     selectedAgent: agentId 
@@ -333,16 +395,11 @@ export class ChatPanel {
                 
                 messageInput.disabled = true;
                 sendButton.disabled = true;
-                document.getElementById('insertCodeButton').disabled = true;
-                document.getElementById('attachFileButton').disabled = true;
-                document.getElementById('exportBtn').disabled = true;
                 messageInput.placeholder = 'Select an agent first...';
                 agentInfo.style.display = 'none';
                 
-                // Disable all feature buttons
                 document.querySelectorAll('.feature-btn').forEach(btn => btn.disabled = true);
                 
-                // Show welcome message
                 const welcomeMessage = document.querySelector('.welcome-message');
                 if (welcomeMessage) {
                     welcomeMessage.style.display = 'block';
@@ -350,66 +407,87 @@ export class ChatPanel {
             }
             
             function enableFeatureButtons(agentId) {
-                // Reset all buttons
                 document.querySelectorAll('.feature-btn').forEach(btn => btn.disabled = true);
                 
-                // Enable relevant buttons for each agent
                 switch(agentId) {
-                    case 'designforge':
-                        document.getElementById('archBtn').disabled = false;
-                        document.getElementById('explainBtn').disabled = false;
-                        break;
-                    case 'securishield':
-                        document.getElementById('secBtn').disabled = false;
-                        document.getElementById('explainBtn').disabled = false;
-                        break;
-                    case 'codecraft':
-                        document.getElementById('qualBtn').disabled = false;
-                        document.getElementById('refactorBtn').disabled = false;
-                        document.getElementById('explainBtn').disabled = false;
-                        break;
-                    case 'perfpulse':
-                        document.getElementById('perfBtn').disabled = false;
-                        document.getElementById('explainBtn').disabled = false;
-                        break;
-                    case 'evaluator':
-                        document.getElementById('qualBtn').disabled = false;
-                        document.getElementById('perfBtn').disabled = false;
-                        document.getElementById('explainBtn').disabled = false;
-                        break;
-                    default:
-                        // Enable all for unknown agents
+                    case 'generalPurpose':
                         document.querySelectorAll('.feature-btn').forEach(btn => btn.disabled = false);
+                        break;
+                    case 'explore':
+                        document.getElementById('archBtn').disabled = false;
+                        break;
+                    case 'plan':
+                        document.querySelectorAll('.feature-btn').forEach(btn => btn.disabled = false);
+                        break;
+                    case 'verification':
+                        document.getElementById('verifyBtn').disabled = false;
+                        document.getElementById('qualBtn').disabled = false;
+                        break;
                 }
             }
             
             function insertTemplate(type) {
                 const templates = {
-                    architecture: "Please analyze the architecture of my current project and provide recommendations for improvement.",
-                    security: "Perform a security analysis of my code and identify potential vulnerabilities.",
-                    quality: "Review my code quality and suggest refactoring opportunities. Include metrics for complexity, maintainability, and readability.",
-                    performance: "Analyze the performance of my application and suggest optimizations. Include time/space complexity analysis.",
-                    explain: "Please explain how this code works and what it does.",
-                    refactor: "Please review this code and suggest refactoring improvements for better maintainability and performance.",
-                    evaluate: "Perform a comprehensive evaluation of this code including quality metrics, technical debt analysis, and improvement recommendations."
+                    architecture: "Please analyze the architecture of my current project.",
+                    security: "Perform a security analysis of my code.",
+                    quality: "Review my code quality and suggest improvements.",
+                    performance: "Analyze the performance of my application.",
+                    verify: "Verify the changes and run tests."
                 };
                 
                 const messageInput = document.getElementById('messageInput');
-                messageInput.value = templates[type];
+                messageInput.value = templates[type] || '';
                 messageInput.focus();
                 autoResizeTextarea(messageInput);
             }
             
-            function insertCurrentCode() {
+            function executeSelectedSkill() {
+                const skillSelect = document.getElementById('skillSelect');
+                const skillName = skillSelect.value;
+                
+                if (!skillName) return;
+                
+                const outputContent = document.getElementById('outputContent');
+                outputContent.innerHTML = '<div class="loading">Executing skill: ' + skillName + '...</div>';
+                
                 vscode.postMessage({
-                    command: 'getCurrentCode'
+                    command: 'executeSkill',
+                    skill: skillName,
+                    args: {}
                 });
             }
             
-            function attachFile() {
+            function selectMCPTool(toolName) {
+                selectedMCPTool = toolName;
+                document.getElementById('mcpToolDetails').style.display = 'block';
+                document.getElementById('selectedMcpToolName').textContent = toolName;
+            }
+            
+            function executeMCPTool() {
+                if (!selectedMCPTool) return;
+                
+                const argsInput = document.getElementById('mcpToolArgs');
+                let args = {};
+                try {
+                    args = argsInput.value ? JSON.parse(argsInput.value) : {};
+                } catch (e) {
+                    alert('Invalid JSON arguments');
+                    return;
+                }
+                
                 vscode.postMessage({
-                    command: 'getFileContext'
+                    command: 'executeMCPTool',
+                    tool: selectedMCPTool,
+                    args: args
                 });
+            }
+            
+            function insertCurrentCode() {
+                vscode.postMessage({ command: 'getCurrentCode' });
+            }
+            
+            function attachFile() {
+                vscode.postMessage({ command: 'getFileContext' });
             }
             
             function sendMessage() {
@@ -418,24 +496,18 @@ export class ChatPanel {
                 
                 if (!message || !currentAgent) return;
                 
-                // Add user message to chat
                 addUserMessage(message);
-                
-                // Clear input
                 messageInput.value = '';
                 autoResizeTextarea(messageInput);
                 
-                // Show typing indicator
                 addTypingIndicator();
                 
-                // Send to agent
                 vscode.postMessage({
                     command: 'sendMessage',
                     agent: currentAgent,
                     message: message
                 });
                 
-                // Save chat state
                 saveChatState();
             }
             
@@ -448,10 +520,7 @@ export class ChatPanel {
                         '<span class="message-sender">👤 You</span>' +
                         '<span class="message-time">' + new Date().toLocaleTimeString() + '</span>' +
                     '</div>' +
-                    '<div class="message-content">' + formatMessage(message) + '</div>' +
-                    '<div class="message-metadata">' +
-                        '<span class="message-chars">' + message.length + ' chars</span>' +
-                    '</div>';
+                    '<div class="message-content">' + formatMessage(message) + '</div>';
                 chatMessages.appendChild(messageDiv);
                 scrollToBottom();
                 messageCount++;
@@ -464,17 +533,15 @@ export class ChatPanel {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message agent-message' + (isError ? ' error' : '');
                 
-                const agentIcon = getAgentIcon(agent);
                 const actions = isError ? '' : 
                     '<div class="message-actions">' +
                         '<button onclick="copyMessage(this)">📋 Copy</button>' +
-                        '<button onclick="likeMessage(this)">👍</button>' +
                         '<button onclick="retryMessage(this)">🔄 Retry</button>' +
                     '</div>';
                 
                 messageDiv.innerHTML = 
                     '<div class="message-header">' +
-                        '<span class="message-sender">' + agentIcon + ' ' + agent + '</span>' +
+                        '<span class="message-sender">🤖 ' + agent + '</span>' +
                         '<span class="message-time">' + new Date().toLocaleTimeString() + '</span>' +
                     '</div>' +
                     '<div class="message-content">' + formatMessage(message) + '</div>' +
@@ -483,19 +550,7 @@ export class ChatPanel {
                 chatMessages.appendChild(messageDiv);
                 scrollToBottom();
                 messageCount++;
-                
                 saveChatState();
-            }
-            
-            function getAgentIcon(agent) {
-                const icons = {
-                    'DesignForge': '🏗️',
-                    'SecuriShield': '🛡️',
-                    'CodeCraft': '⚒️',
-                    'PerfPulse': '⚡',
-                    'Evaluator': '📊'
-                };
-                return icons[agent] || '🤖';
             }
             
             function addTypingIndicator() {
@@ -504,26 +559,15 @@ export class ChatPanel {
                 indicator.className = 'message agent-message typing-indicator';
                 indicator.id = 'typingIndicator';
                 indicator.innerHTML = 
-                    '<div class="message-header">' +
-                        '<span class="message-sender">🤖 Agent</span>' +
-                    '</div>' +
-                    '<div class="message-content">' +
-                        '<div class="typing-dots">' +
-                            '<span></span>' +
-                            '<span></span>' +
-                            '<span></span>' +
-                        '</div>' +
-                        '<span class="typing-text">is typing...</span>' +
-                    '</div>';
+                    '<div class="message-header"><span class="message-sender">🤖 Agent</span></div>' +
+                    '<div class="message-content"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
                 chatMessages.appendChild(indicator);
                 scrollToBottom();
             }
             
             function removeTypingIndicator() {
                 const indicator = document.getElementById('typingIndicator');
-                if (indicator) {
-                    indicator.remove();
-                }
+                if (indicator) indicator.remove();
             }
             
             function clearChat() {
@@ -531,176 +575,28 @@ export class ChatPanel {
                     const chatMessages = document.getElementById('chatMessages');
                     chatMessages.innerHTML = '';
                     messageCount = 0;
-                    
-                    // Reset state
                     vscode.setState({ ...vscode.getState(), chatHistory: null });
-                    
-                    // Re-select current agent to show greeting
-                    if (currentAgent) {
-                        selectAgent(currentAgent);
-                    }
+                    if (currentAgent) selectAgent(currentAgent);
                 }
             }
             
             function copyMessage(button) {
-                const messageContent = button.closest('.message').querySelector('.message-content').textContent;
-                navigator.clipboard.writeText(messageContent).then(() => {
+                const content = button.closest('.message').querySelector('.message-content').textContent;
+                navigator.clipboard.writeText(content).then(() => {
                     button.textContent = '✅ Copied';
-                    setTimeout(() => {
-                        button.textContent = '📋 Copy';
-                    }, 2000);
+                    setTimeout(() => button.textContent = '📋 Copy', 2000);
                 });
-            }
-            
-            function likeMessage(button) {
-                button.textContent = button.textContent === '👍' ? '❤️' : '👍';
             }
             
             function retryMessage(button) {
                 const messageDiv = button.closest('.message');
-                const isUserMessage = messageDiv.classList.contains('user-message');
+                const isUser = messageDiv.classList.contains('user-message');
                 
-                if (isUserMessage) {
-                    const messageContent = messageDiv.querySelector('.message-content').textContent;
-                    const messageInput = document.getElementById('messageInput');
-                    messageInput.value = messageContent;
-                    messageInput.focus();
-                    autoResizeTextarea(messageInput);
-                } else {
-                    // Retry agent response
-                    const chatMessages = document.getElementById('chatMessages');
-                    const messages = Array.from(chatMessages.children);
-                    const currentIndex = messages.indexOf(messageDiv);
-                    
-                    // Find the last user message before this agent message
-                    for (let i = currentIndex - 1; i >= 0; i--) {
-                        const msg = messages[i];
-                        if (msg.classList.contains('user-message')) {
-                            const userMessage = msg.querySelector('.message-content').textContent;
-                            
-                            // Remove this agent message and retry
-                            messageDiv.remove();
-                            
-                            // Add typing indicator and retry
-                            addTypingIndicator();
-                            vscode.postMessage({
-                                command: 'sendMessage',
-                                agent: currentAgent,
-                                message: userMessage
-                            });
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            function exportChat() {
-                const chatMessages = document.getElementById('chatMessages');
-                const messages = Array.from(chatMessages.children)
-                    .filter(msg => !msg.classList.contains('welcome-message'))
-                    .map(msg => {
-                        const sender = msg.querySelector('.message-sender')?.textContent || 'Unknown';
-                        const content = msg.querySelector('.message-content')?.textContent || '';
-                        const time = msg.querySelector('.message-time')?.textContent || '';
-                        return '[' + time + '] ' + sender + ': ' + content;
-                    }).join('\\n\\n');
-                
-                vscode.postMessage({
-                    command: 'exportChat',
-                    content: messages,
-                    agent: currentAgent
-                });
-            }
-            
-            function toggleAgentMetrics() {
-                const metricsDiv = document.getElementById('agentMetrics');
-                if (metricsDiv) {
-                    metricsDiv.remove();
-                } else {
-                    showAgentMetrics();
-                }
-            }
-            
-            function showAgentMetrics() {
-                const container = document.querySelector('.container');
-                const metricsDiv = document.createElement('div');
-                metricsDiv.id = 'agentMetrics';
-                metricsDiv.className = 'agent-metrics';
-                metricsDiv.innerHTML = 
-                    '<div class="metrics-header">' +
-                        '<h3>🤖 Agent Performance Metrics</h3>' +
-                        '<button onclick="toggleAgentMetrics()">✕</button>' +
-                    '</div>' +
-                    '<div class="metrics-content">' +
-                        '<div class="metric-item">' +
-                            '<span class="metric-label">Messages Sent:</span>' +
-                            '<span class="metric-value">' + Math.floor(messageCount / 2) + '</span>' +
-                        '</div>' +
-                        '<div class="metric-item">' +
-                            '<span class="metric-label">Responses Received:</span>' +
-                            '<span class="metric-value">' + Math.floor(messageCount / 2) + '</span>' +
-                        '</div>' +
-                        '<div class="metric-item">' +
-                            '<span class="metric-label">Current Agent:</span>' +
-                            '<span class="metric-value">' + (currentAgent || 'None') + '</span>' +
-                        '</div>' +
-                        '<div class="metric-item">' +
-                            '<span class="metric-label">Session Duration:</span>' +
-                            '<span class="metric-value" id="sessionDuration">00:00</span>' +
-                        '</div>' +
-                    '</div>';
-                container.appendChild(metricsDiv);
-                updateSessionDuration();
-            }
-            
-            function showKeyboardShortcuts() {
-                const shortcutsDiv = document.getElementById('keyboardShortcuts');
-                if (shortcutsDiv) {
-                    shortcutsDiv.remove();
-                } else {
-                    const container = document.querySelector('.container');
-                    const shortcutsDiv = document.createElement('div');
-                    shortcutsDiv.id = 'keyboardShortcuts';
-                    shortcutsDiv.className = 'keyboard-shortcuts';
-                    shortcutsDiv.innerHTML = 
-                        '<div class="shortcuts-header">' +
-                            '<h3>⌨️ Keyboard Shortcuts</h3>' +
-                            '<button onclick="showKeyboardShortcuts()">✕</button>' +
-                        '</div>' +
-                        '<div class="shortcuts-content">' +
-                            '<div class="shortcut-item">' +
-                                '<span class="shortcut-key">Ctrl + K</span>' +
-                                '<span class="shortcut-desc">Focus message input</span>' +
-                            '</div>' +
-                            '<div class="shortcut-item">' +
-                                '<span class="shortcut-key">Ctrl + Shift + C</span>' +
-                                '<span class="shortcut-desc">Insert current code selection</span>' +
-                            '</div>' +
-                            '<div class="shortcut-item">' +
-                                '<span class="shortcut-key">Ctrl + Shift + E</span>' +
-                                '<span class="shortcut-desc">Export chat</span>' +
-                            '</div>' +
-                            '<div class="shortcut-item">' +
-                                '<span class="shortcut-key">Enter</span>' +
-                                '<span class="shortcut-desc">Send message</span>' +
-                            '</div>' +
-                            '<div class="shortcut-item">' +
-                                '<span class="shortcut-key">Shift + Enter</span>' +
-                                '<span class="shortcut-desc">New line in message</span>' +
-                            '</div>' +
-                        '</div>';
-                    container.appendChild(shortcutsDiv);
-                }
-            }
-            
-            function updateSessionDuration() {
-                const durationEl = document.getElementById('sessionDuration');
-                if (durationEl) {
-                    const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
-                    const minutes = Math.floor(duration / 60);
-                    const seconds = duration % 60;
-                    durationEl.textContent = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
-                    setTimeout(updateSessionDuration, 1000);
+                if (isUser) {
+                    const content = messageDiv.querySelector('.message-content').textContent;
+                    const input = document.getElementById('messageInput');
+                    input.value = content;
+                    input.focus();
                 }
             }
             
@@ -710,8 +606,7 @@ export class ChatPanel {
             }
             
             function scrollToBottom() {
-                const chatMessages = document.getElementById('chatMessages');
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
             }
             
             function escapeHtml(text) {
@@ -721,27 +616,12 @@ export class ChatPanel {
             }
             
             function formatMessage(text) {
-                // Basic markdown-like formatting
                 let formatted = escapeHtml(text);
-                
-                // Code blocks
-                formatted = formatted.replace(/\\\`\\\`\\\`([^]*?)\\\`\\\`\\\`/g, '<pre class="code-block"><code>$1</code></pre>');
-                
-                // Inline code
-                formatted = formatted.replace(/\\\`([^\\\`]*)\\\`/g, '<code class="inline-code">$1</code>');
-                
-                // Bold
-                formatted = formatted.replace(/\\*\\*([^*]*)\\*\\*/g, '<strong>$1</strong>');
-                
-                // Italic
-                formatted = formatted.replace(/\\*([^*]*)\\*/g, '<em>$1</em>');
-                
-                // Links (basic)
-                formatted = formatted.replace(/https?:\\/\\/[^\\s]+/g, '<a href="$&" target="_blank">$&</a>');
-                
-                // Line breaks
+                formatted = formatted.replace(/\`\`\`([\\s\\S]*?)\`\`\`/g, '<pre class="code-block"><code>$1</code></pre>');
+                formatted = formatted.replace(/\`([^\`]*)\`/g, '<code class="inline-code">$1</code>');
+                formatted = formatted.replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>');
+                formatted = formatted.replace(/\*([^*]*)\*/g, '<em>$1</em>');
                 formatted = formatted.replace(/\\n/g, '<br>');
-                
                 return formatted;
             }
             
@@ -751,56 +631,30 @@ export class ChatPanel {
                     className: msg.className,
                     innerHTML: msg.innerHTML
                 }));
-                
-                vscode.setState({
-                    ...vscode.getState(),
-                    chatHistory: messages
-                });
+                vscode.setState({ ...vscode.getState(), chatHistory: messages });
             }
             
             function restoreChatHistory(history) {
                 const chatMessages = document.getElementById('chatMessages');
                 chatMessages.innerHTML = '';
-                
                 history.forEach(msg => {
                     const div = document.createElement('div');
                     div.className = msg.className;
                     div.innerHTML = msg.innerHTML;
                     chatMessages.appendChild(div);
                 });
-                
                 messageCount = history.length;
                 scrollToBottom();
             }
             
             function insertCodeIntoMessage(code, language) {
-                const messageInput = document.getElementById('messageInput');
-                const currentValue = messageInput.value;
-                const codeBlock = '\\\`\\\`\\\`' + (language || '') + '\\n' + code + '\\n\\\`\\\`\\\`';
-                messageInput.value = currentValue + (currentValue ? '\\n\\n' : '') + codeBlock;
-                autoResizeTextarea(messageInput);
-                messageInput.focus();
+                const input = document.getElementById('messageInput');
+                const block = '\`\`\`' + (language || '') + '\\n' + code + '\\n\`\`\`';
+                input.value = input.value + (input.value ? '\\n\\n' : '') + block;
+                autoResizeTextarea(input);
+                input.focus();
             }
             
-            function insertFileContext(fileName, content) {
-                const messageInput = document.getElementById('messageInput');
-                const currentValue = messageInput.value;
-                const fileContext = 'File: ' + fileName + '\\n\\\`\\\`\\\`\\n' + content + '\\n\\\`\\\`\\\`';
-                messageInput.value = currentValue + (currentValue ? '\\n\\n' : '') + fileContext;
-                autoResizeTextarea(messageInput);
-                messageInput.focus();
-            }
-            
-            function updateAgentStatus(agentId, status) {
-                const option = document.querySelector('option[value="' + agentId + '"]');
-                if (option) {
-                    option.dataset.status = status;
-                    const statusEmoji = status === 'active' ? '🟢' : status === 'idle' ? '🟡' : '🔴';
-                    option.textContent = option.textContent.replace(/[🟢🟡🔴]/, statusEmoji);
-                }
-            }
-            
-            // Listen for messages from extension
             window.addEventListener('message', event => {
                 const message = event.data;
                 
@@ -808,14 +662,19 @@ export class ChatPanel {
                     case 'agentResponse':
                         addAgentMessage(message.agent, message.response, message.isError);
                         break;
-                    case 'agentStatus':
-                        updateAgentStatus(message.agent, message.status);
+                    case 'skillOutput':
+                        document.getElementById('outputContent').innerHTML = formatMessage(message.output);
+                        break;
+                    case 'mcpToolResult':
+                        alert('MCP Tool Result: ' + message.result);
                         break;
                     case 'currentCode':
                         insertCodeIntoMessage(message.code, message.language);
                         break;
                     case 'fileContext':
-                        insertFileContext(message.fileName, message.content);
+                        const input = document.getElementById('messageInput');
+                        input.value = input.value + 'File: ' + message.fileName + '\\n\`\`\`\\n' + message.content + '\\n\`\`\`';
+                        autoResizeTextarea(input);
                         break;
                 }
             });
@@ -827,14 +686,17 @@ export class ChatPanel {
             case 'sendMessage':
                 await this._sendMessageToAgent(message.agent, message.message);
                 break;
+            case 'executeSkill':
+                await this._executeSkill(message.skill, message.args);
+                break;
+            case 'executeMCPTool':
+                await this._executeMCPTool(message.tool, message.args);
+                break;
             case 'getCurrentCode':
                 await this._sendCurrentCode();
                 break;
             case 'getFileContext':
                 await this._sendFileContext();
-                break;
-            case 'exportChat':
-                await this._exportChat(message.content, message.agent);
                 break;
         }
     }
@@ -871,9 +733,7 @@ export class ChatPanel {
     private async _sendFileContext() {
         try {
             const editor = vscode.window.activeTextEditor;
-            if (!editor) {
-                return;
-            }
+            if (!editor) return;
 
             const fileName = editor.document.fileName;
             const content = editor.document.getText();
@@ -888,65 +748,51 @@ export class ChatPanel {
         }
     }
 
-    private async _exportChat(content: string, agent: string) {
-        try {
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const fileName = `chat-${agent || 'unknown'}-${timestamp}.txt`;
-            
-            const uri = await vscode.window.showSaveDialog({
-                defaultUri: vscode.Uri.file(fileName),
-                filters: {
-                    'Text files': ['txt'],
-                    'Markdown files': ['md']
-                }
-            });
-
-            if (uri) {
-                await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
-                vscode.window.showInformationMessage(`Chat exported to ${uri.fsPath}`);
-            }
-        } catch (error) {
-            logger.error('Failed to export chat', error);
-            vscode.window.showErrorMessage('Failed to export chat');
-        }
-    }
-
     private async _sendMessageToAgent(agent: string, message: string) {
         try {
-            // For now, we'll simulate agent responses
-            // In a real implementation, this would use the orchestrator API
             setTimeout(() => {
                 this._panel?.webview.postMessage({
                     command: 'agentResponse',
                     agent: agent,
-                    response: `Hello! I'm ${agent}. I received your message: "${message}". This is a simulated response with enhanced formatting support. 
-
-Here's what I can help with:
-- **Code analysis** and suggestions
-- *Security* assessments  
-- \`Performance\` optimizations
-- Architecture reviews
-
-\`\`\`typescript
-// Example code block
-function example() {
-    return "This is a code example";
-}
-\`\`\`
-
-Visit https://example.com for more information.`,
+                    response: `Hello! I'm ${agent}. I received: "${message}".\n\nI can help with:\n- Code analysis & suggestions\n- Security assessments\n- Performance optimizations\n- Architecture reviews\n- Verification & testing`,
                     isError: false
                 });
             }, 1000);
-
         } catch (error) {
             logger.error(`Failed to send message to agent ${agent}`, error);
             this._panel?.webview.postMessage({
                 command: 'agentResponse',
                 agent: agent,
-                response: `Error communicating with ${agent}: ${error}`,
+                response: `Error: ${error}`,
                 isError: true
             });
+        }
+    }
+
+    private async _executeSkill(skillName: string, args: any) {
+        try {
+            const result = await this.orchestratorAPI.executeSkill(skillName, args);
+            this._panel?.webview.postMessage({
+                command: 'skillOutput',
+                output: result || `Skill ${skillName} executed successfully.`
+            });
+        } catch (error) {
+            this._panel?.webview.postMessage({
+                command: 'skillOutput',
+                output: `Error executing skill ${skillName}: ${error}`
+            });
+        }
+    }
+
+    private async _executeMCPTool(toolName: string, args: any) {
+        try {
+            const result = await this.orchestratorAPI.executeMCPTool(toolName, args);
+            this._panel?.webview.postMessage({
+                command: 'mcpToolResult',
+                result: result
+            });
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to execute MCP tool: ${error}`);
         }
     }
 }

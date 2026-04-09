@@ -1,0 +1,21 @@
+# Secrets and credentials - prevent accidental commits
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+.secrets/
+**/credentials.json
+**/*_credentials.json
+
+# Build artifacts
+node_modules/
+__pycache__/
+*.pyc
+dist/
+build/
+
+# Logs
+*.log
+logs/

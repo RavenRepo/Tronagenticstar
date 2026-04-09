@@ -1,0 +1,60 @@
+# EditorConfig helps maintain consistent coding styles across editors
+# https://editorconfig.org
+
+root = true
+
+# Default settings for all files
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# JavaScript, TypeScript, JSX, TSX - 2 spaces
+[*.{js,jsx,ts,tsx,mjs,cjs}]
+indent_size = 2
+
+# JSON and YAML - 2 spaces
+[*.{json,yaml,yml}]
+indent_size = 2
+
+# HTML, CSS, SCSS, Vue - 2 spaces
+[*.{html,css,scss,sass,less,vue}]
+indent_size = 2
+
+# Python - 4 spaces (PEP 8)
+[*.py]
+indent_size = 4
+
+# Shell scripts - 2 spaces
+[*.{sh,bash,zsh}]
+indent_size = 2
+
+# Markdown - preserve trailing whitespace (needed for line breaks)
+[*.md]
+trim_trailing_whitespace = false
+
+# Makefiles - require tabs
+[Makefile]
+indent_style = tab
+
+[*.mk]
+indent_style = tab
+
+# Docker
+[Dockerfile*]
+indent_size = 4
+
+# TOML (pyproject.toml, etc.)
+[*.toml]
+indent_size = 4
+
+# INI/Config files
+[*.{ini,cfg}]
+indent_size = 4
+
+# Package files
+[{package.json,package-lock.json,*.lock}]
+indent_size = 2

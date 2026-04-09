@@ -1,0 +1,709 @@
+openapi: 3.0.3
+info:
+  title: Constella Chief Architect Orchestrator API
+  description: |
+    Coordinates specialized AI agents for comprehensive software development analysis.
+    
+    The orchestrator manages three specialized agents:
+    - **Architecture Agent**: Analyzes code architecture, suggests patterns, evaluates design
+    - **Security Agent**: Scans vulnerabilities, checks compliance, audits permissions
+    - **Quality Agent**: Checks code quality, suggests improvements, calculates metrics
+    
+    ## Authentication
+    Most endpoints require JWT Bearer token authentication. Include the token in the `Authorization` header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## WebSocket Support
+    Real-time updates are available via WebSocket connection at `/ws`.
+  version: 2.1.0
+  contact:
+    name: Constella Development Team
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.constella.io
+    description: Production server
+
+tags:
+  - name: Health
+    description: Service health and status endpoints
+  - name: Agents
+    description: Agent management and execution
+  - name: Analysis
+    description: Code analysis operations
+  - name: WebSocket
+    description: Real-time communication
+  - name: Development
+    description: Development-only endpoints (disabled in production)
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the orchestrator service. This endpoint is public and does not require authentication.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                service: chief-architect-orchestrator
+                version: "2.1.0"
+                timestamp: "2024-01-15T10:30:00.000000"
+                agents_available: 3
+                uptime_seconds: 3600.5
+
+  /agents:
+    get:
+      tags:
+        - Agents
+      summary: List available agents
+      description: Returns a list of all registered agents and their capabilities.
+      operationId: listAgents
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of agents retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentsListResponse'
+              example:
+                agents:
+                  architecture:
+                    url: "http://localhost:8010"
+                    capabilities:
+                      - analyze_architecture
+                      - suggest_patterns
+                      - evaluate_design
+                    timeout: 30
+                  security:
+                    url: "http://localhost:8011"
+                    capabilities:
+                      - scan_vulnerabilities
+                      - check_compliance
+                      - audit_permissions
+                    timeout: 45
+                  quality:
+                    url: "http://localhost:8012"
+                    capabilities:
+                      - check_quality
+                      - suggest_improvements
+                      - calculate_metrics
+                    timeout: 30
+                total: 3
+                timestamp: "2024-01-15T10:30:00.000000"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analyze:
+    post:
+      tags:
+        - Analysis
+      summary: Analyze code
+      description: |
+        Performs comprehensive code analysis using multiple specialized agents.
+        
+        The analysis type determines which agents are used:
+        - `architecture`: Uses only the architecture agent
+        - `security`: Uses only the security agent
+        - `quality`: Uses only the quality agent
+        - `comprehensive`: Uses all available agents
+        
+        Results are broadcast via WebSocket when complete.
+      operationId: analyzeCode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisRequest'
+            examples:
+              comprehensive:
+                summary: Comprehensive analysis
+                value:
+                  code: |
+                    def calculate_total(items):
+                        return sum(item.price for item in items)
+                  project_context: "E-commerce pricing module"
+                  analysis_type: comprehensive
+                  priority: normal
+              security_only:
+                summary: Security-focused analysis
+                value:
+                  code: |
+                    def authenticate(username, password):
+                        query = f"SELECT * FROM users WHERE username='{username}'"
+                        return db.execute(query)
+                  analysis_type: security
+                  priority: high
+      responses:
+        '200':
+          description: Analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+              example:
+                request_id: "req_1705312200000"
+                status: completed
+                results:
+                  architecture:
+                    patterns_detected:
+                      - functional_programming
+                    suggestions:
+                      - "Consider adding input validation"
+                  security:
+                    vulnerabilities: []
+                    risk_level: low
+                  quality:
+                    maintainability_score: 85
+                    suggestions:
+                      - "Add type hints for better documentation"
+                execution_time_ms: 1250
+                agents_used:
+                  - architecture
+                  - security
+                  - quality
+                timestamp: "2024-01-15T10:30:00.000000"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                detail:
+                  - loc: ["body", "code"]
+                    msg: "Code cannot be empty"
+                    type: "value_error"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /agents/{agent_name}/execute:
+    post:
+      tags:
+        - Agents
+      summary: Execute agent action
+      description: |
+        Executes a specific action on a named agent with custom parameters.
+        
+        Available agents and their actions:
+        - **architecture**: analyze, suggest_patterns, evaluate_design
+        - **security**: scan, check_compliance, audit_permissions
+        - **quality**: check, suggest_improvements, calculate_metrics
+      operationId: executeAgent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agent_name
+          in: path
+          required: true
+          description: Name of the agent to execute
+          schema:
+            type: string
+            enum:
+              - architecture
+              - security
+              - quality
+          example: security
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentExecutionRequest'
+            examples:
+              security_scan:
+                summary: Run security scan
+                value:
+                  agent_name: security
+                  action: scan
+                  parameters:
+                    code: "SELECT * FROM users WHERE id = $1"
+                    check_sql_injection: true
+                  timeout_seconds: 45
+              architecture_analyze:
+                summary: Analyze architecture
+                value:
+                  agent_name: architecture
+                  action: analyze
+                  parameters:
+                    code: "class UserService { ... }"
+                    patterns:
+                      - singleton
+                      - factory
+                  timeout_seconds: 30
+      responses:
+        '200':
+          description: Agent action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentExecutionResponse'
+              example:
+                status: success
+                agent: security
+                action: scan
+                result:
+                  vulnerabilities_found: 0
+                  scan_complete: true
+                  recommendations: []
+                timestamp: "2024-01-15T10:30:00.000000"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Agent unknown_agent not found"
+        '408':
+          description: Agent execution timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Agent execution timeout"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ws:
+    get:
+      tags:
+        - WebSocket
+      summary: WebSocket connection
+      description: |
+        Establishes a WebSocket connection for real-time updates.
+        
+        **Message Types Received:**
+        - `analysis_complete`: Sent when an analysis operation completes
+        
+        **Example Message:**
+        ```json
+        {
+          "type": "analysis_complete",
+          "request_id": "req_1705312200000",
+          "agents_used": ["architecture", "security", "quality"],
+          "execution_time_ms": 1250
+        }
+        ```
+        
+        **Connection:**
+        ```javascript
+        const ws = new WebSocket('ws://localhost:8000/ws');
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          console.log('Received:', data);
+        };
+        ```
+      operationId: websocketEndpoint
+      responses:
+        '101':
+          description: WebSocket connection established
+
+  /dev/status:
+    get:
+      tags:
+        - Development
+      summary: Development status
+      description: |
+        Returns development environment status information.
+        
+        **Note:** This endpoint is only available when `NODE_ENV` is not set to `production`.
+      operationId: devStatus
+      responses:
+        '200':
+          description: Development status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevStatusResponse'
+              example:
+                environment: development
+                agents:
+                  architecture:
+                    url: "http://localhost:8010"
+                    capabilities:
+                      - analyze_architecture
+                    timeout: 30
+                cors_origins:
+                  - "http://localhost:3000"
+                  - "http://localhost:3001"
+                  - "http://localhost:8080"
+                timestamp: "2024-01-15T10:30:00.000000"
+        '404':
+          description: Endpoint not available in production
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token authentication. Obtain a token from the authentication service
+        and include it in the Authorization header.
+        
+        Token payload should include:
+        - `sub`: User ID
+        - `exp`: Expiration timestamp
+        - `iat`: Issued at timestamp
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - version
+        - timestamp
+        - agents_available
+        - uptime_seconds
+      properties:
+        status:
+          type: string
+          description: Health status
+          example: healthy
+        service:
+          type: string
+          description: Service name
+          example: chief-architect-orchestrator
+        version:
+          type: string
+          description: Service version
+          example: "2.1.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: Current timestamp
+          example: "2024-01-15T10:30:00.000000"
+        agents_available:
+          type: integer
+          description: Number of registered agents
+          example: 3
+        uptime_seconds:
+          type: number
+          format: float
+          description: Service uptime in seconds
+          example: 3600.5
+
+    AgentsListResponse:
+      type: object
+      required:
+        - agents
+        - total
+        - timestamp
+      properties:
+        agents:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/AgentConfig'
+          description: Map of agent names to configurations
+        total:
+          type: integer
+          description: Total number of agents
+          example: 3
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+
+    AgentConfig:
+      type: object
+      required:
+        - url
+        - capabilities
+        - timeout
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Agent service URL
+          example: "http://localhost:8010"
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: List of agent capabilities
+          example:
+            - analyze_architecture
+            - suggest_patterns
+        timeout:
+          type: integer
+          description: Default timeout in seconds
+          example: 30
+
+    AnalysisRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 100000
+          description: Code to analyze
+          example: "def hello(): return 'world'"
+        project_context:
+          type: string
+          maxLength: 10000
+          nullable: true
+          description: Additional project context
+          example: "Backend API service"
+        analysis_type:
+          type: string
+          enum:
+            - architecture
+            - security
+            - quality
+            - comprehensive
+          default: comprehensive
+          description: Type of analysis to perform
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+            - urgent
+          default: normal
+          description: Analysis priority
+
+    AnalysisResponse:
+      type: object
+      required:
+        - request_id
+        - status
+        - results
+        - execution_time_ms
+        - agents_used
+        - timestamp
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier
+          example: "req_1705312200000"
+        status:
+          type: string
+          description: Analysis status
+          example: completed
+        results:
+          type: object
+          additionalProperties:
+            type: object
+          description: Results from each agent
+        execution_time_ms:
+          type: integer
+          description: Total execution time in milliseconds
+          example: 1250
+        agents_used:
+          type: array
+          items:
+            type: string
+          description: List of agents that were used
+          example:
+            - architecture
+            - security
+            - quality
+        timestamp:
+          type: string
+          format: date-time
+          description: Completion timestamp
+
+    AgentExecutionRequest:
+      type: object
+      required:
+        - agent_name
+        - action
+      properties:
+        agent_name:
+          type: string
+          pattern: "^[a-zA-Z0-9_-]+$"
+          description: Name of the agent to execute
+          example: security
+        action:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Action to perform
+          example: scan
+        parameters:
+          type: object
+          additionalProperties: true
+          default: {}
+          description: Parameters for the action
+        timeout_seconds:
+          type: integer
+          minimum: 5
+          maximum: 300
+          default: 30
+          description: Execution timeout in seconds
+
+    AgentExecutionResponse:
+      type: object
+      required:
+        - status
+        - agent
+        - action
+        - result
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: Execution status
+          example: success
+        agent:
+          type: string
+          description: Agent that was executed
+          example: security
+        action:
+          type: string
+          description: Action that was performed
+          example: scan
+        result:
+          type: object
+          additionalProperties: true
+          description: Action result
+        timestamp:
+          type: string
+          format: date-time
+          description: Completion timestamp
+
+    DevStatusResponse:
+      type: object
+      required:
+        - environment
+        - agents
+        - cors_origins
+        - timestamp
+      properties:
+        environment:
+          type: string
+          description: Current environment
+          example: development
+        agents:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/AgentConfig'
+          description: Registered agents
+        cors_origins:
+          type: array
+          items:
+            type: string
+          description: Allowed CORS origins
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          oneOf:
+            - type: string
+            - type: object
+          description: Error details
+
+    ValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: integer
+                description: Error location
+              msg:
+                type: string
+                description: Error message
+              type:
+                type: string
+                description: Error type
+
+    WebSocketMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Message type
+          example: analysis_complete
+        request_id:
+          type: string
+          description: Related request ID
+          example: "req_1705312200000"
+        agents_used:
+          type: array
+          items:
+            type: string
+          description: Agents used in the operation
+        execution_time_ms:
+          type: integer
+          description: Execution time in milliseconds
+
+  responses:
+    UnauthorizedError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            expired:
+              summary: Token expired
+              value:
+                detail: "Token expired"
+            invalid:
+              summary: Invalid token
+              value:
+                detail: "Invalid token"
+            missing:
+              summary: Missing token
+              value:
+                detail: "Not authenticated"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Internal server error"

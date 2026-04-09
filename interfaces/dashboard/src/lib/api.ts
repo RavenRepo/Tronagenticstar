@@ -129,6 +129,50 @@ export interface AnalysisResponse {
   timestamp: string;
 }
 
+// ---------------------------------------------------------------------------
+// SwarmOrchestrator /v1/chat types
+// ---------------------------------------------------------------------------
+
+export interface ChatRequest {
+  message: string;
+}
+
+export interface ChatPlanStep {
+  agent: string;
+  action: string;
+  reason: string;
+}
+
+export interface ChatPlan {
+  summary: string;
+  complexity: string;
+  confidence: number;
+  steps: ChatPlanStep[];
+}
+
+export interface ChatStepResult {
+  agent: string;
+  action: string;
+  success: boolean;
+  duration_ms: number;
+  error?: string;
+}
+
+export interface ChatResponse {
+  answer: string;
+  plan: ChatPlan;
+  agents_used: string[];
+  step_results: ChatStepResult[];
+  duration_ms: number;
+  success: boolean;
+}
+
+export interface ChatAgentInfo {
+  id: string;
+  taskType: string;
+  actions: string[];
+}
+
 export interface LLMMetrics {
   cost_today_usd: number;
   provider_health: Record<
@@ -232,7 +276,8 @@ export const AGENT_CATALOG: Record<
   },
   designforge: {
     displayName: "DesignForge",
-    description: "Architecture analysis, diagram generation, and design patterns",
+    description:
+      "Architecture analysis, diagram generation, and design patterns",
     icon: "Layout",
     color: "#8b5cf6",
     taskTypes: [
@@ -357,7 +402,7 @@ export function generateTaskId(): string {
  */
 async function request<T>(
   url: string,
-  options: RequestInit & { timeoutMs?: number } = {}
+  options: RequestInit & { timeoutMs?: number } = {},
 ): Promise<T> {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, ...fetchOptions } = options;
 
@@ -441,7 +486,7 @@ async function request<T>(
 /** Convenience GET. */
 async function get<T>(
   url: string,
-  options?: { timeoutMs?: number }
+  options?: { timeoutMs?: number },
 ): Promise<T> {
   return request<T>(url, { method: "GET", ...options });
 }
@@ -450,7 +495,7 @@ async function get<T>(
 async function post<T>(
   url: string,
   body: unknown,
-  options?: { timeoutMs?: number }
+  options?: { timeoutMs?: number },
 ): Promise<T> {
   return request<T>(url, {
     method: "POST",
@@ -503,10 +548,9 @@ export const gateway = {
     success: boolean;
     data: Record<string, unknown>;
   }> {
-    return get(
-      `/api/gateway/agents/${encodeURIComponent(agentId)}/status`,
-      { timeoutMs: 10_000 }
-    );
+    return get(`/api/gateway/agents/${encodeURIComponent(agentId)}/status`, {
+      timeoutMs: 10_000,
+    });
   },
 
   /** Execute an agent task through the gateway. */
@@ -514,7 +558,7 @@ export const gateway = {
     agentId: string,
     action: string,
     parameters: Record<string, unknown>,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<{
     success: boolean;
     data: {
@@ -530,7 +574,7 @@ export const gateway = {
         parameters,
         metadata,
       },
-      { timeoutMs: LLM_TASK_TIMEOUT_MS }
+      { timeoutMs: LLM_TASK_TIMEOUT_MS },
     );
   },
 };
@@ -561,12 +605,37 @@ export const orchestrator = {
     });
   },
 
+  /**
+   * Send a natural-language message to the SwarmOrchestrator `/v1/chat`
+   * endpoint. The LLM planner decides which agents to invoke, executes
+   * the plan, and returns a synthesised answer.
+   *
+   * This is the primary intelligence endpoint — no need to know which
+   * agent or action to call; just describe what you need.
+   */
+  async chat(message: string): Promise<ChatResponse> {
+    const orchestratorUrl =
+      process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || "http://localhost:3000";
+    return post<ChatResponse>(
+      `${orchestratorUrl}/v1/chat`,
+      { message } satisfies ChatRequest,
+      { timeoutMs: LLM_TASK_TIMEOUT_MS },
+    );
+  },
+
+  /** List the agents the SwarmOrchestrator planner knows about. */
+  async chatAgents(): Promise<ChatAgentInfo[]> {
+    const orchestratorUrl =
+      process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || "http://localhost:3000";
+    return get<ChatAgentInfo[]>(`${orchestratorUrl}/v1/chat/agents`);
+  },
+
   /** Execute a specific agent action through the orchestrator. */
   async executeAgent(
     agentName: string,
     action: string,
     parameters: Record<string, unknown>,
-    timeoutSeconds = 60
+    timeoutSeconds = 60,
   ): Promise<{
     status: string;
     agent: string;
@@ -582,7 +651,7 @@ export const orchestrator = {
         parameters,
         timeout_seconds: timeoutSeconds,
       },
-      { timeoutMs: (timeoutSeconds + 10) * 1000 }
+      { timeoutMs: (timeoutSeconds + 10) * 1000 },
     );
   },
 };
@@ -601,10 +670,7 @@ export const orchestrator = {
  */
 export const agents = {
   /** Check health of a specific agent by name. */
-  async getHealth(
-    agentName: string,
-    baseUrl?: string
-  ): Promise<AgentHealth> {
+  async getHealth(agentName: string, baseUrl?: string): Promise<AgentHealth> {
     const url = baseUrl || agentDirectUrl(agentName);
     return get<AgentHealth>(`${url}/health`, { timeoutMs: 10_000 });
   },
@@ -612,7 +678,7 @@ export const agents = {
   /** Get capabilities of a specific agent. */
   async getCapabilities(
     agentName: string,
-    baseUrl?: string
+    baseUrl?: string,
   ): Promise<AgentCapabilities> {
     const url = baseUrl || agentDirectUrl(agentName);
     return get<AgentCapabilities>(`${url}/capabilities`);
@@ -624,7 +690,7 @@ export const agents = {
     taskType: string,
     parameters: TaskParameters,
     context?: Array<{ content: string; tags?: string }>,
-    baseUrl?: string
+    baseUrl?: string,
   ): Promise<TaskResult> {
     const url = baseUrl || agentDirectUrl(agentName);
     const taskRequest: TaskRequest = {
@@ -641,7 +707,7 @@ export const agents = {
   /** Get LLM usage metrics from an agent (CodeCraft, SecuriShield, DesignForge). */
   async getLLMMetrics(
     agentName: string,
-    baseUrl?: string
+    baseUrl?: string,
   ): Promise<LLMMetrics> {
     const url = baseUrl || agentDirectUrl(agentName);
     return get<LLMMetrics>(`${url}/llm-metrics`);
@@ -718,16 +784,13 @@ export const rag = {
         task_type: "generate_embedding",
         parameters: { text },
       },
-      { timeoutMs: 15_000 }
+      { timeoutMs: 15_000 },
     );
     return result.result as { embedding: number[] };
   },
 
   /** Search the knowledge base with a natural language query. */
-  async search(
-    query: string,
-    topK = 5
-  ): Promise<{ results: string[] }> {
+  async search(query: string, topK = 5): Promise<{ results: string[] }> {
     const result = await post<TaskResult>(
       `/api/orchestrator/retriever/execute_task`,
       {
@@ -735,7 +798,7 @@ export const rag = {
         task_type: "retrieve_memories",
         parameters: { query, top_k: topK },
       },
-      { timeoutMs: 15_000 }
+      { timeoutMs: 15_000 },
     );
     return result.result as { results: string[] };
   },
@@ -745,7 +808,7 @@ export const rag = {
     id: string,
     content: string,
     metadata?: Record<string, unknown>,
-    relatedIds?: string[]
+    relatedIds?: string[],
   ): Promise<{ indexed: string }> {
     const result = await post<TaskResult>(
       `/api/orchestrator/retriever/execute_task`,
@@ -754,7 +817,7 @@ export const rag = {
         task_type: "index_memory",
         parameters: { id, content, metadata, related_ids: relatedIds },
       },
-      { timeoutMs: 15_000 }
+      { timeoutMs: 15_000 },
     );
     return result.result as { indexed: string };
   },
@@ -772,7 +835,9 @@ export const rag = {
 function agentDirectUrl(agentName: string): string {
   const catalog = AGENT_CATALOG[agentName];
   if (!catalog) {
-    throw new Error(`Unknown agent: ${agentName}. Known agents: ${Object.keys(AGENT_CATALOG).join(", ")}`);
+    throw new Error(
+      `Unknown agent: ${agentName}. Known agents: ${Object.keys(AGENT_CATALOG).join(", ")}`,
+    );
   }
 
   // In the browser, use the Next.js proxy (requests go to /api/orchestrator/...)
@@ -833,6 +898,8 @@ export const api = {
   // Orchestrator
   orchestratorHealth: orchestrator.getHealth,
   orchestratorAnalyze: orchestrator.analyze,
+  orchestratorChat: orchestrator.chat,
+  orchestratorChatAgents: orchestrator.chatAgents,
   orchestratorListAgents: orchestrator.listAgents,
   orchestratorExecuteAgent: orchestrator.executeAgent,
 

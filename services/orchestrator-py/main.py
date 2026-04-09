@@ -10,10 +10,14 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import httpx
 import jwt
 
@@ -49,6 +53,9 @@ logging.getLogger("uvicorn.access").handlers = []
 # Security
 security = HTTPBearer()
 
+# Rate Limiting
+limiter = Limiter(key_func=get_remote_address)
+
 # Pydantic Models for Request Validation
 class AnalysisRequest(BaseModel):
     code: str = Field(..., min_length=1, max_length=100000, description="Code to analyze")
@@ -73,13 +80,20 @@ class WorkflowRequest(BaseModel):
     target: str = Field(..., min_length=1, max_length=1000, description="Target for the workflow")
     configuration: Dict[str, Any] = Field(default_factory=dict, description="Workflow configuration")
 
+class ServiceCheckResult(BaseModel):
+    status: str  # "up", "down", "degraded"
+    latency_ms: Optional[float] = None
+    error: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+
 class HealthResponse(BaseModel):
-    status: str
+    status: str  # "healthy", "degraded", "unhealthy"
     service: str
     version: str
     timestamp: str
     agents_available: int
     uptime_seconds: float
+    checks: Optional[Dict[str, Any]] = None
 
 class AnalysisResponse(BaseModel):
     request_id: str
@@ -130,10 +144,10 @@ else:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:8080"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Agent Registry

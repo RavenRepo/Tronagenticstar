@@ -26,6 +26,7 @@
   "author": "Constella Development Team",
   "license": "MIT",
   "dependencies": {
+    "@slack/web-api": "^7.14.1",
     "axios": "^1.6.2",
     "bcrypt": "^5.1.1",
     "colors": "^1.4.0",
@@ -40,10 +41,12 @@
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "nats": "^2.29.3",
     "node-cron": "^3.0.3",
     "prom-client": "^15.1.0",
     "redis": "^4.6.10",
     "tsconfig-paths": "^4.2.0",
+    "tweetnacl": "^1.0.3",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"
   },

@@ -12,8 +12,18 @@ import {
   setupErrorHandling,
 } from "./middleware/error-handler";
 import { createAgentsRouter } from "./routes/agents";
+import { createToolsRouter } from "./routes/tools";
+import { createAgentTypesRouter } from "./routes/agent-types";
+import { createSkillsRouter } from "./routes/skills";
+import { createMCPRouter } from "./routes/mcp";
+import { createHooksRouter } from "./routes/hooks";
+import { createAnalyticsRouter } from "./routes/analytics";
 import { createHealthRouter } from "./routes/health";
 import { createMetricsRouter } from "./routes/metrics";
+
+// Phase 3: Multi-Channel Routing — External channel connectors
+import { createSlackWebhookRouter } from "./channels/slackConnector";
+import { createDiscordWebhookRouter } from "./channels/discordConnector";
 
 const app: express.Application = express();
 
@@ -136,6 +146,12 @@ if (metricsAuthRequired) {
 
 // API routes (all require authentication)
 app.use("/v1/agents", authMiddleware, createAgentsRouter());
+app.use("/v1/tools", authMiddleware, createToolsRouter());
+app.use("/v1/agents/types", authMiddleware, createAgentTypesRouter());
+app.use("/v1/skills", authMiddleware, createSkillsRouter());
+app.use("/v1/mcp", authMiddleware, createMCPRouter());
+app.use("/v1/hooks", authMiddleware, createHooksRouter());
+app.use("/v1/analytics", authMiddleware, createAnalyticsRouter());
 app.use("/v1/status", authMiddleware, (req: any, res: any) => {
   res.json({
     status: "healthy",
@@ -146,6 +162,41 @@ app.use("/v1/status", authMiddleware, (req: any, res: any) => {
     services: config.services,
   });
 });
+
+// ─── Phase 3: External Channel Webhooks ─────────────────────────────────────
+// These routes use platform-specific signature verification (HMAC-SHA256 for
+// Slack, Ed25519 for Discord) instead of JWT/API key authMiddleware.
+// They are registered OUTSIDE the authMiddleware-protected routes.
+
+// Slack Events API webhook
+// Slack will send events to POST /webhooks/slack/events
+// Signature verification is handled inside the Slack connector router.
+if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_SIGNING_SECRET) {
+  app.use("/webhooks/slack", createSlackWebhookRouter());
+  logger.info("✅ Slack webhook connector enabled at /webhooks/slack/events");
+} else {
+  logger.info(
+    "ℹ️  Slack webhook connector disabled (SLACK_BOT_TOKEN or SLACK_SIGNING_SECRET not set)",
+  );
+}
+
+// Discord Interactions Endpoint webhook
+// Discord will send interactions to POST /webhooks/discord/events
+// Signature verification is handled inside the Discord connector router.
+if (
+  process.env.DISCORD_BOT_TOKEN &&
+  process.env.DISCORD_PUBLIC_KEY &&
+  process.env.DISCORD_APPLICATION_ID
+) {
+  app.use("/webhooks/discord", createDiscordWebhookRouter());
+  logger.info(
+    "✅ Discord webhook connector enabled at /webhooks/discord/events",
+  );
+} else {
+  logger.info(
+    "ℹ️  Discord webhook connector disabled (DISCORD_BOT_TOKEN, DISCORD_PUBLIC_KEY, or DISCORD_APPLICATION_ID not set)",
+  );
+}
 
 // Development-only routes
 if (process.env.NODE_ENV === "development") {

@@ -1,0 +1,401 @@
+{
+  "uid": "agent-performance",
+  "title": "Agent Performance",
+  "description": "Task duration, success rates, and performance metrics for AI agents",
+  "schemaVersion": 38,
+  "version": 1,
+  "tags": ["agent", "ai", "performance", "tasks"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "agent_id",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(agent_tasks_total, agent_id)",
+        "refresh": 1,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "task_type",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(agent_tasks_total{agent_id=~\"$agent_id\"}, task_type)",
+        "refresh": 1,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Tasks Processed",
+      "description": "Total number of tasks completed",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[24h]))",
+          "legendFormat": "Tasks",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Success Rate",
+      "description": "Percentage of tasks completed successfully",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 90 },
+              { "color": "green", "value": 98 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "(sum(increase(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\", status=\"success\"}[24h])) / sum(increase(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[24h]))) * 100",
+          "legendFormat": "Success %",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Avg Task Duration",
+      "description": "Average time to complete a task",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "red", "value": 60 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(agent_task_duration_seconds_sum{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[5m])) / sum(rate(agent_task_duration_seconds_count{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[5m]))",
+          "legendFormat": "Avg Duration",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Active Agents",
+      "description": "Number of agents currently processing tasks",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "count(agent_active_tasks{agent_id=~\"$agent_id\"} > 0)",
+          "legendFormat": "Active",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Task Throughput by Agent",
+      "description": "Tasks completed per minute by agent",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "opm"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\", status=\"success\"}[5m])) by (agent_id) * 60",
+          "legendFormat": "{{agent_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Success Rate Over Time",
+      "description": "Task success rate trend by agent",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "targets": [
+        {
+          "expr": "(sum(rate(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\", status=\"success\"}[5m])) by (agent_id) / sum(rate(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[5m])) by (agent_id)) * 100",
+          "legendFormat": "{{agent_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Task Duration Percentiles",
+      "description": "Task execution time percentiles",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(agent_task_duration_seconds_bucket{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[5m])) by (le))",
+          "legendFormat": "P50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum(rate(agent_task_duration_seconds_bucket{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[5m])) by (le))",
+          "legendFormat": "P90",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(agent_task_duration_seconds_bucket{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[5m])) by (le))",
+          "legendFormat": "P95",
+          "refId": "C"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(agent_task_duration_seconds_bucket{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[5m])) by (le))",
+          "legendFormat": "P99",
+          "refId": "D"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "piechart",
+      "title": "Task Distribution by Type",
+      "description": "Breakdown of tasks by type",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 12, "y": 12, "w": 6, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(increase(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[24h])) by (task_type)",
+          "legendFormat": "{{task_type}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "piechart",
+      "title": "Task Status Distribution",
+      "description": "Breakdown of tasks by status",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 18, "y": 12, "w": 6, "h": 8 },
+      "options": {
+        "pieType": "pie",
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        }
+      },
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "success" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "failed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "timeout" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[24h])) by (status)",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Error Rate by Agent",
+      "description": "Task failure rate per agent",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "(sum(rate(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\", status=\"failed\"}[5m])) by (agent_id) / sum(rate(agent_tasks_total{agent_id=~\"$agent_id\", task_type=~\"$task_type\"}[5m])) by (agent_id)) * 100",
+          "legendFormat": "{{agent_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Queue Length by Agent",
+      "description": "Number of pending tasks in queue",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "targets": [
+        {
+          "expr": "agent_queue_length{agent_id=~\"$agent_id\"}",
+          "legendFormat": "{{agent_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Memory Usage by Agent",
+      "description": "Memory consumption per agent",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 0, "y": 28, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "expr": "agent_memory_bytes{agent_id=~\"$agent_id\"}",
+          "legendFormat": "{{agent_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Token Usage by Agent",
+      "description": "LLM token consumption per agent",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 12, "y": 28, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(agent_tokens_used_total{agent_id=~\"$agent_id\"}[5m])) by (agent_id) * 60",
+          "legendFormat": "{{agent_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Agent Performance Summary",
+      "description": "Key metrics per agent",
+      "datasource": "Prometheus",
+      "gridPos": { "x": 0, "y": 36, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(increase(agent_tasks_total{status=\"success\"}[24h])) by (agent_id)",
+          "legendFormat": "{{agent_id}} - Success",
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "sum(increase(agent_tasks_total{status=\"failed\"}[24h])) by (agent_id)",
+          "legendFormat": "{{agent_id}} - Failed",
+          "refId": "B",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(agent_task_duration_seconds_bucket[24h])) by (le, agent_id))",
+          "legendFormat": "{{agent_id}} - P95",
+          "refId": "C",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge"
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Value #A": "Success (24h)",
+              "Value #B": "Failed (24h)",
+              "Value #C": "P95 Duration"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

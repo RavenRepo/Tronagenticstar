@@ -84,7 +84,10 @@ interface TaskExecution {
 // Agent definitions
 // ---------------------------------------------------------------------------
 
-const AGENTS: Omit<AgentHealth, "status" | "latencyMs" | "details" | "capabilities" | "llmConfigured">[] = [
+const AGENTS: Omit<
+  AgentHealth,
+  "status" | "latencyMs" | "details" | "capabilities" | "llmConfigured"
+>[] = [
   {
     id: "codecraft",
     name: "CodeCraft",
@@ -166,7 +169,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: Code2,
     agentId: "codecraft",
     taskType: "generate_code",
-    color: "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20",
+    color:
+      "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20",
   },
   {
     label: "Security Scan",
@@ -182,7 +186,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: BrainCircuit,
     agentId: "designforge",
     taskType: "generate_diagram",
-    color: "bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/20",
+    color:
+      "bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/20",
   },
   {
     label: "Code Review",
@@ -190,7 +195,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: Search,
     agentId: "designforge",
     taskType: "design_review",
-    color: "bg-pink-500/10 text-pink-400 border-pink-500/20 hover:bg-pink-500/20",
+    color:
+      "bg-pink-500/10 text-pink-400 border-pink-500/20 hover:bg-pink-500/20",
   },
   {
     label: "Write Tests",
@@ -198,7 +204,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: CheckCircle2,
     agentId: "codecraft",
     taskType: "write_tests",
-    color: "bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20",
+    color:
+      "bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20",
   },
   {
     label: "Fix Bug",
@@ -206,7 +213,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: Flame,
     agentId: "codecraft",
     taskType: "fix_bug",
-    color: "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500/20",
+    color:
+      "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500/20",
   },
 ];
 
@@ -214,16 +222,22 @@ const QUICK_ACTIONS: QuickAction[] = [
 // API helpers
 // ---------------------------------------------------------------------------
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:3000";
+const GATEWAY_URL =
+  process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:3000";
 
 function agentUrl(port: number): string {
-  if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost"
+  ) {
     return `/api/agents`;
   }
   return `http://localhost:${port}`;
 }
 
-async function fetchAgentHealth(agent: (typeof AGENTS)[number]): Promise<AgentHealth> {
+async function fetchAgentHealth(
+  agent: (typeof AGENTS)[number],
+): Promise<AgentHealth> {
   const base: AgentHealth = {
     ...agent,
     status: "loading",
@@ -243,19 +257,29 @@ async function fetchAgentHealth(agent: (typeof AGENTS)[number]): Promise<AgentHe
     const latencyMs = Math.round(performance.now() - start);
 
     if (!resp.ok) {
-      return { ...base, status: "degraded", latencyMs, details: `HTTP ${resp.status}` };
+      return {
+        ...base,
+        status: "degraded",
+        latencyMs,
+        details: `HTTP ${resp.status}`,
+      };
     }
 
     const data = await resp.json();
     const status: AgentStatus =
-      data.status === "ok" || data.status === "healthy" ? "healthy" : "degraded";
+      data.status === "ok" || data.status === "healthy"
+        ? "healthy"
+        : "degraded";
 
     let capabilities: string[] = [];
     try {
-      const capResp = await fetch(`http://localhost:${agent.port}/capabilities`, {
-        signal: AbortSignal.timeout(5000),
-        cache: "no-store",
-      });
+      const capResp = await fetch(
+        `http://localhost:${agent.port}/capabilities`,
+        {
+          signal: AbortSignal.timeout(5000),
+          cache: "no-store",
+        },
+      );
       if (capResp.ok) {
         const capData = await capResp.json();
         capabilities = capData.capabilities || [];
@@ -273,10 +297,28 @@ async function fetchAgentHealth(agent: (typeof AGENTS)[number]): Promise<AgentHe
       llmConfigured: data.llm_configured ?? false,
     };
   } catch {
-    return { ...base, status: "unreachable", latencyMs: null, details: "Connection refused" };
+    return {
+      ...base,
+      status: "unreachable",
+      latencyMs: null,
+      details: "Connection refused",
+    };
   }
 }
 
+const ORCHESTRATOR_URL =
+  process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || "http://localhost:3000";
+
+/**
+ * Route a quick-action through the SwarmOrchestrator `/v1/chat` endpoint.
+ *
+ * We build a natural-language message that tells the LLM planner which
+ * agent and task-type to invoke, so the planner can make an intelligent
+ * decision (and potentially fan out to multiple agents).
+ *
+ * Falls back to direct agent `/execute_task` only when the orchestrator
+ * is unreachable (e.g. no LLM keys configured).
+ */
 async function executeQuickAction(
   action: QuickAction,
   prompt: string,
@@ -284,6 +326,38 @@ async function executeQuickAction(
   const agentDef = AGENTS.find((a) => a.id === action.agentId);
   if (!agentDef) return { success: false, error: "Agent not found" };
 
+  // ── 1. Build a rich natural-language message for /v1/chat ──────────
+  const taskLabel = action.taskType.replace(/_/g, " ");
+  const chatMessage = `[${agentDef.name} · ${taskLabel}] ${prompt}`;
+
+  try {
+    const chatResp = await fetch(`${ORCHESTRATOR_URL}/v1/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: chatMessage }),
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (chatResp.ok) {
+      const data = await chatResp.json();
+      return { success: data.success !== false, result: data };
+    }
+
+    // If 503 (no LLM keys) fall through to direct agent call
+    if (chatResp.status !== 503) {
+      const errData = await chatResp
+        .json()
+        .catch(() => ({ error: chatResp.statusText }));
+      return {
+        success: false,
+        error: errData.error || `HTTP ${chatResp.status}`,
+      };
+    }
+  } catch {
+    // Orchestrator unreachable — fall through to direct call
+  }
+
+  // ── 2. Fallback: direct agent /execute_task ────────────────────────
   const taskId = `dash-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   const params: Record<string, any> = {};
@@ -328,7 +402,9 @@ async function executeQuickAction(
     });
 
     if (!resp.ok) {
-      const errData = await resp.json().catch(() => ({ detail: resp.statusText }));
+      const errData = await resp
+        .json()
+        .catch(() => ({ detail: resp.statusText }));
       return { success: false, error: errData.detail || `HTTP ${resp.status}` };
     }
 
@@ -337,6 +413,268 @@ async function executeQuickAction(
   } catch (err: any) {
     return { success: false, error: err.message || "Request failed" };
   }
+}
+
+// ---------------------------------------------------------------------------
+// SwarmChatBar — Natural Language Command Bar wired to /v1/chat
+// ---------------------------------------------------------------------------
+
+interface ChatExchange {
+  id: string;
+  message: string;
+  answer: string | null;
+  plan: {
+    summary: string;
+    steps: { agent: string; action: string; reason: string }[];
+  } | null;
+  agentsUsed: string[];
+  stepResults: {
+    agent: string;
+    action: string;
+    success: boolean;
+    duration_ms: number;
+    error?: string;
+  }[];
+  durationMs: number | null;
+  status: "sending" | "completed" | "failed";
+  error: string | null;
+}
+
+function SwarmChatBar() {
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [history, setHistory] = useState<ChatExchange[]>([]);
+  const [expanded, setExpanded] = useState(false);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const msg = input.trim();
+    if (!msg || sending) return;
+
+    const id = `chat-${Date.now()}`;
+    const exchange: ChatExchange = {
+      id,
+      message: msg,
+      answer: null,
+      plan: null,
+      agentsUsed: [],
+      stepResults: [],
+      durationMs: null,
+      status: "sending",
+      error: null,
+    };
+
+    setHistory((prev) => [...prev, exchange]);
+    setInput("");
+    setSending(true);
+    setExpanded(true);
+
+    try {
+      const resp = await fetch(`${ORCHESTRATOR_URL}/v1/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg }),
+        signal: AbortSignal.timeout(120_000),
+      });
+
+      if (!resp.ok) {
+        const errBody = await resp
+          .json()
+          .catch(() => ({ error: resp.statusText }));
+        setHistory((prev) =>
+          prev.map((h) =>
+            h.id === id
+              ? {
+                  ...h,
+                  status: "failed" as const,
+                  error:
+                    errBody.error || errBody.reason || `HTTP ${resp.status}`,
+                }
+              : h,
+          ),
+        );
+        setSending(false);
+        return;
+      }
+
+      const data = await resp.json();
+      setHistory((prev) =>
+        prev.map((h) =>
+          h.id === id
+            ? {
+                ...h,
+                status: "completed" as const,
+                answer: data.answer ?? null,
+                plan: data.plan ?? null,
+                agentsUsed: data.agents_used ?? [],
+                stepResults: data.step_results ?? [],
+                durationMs: data.duration_ms ?? null,
+              }
+            : h,
+        ),
+      );
+    } catch (err: any) {
+      setHistory((prev) =>
+        prev.map((h) =>
+          h.id === id
+            ? {
+                ...h,
+                status: "failed" as const,
+                error: err.message || "Request failed",
+              }
+            : h,
+        ),
+      );
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Auto-scroll to bottom
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [history]);
+
+  const latestExchange = history[history.length - 1] ?? null;
+
+  return (
+    <section className="glass-panel overflow-hidden">
+      {/* Input bar */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-3 px-5 py-4"
+      >
+        <BrainCircuit className="h-5 w-5 shrink-0 text-brand" />
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder='Ask the swarm anything… e.g. "Review my Express API for security issues"'
+          className="flex-1 bg-transparent text-sm text-text-primary placeholder-text-tertiary outline-none"
+          disabled={sending}
+        />
+        <button
+          type="submit"
+          disabled={!input.trim() || sending}
+          className="flex items-center gap-1.5 rounded-lg bg-brand/20 px-3 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/30 disabled:opacity-40"
+        >
+          {sending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <SendHorizonal className="h-3.5 w-3.5" />
+          )}
+          {sending ? "Thinking…" : "Send"}
+        </button>
+        {history.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            <ChevronRight
+              className={`h-4 w-4 transition-transform ${expanded ? "rotate-90" : ""}`}
+            />
+          </button>
+        )}
+      </form>
+
+      {/* Expandable response area */}
+      {expanded && history.length > 0 && (
+        <div
+          ref={scrollRef}
+          className="max-h-80 overflow-y-auto border-t border-border px-5 py-3 space-y-4"
+        >
+          {history.map((ex) => (
+            <div key={ex.id} className="space-y-2">
+              {/* User message */}
+              <div className="flex items-start gap-2">
+                <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-400" />
+                <p className="text-xs text-text-secondary">{ex.message}</p>
+              </div>
+
+              {/* Status / Answer */}
+              {ex.status === "sending" && (
+                <div className="flex items-center gap-2 text-xs text-brand">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Orchestrating agents…
+                </div>
+              )}
+              {ex.status === "failed" && (
+                <div className="flex items-center gap-2 text-xs text-red-400">
+                  <XCircle className="h-3.5 w-3.5" />
+                  {ex.error}
+                </div>
+              )}
+              {ex.status === "completed" && (
+                <div className="space-y-2">
+                  {/* Agent badges */}
+                  {ex.agentsUsed.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {ex.agentsUsed.map((a) => (
+                        <span
+                          key={a}
+                          className="rounded bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand"
+                        >
+                          {a}
+                        </span>
+                      ))}
+                      {ex.durationMs != null && (
+                        <span className="ml-1 text-[10px] text-text-tertiary">
+                          {ex.durationMs}ms
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Plan summary */}
+                  {ex.plan?.summary && (
+                    <p className="text-[11px] italic text-text-tertiary">
+                      Plan: {ex.plan.summary}
+                    </p>
+                  )}
+
+                  {/* Step results */}
+                  {ex.stepResults.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {ex.stepResults.map((sr, i) => (
+                        <span
+                          key={i}
+                          className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-mono ${
+                            sr.success
+                              ? "bg-emerald-500/10 text-emerald-400"
+                              : "bg-red-500/10 text-red-400"
+                          }`}
+                        >
+                          {sr.success ? (
+                            <CheckCircle2 className="h-2.5 w-2.5" />
+                          ) : (
+                            <XCircle className="h-2.5 w-2.5" />
+                          )}
+                          {sr.agent}:{sr.action} {sr.duration_ms}ms
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Answer */}
+                  {ex.answer && (
+                    <div className="rounded-lg border border-border bg-bg-secondary px-4 py-3">
+                      <pre className="max-h-60 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-text-secondary">
+                        {ex.answer}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -404,7 +742,7 @@ function AgentCard({
       {/* Animated glowing border effect on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_100%_100%_at_50%_-20%,rgba(0,153,255,0.1),transparent)] pointer-events-none" />
       <div
-        className={`absolute -top-px left-[10%] h-px w-[80%] bg-gradient-to-r from-transparent via-${agent.color.split('-')[1]}-500/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+        className={`absolute -top-px left-[10%] h-px w-[80%] bg-gradient-to-r from-transparent via-${agent.color.split("-")[1]}-500/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
       />
 
       <div className="flex items-start justify-between relative z-10">
@@ -416,8 +754,12 @@ function AgentCard({
         <StatusBadge status={agent.status} />
       </div>
 
-      <h3 className="mt-5 text-base font-semibold text-text-primary tracking-tight relative z-10">{agent.name}</h3>
-      <p className="mt-1.5 text-xs leading-relaxed text-text-secondary line-clamp-2 relative z-10">{agent.description}</p>
+      <h3 className="mt-5 text-base font-semibold text-text-primary tracking-tight relative z-10">
+        {agent.name}
+      </h3>
+      <p className="mt-1.5 text-xs leading-relaxed text-text-secondary line-clamp-2 relative z-10">
+        {agent.description}
+      </p>
 
       <div className="mt-5 flex items-center gap-4 text-xs text-text-tertiary relative z-10">
         {agent.latencyMs !== null && (
@@ -432,7 +774,9 @@ function AgentCard({
             <span className="font-mono">{agent.capabilities.length} tasks</span>
           </span>
         )}
-        <span className="ml-auto font-mono text-text-secondary bg-bg-primary/50 px-2 py-0.5 rounded border border-border/50">:{agent.port}</span>
+        <span className="ml-auto font-mono text-text-secondary bg-bg-primary/50 px-2 py-0.5 rounded border border-border/50">
+          :{agent.port}
+        </span>
       </div>
     </button>
   );
@@ -477,14 +821,20 @@ function StatsBar({ stats }: { stats: PlatformStats }) {
             key={stat.label}
             className="flex flex-col gap-3 glass-panel p-5 relative overflow-hidden group"
           >
-             {/* Subtle ambient gradient on hover */}
-             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.03),transparent)] pointer-events-none" />
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg} ring-1 ring-white/5`}>
+            {/* Subtle ambient gradient on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.03),transparent)] pointer-events-none" />
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg} ring-1 ring-white/5`}
+            >
               <Icon className={`h-5 w-5 ${stat.color}`} />
             </div>
             <div className="mt-1">
-              <p className="text-3xl font-bold text-text-primary tracking-tight font-mono">{stat.value}</p>
-              <p className="text-xs text-text-tertiary mt-1 font-medium tracking-wide uppercase">{stat.label}</p>
+              <p className="text-3xl font-bold text-text-primary tracking-tight font-mono">
+                {stat.value}
+              </p>
+              <p className="text-xs text-text-tertiary mt-1 font-medium tracking-wide uppercase">
+                {stat.label}
+              </p>
             </div>
           </div>
         );
@@ -543,7 +893,9 @@ function AgentDetailPanel({
             <Icon className="h-6 w-6 text-text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-text-primary">{agent.name}</h2>
+            <h2 className="text-lg font-bold text-text-primary">
+              {agent.name}
+            </h2>
             <p className="text-sm text-text-secondary">{agent.description}</p>
           </div>
         </div>
@@ -558,21 +910,27 @@ function AgentDetailPanel({
           {/* Port */}
           <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3">
             <span className="text-sm text-text-secondary">Port</span>
-            <span className="font-mono text-sm text-text-primary">{agent.port}</span>
+            <span className="font-mono text-sm text-text-primary">
+              {agent.port}
+            </span>
           </div>
 
           {/* Latency */}
           {agent.latencyMs !== null && (
             <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3">
               <span className="text-sm text-text-secondary">Latency</span>
-              <span className="font-mono text-sm text-text-primary">{agent.latencyMs}ms</span>
+              <span className="font-mono text-sm text-text-primary">
+                {agent.latencyMs}ms
+              </span>
             </div>
           )}
 
           {/* LLM */}
           <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary px-4 py-3">
             <span className="text-sm text-text-secondary">LLM Provider</span>
-            <span className={`text-sm font-medium ${agent.llmConfigured ? "text-emerald-400" : "text-yellow-400"}`}>
+            <span
+              className={`text-sm font-medium ${agent.llmConfigured ? "text-emerald-400" : "text-yellow-400"}`}
+            >
               {agent.llmConfigured ? "Connected" : "Not initialized"}
             </span>
           </div>
@@ -598,7 +956,9 @@ function AgentDetailPanel({
           {agent.details && (
             <div className="rounded-lg border border-border bg-bg-secondary px-4 py-3">
               <p className="text-sm text-text-secondary">Details</p>
-              <p className="mt-1 text-sm text-text-secondary">{agent.details}</p>
+              <p className="mt-1 text-sm text-text-secondary">
+                {agent.details}
+              </p>
             </div>
           )}
         </div>
@@ -655,7 +1015,8 @@ function TaskModal({
         else if (r.test_code) preview = r.test_code;
         else if (r.diagram_code) preview = r.diagram_code;
         else if (r.executive_summary) preview = r.executive_summary;
-        else if (r.vulnerabilities) preview = `Found ${r.vulnerabilities.length} vulnerabilities`;
+        else if (r.vulnerabilities)
+          preview = `Found ${r.vulnerabilities.length} vulnerabilities`;
         else preview = JSON.stringify(r, null, 2).slice(0, 2000);
       } catch {
         preview = JSON.stringify(resultData, null, 2).slice(0, 2000);
@@ -689,20 +1050,30 @@ function TaskModal({
     setRunning(false);
   };
 
-  const needsCodeInput = ["scan_code", "design_review", "write_tests", "fix_bug"].includes(
-    action.taskType,
-  );
+  const needsCodeInput = [
+    "scan_code",
+    "design_review",
+    "write_tests",
+    "fix_bug",
+  ].includes(action.taskType);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="relative flex w-full max-w-2xl flex-col rounded-2xl border border-border-light bg-bg-primary shadow-2xl" style={{ maxHeight: "90vh" }}>
+      <div
+        className="relative flex w-full max-w-2xl flex-col rounded-2xl border border-border-light bg-bg-primary shadow-2xl"
+        style={{ maxHeight: "90vh" }}
+      >
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-border px-6 py-4">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${action.color.split(" ")[0]}`}>
+          <div
+            className={`flex h-8 w-8 items-center justify-center rounded-lg ${action.color.split(" ")[0]}`}
+          >
             <Icon className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-text-primary">{action.label}</h2>
+            <h2 className="text-base font-semibold text-text-primary">
+              {action.label}
+            </h2>
             <p className="text-xs text-text-secondary">{action.description}</p>
           </div>
           <button
@@ -718,7 +1089,9 @@ function TaskModal({
           {!result ? (
             <form onSubmit={handleSubmit}>
               <label className="mb-2 block text-sm font-medium text-text-secondary">
-                {needsCodeInput ? "Paste your code below" : "Describe what you need"}
+                {needsCodeInput
+                  ? "Paste your code below"
+                  : "Describe what you need"}
               </label>
               <textarea
                 className="w-full rounded-lg border border-border-light bg-bg-secondary px-4 py-3 font-mono text-sm text-text-primary placeholder-gray-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
@@ -789,10 +1162,14 @@ function TaskModal({
               {result.resultPreview && (
                 <div className="rounded-lg border border-border bg-bg-secondary">
                   <div className="flex items-center justify-between border-b border-border px-4 py-2">
-                    <span className="text-xs font-medium text-text-secondary">Result</span>
+                    <span className="text-xs font-medium text-text-secondary">
+                      Result
+                    </span>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(result.resultPreview || "");
+                        navigator.clipboard.writeText(
+                          result.resultPreview || "",
+                        );
                       }}
                       className="text-xs text-blue-400 hover:text-blue-300"
                     >
@@ -827,9 +1204,12 @@ function TaskModal({
 }
 
 // ---------------------------------------------------------------------------
-// Main Dashboard Page
+// BrainCircuit icon import is already at the top — used by SwarmChatBar
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Main Dashboard Page
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Dashboard Sub-components (Bento)
@@ -839,53 +1219,70 @@ function TopologyMap({ agents }: { agents: AgentHealth[] }) {
   return (
     <div className="relative w-full h-full min-h-[350px] flex items-center justify-center overflow-hidden mt-2">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,153,255,0.08)_0%,transparent_60%)] animate-pulse-slow pointer-events-none"></div>
-      
+
       {/* Central Node */}
       <div className="relative z-10 flex flex-col items-center justify-center p-5 glass-panel border-brand/40 shadow-[0_0_30px_rgba(0,153,255,0.3)] animate-pulse-slow pointer-events-none">
         <Server className="w-8 h-8 text-brand" />
-        <span className="text-xs font-bold mt-3 text-text-primary tracking-widest uppercase">Orchestrator</span>
+        <span className="text-xs font-bold mt-3 text-text-primary tracking-widest uppercase">
+          Orchestrator
+        </span>
       </div>
 
       {/* Surrounding Nodes */}
       {agents.slice(0, 8).map((agent, i) => {
-         const angle = (i / Math.min(8, agents.length)) * Math.PI * 2;
-         const radius = 140; // px
-         const x = Math.cos(angle) * radius;
-         const y = Math.sin(angle) * radius;
-         const Icon = agent.icon;
-         const isActive = agent.status === "healthy";
-         
-         return (
-           <React.Fragment key={agent.id}>
-             <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-               <line 
-                 x1="50%" y1="50%" 
-                 x2={`calc(50% + ${x}px)`} y2={`calc(50% + ${y}px)`} 
-                 stroke={isActive ? "hsl(var(--color-brand))" : "hsl(var(--color-border))"} 
-                 strokeWidth="1.5" 
-                 strokeDasharray={isActive ? "4 4" : "none"}
-                 className={isActive ? "animate-[border-beam_20s_linear_infinite]" : ""}
-                 opacity={isActive ? "0.6" : "0.3"}
-               />
-             </svg>
-             
-             <div 
-               className={`absolute z-10 flex h-12 w-12 items-center justify-center rounded-xl glass-panel transition-all hover:scale-110 cursor-pointer ${isActive ? "border-brand-light/40 shadow-[0_0_15px_rgba(0,153,255,0.2)]" : "border-border/40 opacity-50"}`}
-               style={{ transform: `translate(${x}px, ${y}px)` }}
-               title={agent.name}
-             >
-               <Icon className={`w-5 h-5 ${agent.color.includes('red') ? 'text-red-400' : isActive ? "text-text-primary" : "text-text-tertiary"}`} />
-             </div>
-           </React.Fragment>
-         );
+        const angle = (i / Math.min(8, agents.length)) * Math.PI * 2;
+        const radius = 140; // px
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        const Icon = agent.icon;
+        const isActive = agent.status === "healthy";
+
+        return (
+          <React.Fragment key={agent.id}>
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              style={{ zIndex: 0 }}
+            >
+              <line
+                x1="50%"
+                y1="50%"
+                x2={`calc(50% + ${x}px)`}
+                y2={`calc(50% + ${y}px)`}
+                stroke={
+                  isActive
+                    ? "hsl(var(--color-brand))"
+                    : "hsl(var(--color-border))"
+                }
+                strokeWidth="1.5"
+                strokeDasharray={isActive ? "4 4" : "none"}
+                className={
+                  isActive ? "animate-[border-beam_20s_linear_infinite]" : ""
+                }
+                opacity={isActive ? "0.6" : "0.3"}
+              />
+            </svg>
+
+            <div
+              className={`absolute z-10 flex h-12 w-12 items-center justify-center rounded-xl glass-panel transition-all hover:scale-110 cursor-pointer ${isActive ? "border-brand-light/40 shadow-[0_0_15px_rgba(0,153,255,0.2)]" : "border-border/40 opacity-50"}`}
+              style={{ transform: `translate(${x}px, ${y}px)` }}
+              title={agent.name}
+            >
+              <Icon
+                className={`w-5 h-5 ${agent.color.includes("red") ? "text-red-400" : isActive ? "text-text-primary" : "text-text-tertiary"}`}
+              />
+            </div>
+          </React.Fragment>
+        );
       })}
     </div>
   );
 }
 
 function LiveExecutionStream() {
-  const [logs, setLogs] = useState<{id: number, text: string, type: 'info'|'success'|'warn'}[]>([]);
-  
+  const [logs, setLogs] = useState<
+    { id: number; text: string; type: "info" | "success" | "warn" }[]
+  >([]);
+
   useEffect(() => {
     const messages = [
       "SecuriShield: Dependency scan completed. 0 criticals.",
@@ -896,14 +1293,17 @@ function LiveExecutionStream() {
       "Evaluator: E2E test suite passed (12ms).",
       "Database Agent: Optimizing indices for Users table.",
       "ExpressOps: Restarting worker processes.",
-      "Orchestrator: Health check verified. All systems nominal."
+      "Orchestrator: Health check verified. All systems nominal.",
     ];
     let id = 0;
     const interval = setInterval(() => {
       const msg = messages[Math.floor(Math.random() * messages.length)];
-      setLogs(prev => {
-        const logType = Math.random() > 0.8 ? 'success' : 'info';
-        const next = [...prev, { id: id++, text: msg, type: logType as 'success' | 'info' }];
+      setLogs((prev) => {
+        const logType = Math.random() > 0.8 ? "success" : "info";
+        const next = [
+          ...prev,
+          { id: id++, text: msg, type: logType as "success" | "info" },
+        ];
         if (next.length > 7) return next.slice(next.length - 7);
         return next;
       });
@@ -913,26 +1313,40 @@ function LiveExecutionStream() {
 
   return (
     <div className="flex-1 w-full bg-[#030303]/80 border border-border/30 rounded-xl p-5 font-mono text-xs overflow-hidden relative shadow-inner mt-2">
-       <div className="flex gap-2 mb-4 opacity-50">
-         <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-         <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
-         <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-       </div>
-       <div className="space-y-2.5 flex flex-col justify-end h-[calc(100%-2rem)]">
-         {logs.map((log) => (
-           <div key={log.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300 flex gap-3">
-             <span className="text-text-tertiary/50 shrink-0">[{new Date().toLocaleTimeString([], {hour12:false})}]</span>
-             <span className={log.type === 'success' ? 'text-emerald-400' : 'text-blue-300'}>{log.text}</span>
-           </div>
-         ))}
-         {logs.length === 0 && <span className="text-text-tertiary/50 animate-pulse">Establishing secure connection to swarm...</span>}
-       </div>
+      <div className="flex gap-2 mb-4 opacity-50">
+        <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+        <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+      </div>
+      <div className="space-y-2.5 flex flex-col justify-end h-[calc(100%-2rem)]">
+        {logs.map((log) => (
+          <div
+            key={log.id}
+            className="animate-in fade-in slide-in-from-bottom-2 duration-300 flex gap-3"
+          >
+            <span className="text-text-tertiary/50 shrink-0">
+              [{new Date().toLocaleTimeString([], { hour12: false })}]
+            </span>
+            <span
+              className={
+                log.type === "success" ? "text-emerald-400" : "text-blue-300"
+              }
+            >
+              {log.text}
+            </span>
+          </div>
+        ))}
+        {logs.length === 0 && (
+          <span className="text-text-tertiary/50 animate-pulse">
+            Establishing secure connection to swarm...
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
 export default function DashboardPage() {
-
   const [agents, setAgents] = useState<AgentHealth[]>(
     AGENTS.map((a) => ({
       ...a,
@@ -963,7 +1377,8 @@ export default function DashboardPage() {
       totalAgents: results.length,
       healthyAgents: results.filter((a) => a.status === "healthy").length,
       degradedAgents: results.filter((a) => a.status === "degraded").length,
-      unreachableAgents: results.filter((a) => a.status === "unreachable").length,
+      unreachableAgents: results.filter((a) => a.status === "unreachable")
+        .length,
       lastChecked: new Date(),
     };
     setStats(newStats);
@@ -982,19 +1397,22 @@ export default function DashboardPage() {
     <div className="min-h-screen text-text-primary pb-12">
       {/* Main content */}
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
-        
+        {/* ── Swarm Chat Bar ── */}
+        <div className="mb-6">
+          <SwarmChatBar />
+        </div>
+
         {/* WAR ROOM BENTO GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          
           {/* Left Column (8 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             <StatsBar stats={stats} />
-            
+
             <section className="flex-1 glass-panel p-6 relative group overflow-hidden flex flex-col min-h-[450px]">
-               <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2 tracking-wide uppercase">
-                 <Workflow className="w-4 h-4 text-brand"/> Swarm Topology
-               </h2>
-               <TopologyMap agents={agents} />
+              <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2 tracking-wide uppercase">
+                <Workflow className="w-4 h-4 text-brand" /> Swarm Topology
+              </h2>
+              <TopologyMap agents={agents} />
             </section>
           </div>
 
@@ -1002,7 +1420,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-4 flex flex-col gap-6">
             <section className="flex-1 glass-panel p-6 flex flex-col min-h-[450px]">
               <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2 mb-2 tracking-wide uppercase">
-                <Terminal className="w-4 h-4 text-brand"/> Thought Log
+                <Terminal className="w-4 h-4 text-brand" /> Thought Log
               </h2>
               <LiveExecutionStream />
             </section>
@@ -1013,7 +1431,9 @@ export default function DashboardPage() {
         <section className="mb-10">
           <div className="mb-4 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-brand" />
-            <h2 className="text-sm font-semibold text-text-primary tracking-wide uppercase">Command Shortcuts</h2>
+            <h2 className="text-sm font-semibold text-text-primary tracking-wide uppercase">
+              Command Shortcuts
+            </h2>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {QUICK_ACTIONS.map((action) => (
@@ -1031,7 +1451,9 @@ export default function DashboardPage() {
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-brand" />
-              <h2 className="text-sm font-semibold text-text-primary tracking-wide uppercase">Active Fleet</h2>
+              <h2 className="text-sm font-semibold text-text-primary tracking-wide uppercase">
+                Active Fleet
+              </h2>
             </div>
             <p className="text-xs text-brand font-mono bg-brand/10 px-2 py-1 rounded">
               {stats.healthyAgents}/{stats.totalAgents} ONLINE
@@ -1039,19 +1461,28 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {agents.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} onSelect={setSelectedAgent} />
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                onSelect={setSelectedAgent}
+              />
             ))}
           </div>
         </section>
-
       </main>
 
       {/* Modals */}
       {selectedAgent && (
-        <AgentDetailPanel agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
+        <AgentDetailPanel
+          agent={selectedAgent}
+          onClose={() => setSelectedAgent(null)}
+        />
       )}
       {activeAction && (
-        <TaskModal action={activeAction} onClose={() => setActiveAction(null)} />
+        <TaskModal
+          action={activeAction}
+          onClose={() => setActiveAction(null)}
+        />
       )}
     </div>
   );

@@ -1,21 +1,21 @@
 // Unified task types across local TS agents and external Python microservices
 export enum TaskType {
   // Domain-level tasks
-  ARCHITECTURE = 'ARCHITECTURE',
-  SECURITY = 'SECURITY',
-  QUALITY = 'QUALITY',
-  PERFORMANCE = 'PERFORMANCE',
-  DEVOPS = 'DEVOPS',
+  ARCHITECTURE = "ARCHITECTURE",
+  SECURITY = "SECURITY",
+  QUALITY = "QUALITY",
+  PERFORMANCE = "PERFORMANCE",
+  DEVOPS = "DEVOPS",
 
   // Action-level tasks (microservices)
-  CODE_GENERATION = 'CODE_GENERATION',
-  REFACTOR = 'REFACTOR',
-  EVALUATION = 'EVALUATION',
-  DESIGN = 'DESIGN',
-  EMBEDDING = 'EMBEDDING',
-  PERFORMANCE_ANALYSIS = 'PERFORMANCE_ANALYSIS',
-  COMPLIANCE = 'COMPLIANCE',
-  RETRIEVAL = 'RETRIEVAL',
+  CODE_GENERATION = "CODE_GENERATION",
+  REFACTOR = "REFACTOR",
+  EVALUATION = "EVALUATION",
+  DESIGN = "DESIGN",
+  EMBEDDING = "EMBEDDING",
+  PERFORMANCE_ANALYSIS = "PERFORMANCE_ANALYSIS",
+  COMPLIANCE = "COMPLIANCE",
+  RETRIEVAL = "RETRIEVAL",
 }
 
 export interface Task {
@@ -31,7 +31,7 @@ export interface AgentMetrics {
   avgResponseTimeMs: number;
   currentLoad: number; // 0–1
   qualityScore?: number;
-  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+  healthStatus?: "healthy" | "degraded" | "unhealthy";
   lastActivity?: Date;
   totalTasksCompleted?: number;
   totalTasksFailed?: number;
@@ -53,13 +53,13 @@ export interface AgentInfo {
 }
 
 export enum AgentStatus {
-  INITIALIZING = 'initializing',
-  READY = 'ready',
-  BUSY = 'busy',
-  DEGRADED = 'degraded',
-  UNAVAILABLE = 'unavailable',
-  FAILED = 'failed',
-  SHUTTING_DOWN = 'shutting_down'
+  INITIALIZING = "initializing",
+  READY = "ready",
+  BUSY = "busy",
+  DEGRADED = "degraded",
+  UNAVAILABLE = "unavailable",
+  FAILED = "failed",
+  SHUTTING_DOWN = "shutting_down",
 }
 
 // Memory Bank Types
@@ -87,7 +87,7 @@ export interface ErrorContext {
   error: Error;
   context: Record<string, unknown>;
   timestamp: Date;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
 }
 
 // Authentication Types
@@ -106,9 +106,9 @@ export interface CircuitBreakerConfig {
 }
 
 export enum CircuitBreakerState {
-  CLOSED = 'closed',
-  OPEN = 'open',
-  HALF_OPEN = 'half_open'
+  CLOSED = "closed",
+  OPEN = "open",
+  HALF_OPEN = "half_open",
 }
 
 // Result contract returned by Python microservices
@@ -122,4 +122,58 @@ export interface TaskResult {
   status: string;
   result: unknown;
   metrics: TaskResultMetrics;
+}
+
+// ─── Phase 1: Swarm Intelligence (OpenClaw Integration) ────────────────────
+
+/**
+ * Message envelope for agent-to-agent communication over NATS.
+ * Published to `constella.agent.{toAgentId}.inbox`.
+ */
+export interface SessionMessage {
+  correlationId: string;
+  fromAgentId: string;
+  toAgentId: string;
+  content: string;
+  timestamp: Date;
+  /** NATS reply subject for request/reply pattern */
+  replyTo?: string;
+}
+
+/**
+ * Tool definition in OpenAI / Anthropic function-calling format.
+ * Returned by `BaseAgent.getTools()` so the LLM can invoke session tools.
+ */
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  /** JSON Schema describing the tool's parameters */
+  parameters: Record<string, unknown>;
+}
+
+/**
+ * A single entry in an agent's conversation / task history.
+ * Stored in Redis (hot) and Neo4j (cold).
+ */
+export interface SessionHistoryEntry {
+  timestamp: Date;
+  role: "user" | "agent" | "system";
+  content: string;
+  taskId?: string;
+  agentId: string;
+}
+
+/**
+ * Configuration for the SessionTools class.
+ * All connections are injected — SessionTools never creates its own.
+ */
+export interface SessionToolsConfig {
+  /** The agent that owns this SessionTools instance */
+  ownerAgentId: string;
+  /** NATS server URL (e.g. "nats://localhost:4222") */
+  natsUrl?: string;
+  /** Redis URL for hot history (e.g. "redis://localhost:6379") */
+  redisUrl?: string;
+  /** Default timeout in ms when awaiting a reply from another agent */
+  defaultTimeoutMs?: number;
 }

@@ -18,12 +18,19 @@
     "@types/express": "^5.0.3",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
+    "dockerode": "^4.0.9",
     "eventemitter3": "^5.0.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "nats": "^2.29.3",
+    "redis": "^4.7.1",
+    "ws": "^8.20.0",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
+    "@types/dockerode": "^3.3.47",
     "@types/node": "^20.0.0",
     "@types/supertest": "^2.0.16",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitest/coverage-v8": "^0.34.6",

@@ -11,51 +11,44 @@ import { logger } from './utils/logger';
 import { Config } from './utils/config';
 
 export async function activate(context: vscode.ExtensionContext) {
-    logger.info('AgentForge extension is activating...');
+    logger.info('Tronagenticstar extension is activating...');
 
-    // Initialize configuration
     const config = new Config();
     
-    // Set context for when clause
-    await vscode.commands.executeCommand('setContext', 'agentforge.enabled', true);
+    await vscode.commands.executeCommand('setContext', 'tronagenticstar.enabled', true);
 
-    // Initialize services
     const orchestratorAPI = new OrchestratorAPI(context);
     const wsManager = new WebSocketManager(orchestratorAPI);
 
-    // Initialize data providers
     const activityProvider = new AgentActivityProvider(orchestratorAPI);
     const agentsProvider = new AgentsProvider(orchestratorAPI);
 
-    // Register tree data providers
-    vscode.window.registerTreeDataProvider('agentforge.activity', activityProvider);
-    vscode.window.registerTreeDataProvider('agentforge.agents', agentsProvider);
+    vscode.window.registerTreeDataProvider('tronagenticstar.activity', activityProvider);
+    vscode.window.registerTreeDataProvider('tronagenticstar.agents', agentsProvider);
 
-    // Initialize panels (these will be created on demand)
     const activityPanel = new AgentActivityPanel(context, orchestratorAPI, wsManager);
     const chatPanel = new ChatPanel(context, orchestratorAPI, wsManager);
     const dashboardPanel = new DashboardPanel(context, orchestratorAPI);
     const settingsPanel = new SettingsPanel(context);
 
-    // Register commands
     const commands = [
-        vscode.commands.registerCommand('agentforge.showActivity', () => {
+        vscode.commands.registerCommand('tronagenticstar.showActivity', () => {
             activityPanel.show();
         }),
         
-        vscode.commands.registerCommand('agentforge.openChat', () => {
+        vscode.commands.registerCommand('tronagenticstar.openChat', () => {
             chatPanel.show();
         }),
         
-        vscode.commands.registerCommand('agentforge.showDashboard', () => {
+        vscode.commands.registerCommand('tronagenticstar.showDashboard', () => {
             dashboardPanel.show();
         }),
         
-        vscode.commands.registerCommand('agentforge.showSettings', () => {
+        vscode.commands.registerCommand('tronagenticstar.showSettings', () => {
             settingsPanel.show();
         }),
         
-        vscode.commands.registerCommand('agentforge.triggerArchitectureAnalysis', async () => {
+        vscode.commands.registerCommand('tronagenticstar.triggerArchitectureAnalysis', async () => {
             const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
             if (!workspaceFolder) {
                 vscode.window.showWarningMessage('No workspace folder found');
@@ -73,7 +66,7 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         }),
         
-        vscode.commands.registerCommand('agentforge.triggerSecurityScan', async () => {
+        vscode.commands.registerCommand('tronagenticstar.triggerSecurityScan', async () => {
             const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
             if (!workspaceFolder) {
                 vscode.window.showWarningMessage('No workspace folder found');
@@ -91,7 +84,7 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         }),
         
-        vscode.commands.registerCommand('agentforge.triggerQualityCheck', async () => {
+        vscode.commands.registerCommand('tronagenticstar.triggerQualityCheck', async () => {
             const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
             if (!workspaceFolder) {
                 vscode.window.showWarningMessage('No workspace folder found');
@@ -109,7 +102,7 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         }),
         
-        vscode.commands.registerCommand('agentforge.generateAgent', async () => {
+        vscode.commands.registerCommand('tronagenticstar.generateAgent', async () => {
             const agentName = await vscode.window.showInputBox({
                 prompt: 'Enter agent name',
                 placeHolder: 'e.g., MyCustomAgent'
@@ -140,16 +133,210 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         }),
         
-        vscode.commands.registerCommand('agentforge.refreshActivity', () => {
+        vscode.commands.registerCommand('tronagenticstar.refreshActivity', () => {
             activityProvider.refresh();
             agentsProvider.refresh();
+        }),
+
+        vscode.commands.registerCommand('tronagenticstar.executeTool', async () => {
+            const toolName = await vscode.window.showInputBox({
+                prompt: 'Enter tool name to execute',
+                placeHolder: 'e.g., read_file, grep'
+            });
+            
+            if (!toolName) {
+                return;
+            }
+            
+            const toolArgs = await vscode.window.showInputBox({
+                prompt: 'Enter tool arguments (JSON)',
+                placeHolder: '{"path": "/path/to/file"}'
+            });
+            
+            try {
+                const args = toolArgs ? JSON.parse(toolArgs) : {};
+                await orchestratorAPI.executeTool(toolName, args);
+                vscode.window.showInformationMessage(`Tool ${toolName} executed successfully`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to execute tool: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('tronagenticstar.listTools', async () => {
+            try {
+                const tools = await orchestratorAPI.listTools();
+                const toolList = tools.map(t => `${t.name}: ${t.description}`).join('\n');
+                
+                const doc = await vscode.window.showTextDocument(
+                    vscode.Uri.parse(`tronagenticstar://tools`),
+                    { viewColumn: vscode.ViewColumn.One, preserveFocus: true }
+                );
+                await doc.edit(edit => {
+                    edit.insert(new vscode.Position(0, 0), toolList);
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to list tools: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('tronagenticstar.forkAgent', async () => {
+            const agentType = await vscode.window.showQuickPick([
+                'generalPurpose',
+                'explore',
+                'plan',
+                'verification'
+            ], {
+                placeHolder: 'Select agent type to fork'
+            });
+            
+            if (!agentType) {
+                return;
+            }
+            
+            const contextOption = await vscode.window.showQuickPick([
+                'Current file',
+                'Selected code',
+                'Open files',
+                'Entire workspace'
+            ], {
+                placeHolder: 'Select context for subagent'
+            });
+            
+            try {
+                await orchestratorAPI.forkAgent(agentType, contextOption);
+                vscode.window.showInformationMessage(`Forked ${agentType} agent with ${contextOption} context`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to fork agent: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('tronagenticstar.exploreFiles', async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                vscode.window.showWarningMessage('No workspace folder found');
+                return;
+            }
+            
+            const pattern = await vscode.window.showInputBox({
+                prompt: 'Enter file pattern',
+                placeHolder: '*.ts, *.js, src/**'
+            });
+            
+            try {
+                await orchestratorAPI.exploreFiles(workspaceFolder.uri.fsPath, pattern || '*');
+                vscode.window.showInformationMessage('File exploration started');
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to explore files: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('tronagenticstar.verifyChanges', async () => {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                vscode.window.showWarningMessage('No workspace folder found');
+                return;
+            }
+            
+            try {
+                await orchestratorAPI.triggerAgent('Verifier', {
+                    action: 'verify_changes',
+                    workspace: workspaceFolder.uri.fsPath
+                });
+                vscode.window.showInformationMessage('Verification started');
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to run verification: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('tronagenticstar.listSkills', async () => {
+            try {
+                const skills = await orchestratorAPI.listSkills();
+                const skillList = skills.map(s => `${s.name}: ${s.description}`).join('\n');
+                
+                vscode.window.showInformationMessage(`Available skills: ${skills.length}`);
+                
+                const doc = await vscode.window.showTextDocument(
+                    vscode.Uri.parse(`tronagenticstar://skills`),
+                    { viewColumn: vscode.ViewColumn.One, preserveFocus: true }
+                );
+                await doc.edit(edit => {
+                    edit.insert(new vscode.Position(0, 0), skillList);
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to list skills: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('tronagenticstar.executeSkill', async () => {
+            const skillName = await vscode.window.showInputBox({
+                prompt: 'Enter skill name to execute',
+                placeHolder: 'e.g., apex-architect, context7-mcp'
+            });
+            
+            if (!skillName) {
+                return;
+            }
+            
+            const skillArgs = await vscode.window.showInputBox({
+                prompt: 'Enter skill arguments (JSON)',
+                placeHolder: '{}'
+            });
+            
+            try {
+                const args = skillArgs ? JSON.parse(skillArgs) : {};
+                await orchestratorAPI.executeSkill(skillName, args);
+                vscode.window.showInformationMessage(`Skill ${skillName} executed successfully`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to execute skill: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('tronagenticstar.connectMCP', async () => {
+            const serverName = await vscode.window.showInputBox({
+                prompt: 'Enter MCP server name',
+                placeHolder: 'e.g., filesystem, github'
+            });
+            
+            if (!serverName) {
+                return;
+            }
+            
+            const serverConfig = await vscode.window.showInputBox({
+                prompt: 'Enter server configuration (JSON)',
+                placeHolder: '{"command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path"]}'
+            });
+            
+            try {
+                const config = serverConfig ? JSON.parse(serverConfig) : {};
+                await orchestratorAPI.connectMCP(serverName, config);
+                vscode.window.showInformationMessage(`MCP server ${serverName} connected`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to connect MCP server: ${error}`);
+            }
+        }),
+        
+        vscode.commands.registerCommand('tronagenticstar.listMCPTools', async () => {
+            try {
+                const tools = await orchestratorAPI.listMCPTools();
+                const toolList = tools.map(t => `${t.server}: ${t.name} - ${t.description}`).join('\n');
+                
+                vscode.window.showInformationMessage(`MCP Tools: ${tools.length} available`);
+                
+                const doc = await vscode.window.showTextDocument(
+                    vscode.Uri.parse(`tronagenticstar://mcp-tools`),
+                    { viewColumn: vscode.ViewColumn.One, preserveFocus: true }
+                );
+                await doc.edit(edit => {
+                    edit.insert(new vscode.Position(0, 0), toolList);
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to list MCP tools: ${error}`);
+            }
         })
     ];
 
-    // Register all commands
     commands.forEach(command => context.subscriptions.push(command));
 
-    // Start WebSocket connection if real-time updates are enabled
     if (config.get('enableRealTimeUpdates')) {
         try {
             await wsManager.connect();
@@ -159,30 +346,29 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }
 
-    // Show welcome message on first activation
-    const hasShownWelcome = context.globalState.get('agentforge.hasShownWelcome', false);
+    const hasShownWelcome = context.globalState.get('tronagenticstar.hasShownWelcome', false);
     if (!hasShownWelcome) {
         vscode.window.showInformationMessage(
-            'Welcome to AgentForge! Your AI agent orchestration is ready.',
+            'Welcome to Tronagenticstar! Your AI agent orchestration is ready.',
             'Show Dashboard',
             'Open Settings'
         ).then(selection => {
             switch (selection) {
                 case 'Show Dashboard':
-                    vscode.commands.executeCommand('agentforge.showDashboard');
+                    vscode.commands.executeCommand('tronagenticstar.showDashboard');
                     break;
                 case 'Open Settings':
-                    vscode.commands.executeCommand('agentforge.showSettings');
+                    vscode.commands.executeCommand('tronagenticstar.showSettings');
                     break;
             }
         });
         
-        context.globalState.update('agentforge.hasShownWelcome', true);
+        context.globalState.update('tronagenticstar.hasShownWelcome', true);
     }
 
-    logger.info('AgentForge extension activated successfully');
+    logger.info('Tronagenticstar extension activated successfully');
 }
 
 export function deactivate() {
-    logger.info('AgentForge extension is deactivating...');
+    logger.info('Tronagenticstar extension is deactivating...');
 }

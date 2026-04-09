@@ -1,0 +1,31 @@
+# CODEOWNERS - Defines code ownership for automated review requests
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for all files (fallback)
+* @org/maintainers @lead-developer
+
+# Security team owns security-related files
+/security/                    @org/security-team
+**/security/**                @org/security-team
+*.pem                         @org/security-team
+*.key                         @org/security-team
+**/auth/**                    @org/security-team
+**/authentication/**          @org/security-team
+**/authorization/**           @org/security-team
+
+# Backend team owns services
+/services/                    @org/backend-team
+**/services/**                @org/backend-team
+
+# Frontend team owns interfaces
+/interfaces/                  @org/frontend-team
+**/interfaces/**              @org/frontend-team
+
+# DevOps team owns infrastructure and deployment
+/devops/                      @org/devops-team
+**/devops/**                  @org/devops-team
+docker-compose*               @org/devops-team
+Dockerfile*                   @org/devops-team
+**/docker-compose*            @org/devops-team
+**/Dockerfile*                @org/devops-team
+/.github/workflows/           @org/devops-team

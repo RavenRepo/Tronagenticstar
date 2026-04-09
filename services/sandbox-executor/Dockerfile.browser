@@ -1,0 +1,77 @@
+# ─── Constella Sandbox Executor (Browser) ────────────────────────────────────
+# Extended sandbox image with Chromium for browser-based tasks.
+# Used by SecuriShield for web vulnerability scanning and by agents
+# that need headless browser automation (Puppeteer / Playwright).
+#
+# Same security constraints as the base sandbox, enforced at container
+# creation time by systemTools.ts:
+#   --network none          No network access (override per-agent policy)
+#   --memory 512m           Higher memory cap for browser workloads
+#   --cpus 1.0              Higher CPU cap for rendering
+#   --read-only             Read-only root filesystem (except /sandbox)
+#   --pids-limit 128        Higher PID limit for Chromium child processes
+#   Timeout: 60s            Longer deadline for browser tasks
+# ─────────────────────────────────────────────────────────────────────────────
+
+FROM node:22-alpine
+
+LABEL maintainer="Constella Development Team"
+LABEL description="Ephemeral browser sandbox for secure agent web automation"
+LABEL org.opencontainers.image.source="https://github.com/constella/tronagenticstar"
+
+# Install Chromium and runtime dependencies
+# - chromium: headless browser for Puppeteer / Playwright
+# - nss / freetype / harfbuzz / ca-certificates: Chromium rendering deps
+# - python3 + pip: for Python script execution
+# - bash / git / curl / jq: general-purpose tooling
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    font-noto-emoji \
+    python3 \
+    py3-pip \
+    bash \
+    git \
+    curl \
+    jq \
+    && python3 -m ensurepip --upgrade 2>/dev/null || true \
+    && rm -rf /var/cache/apk/* /tmp/*
+
+# Tell Puppeteer to skip downloading Chromium — we use the system package
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+
+# Playwright: tell it to use system Chromium as well
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
+# Create non-root sandbox user
+RUN addgroup -S sandboxgroup \
+    && adduser -S -G sandboxgroup -h /sandbox -s /bin/bash sandboxuser
+
+# Create working directories with correct permissions
+RUN mkdir -p /sandbox/output /sandbox/tmp /sandbox/screenshots \
+    && chown -R sandboxuser:sandboxgroup /sandbox
+
+# Set resource-friendly Python defaults
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set Node.js memory limit (higher for browser workloads)
+ENV NODE_OPTIONS="--max-old-space-size=384"
+
+WORKDIR /sandbox
+
+USER sandboxuser
+
+# Default entrypoint: execute a shell command passed as an argument
+# Usage: docker run --rm constella/sandbox-executor:browser "node scan.js"
+ENTRYPOINT ["bash", "-c"]
+
+# Default command (no-op, overridden at runtime)
+CMD ["echo 'Constella Browser Sandbox Ready'"]

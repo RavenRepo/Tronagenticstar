@@ -1,8 +1,35 @@
 {
+  "name": "tronagenticstar",
+  "version": "1.0.0",
+  "description": "Agentic AI Platform with multi-agent orchestration",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker-compose -f docker-compose.dev.yml up -d && echo 'Development environment started'",
+    "dev:logs": "docker-compose -f docker-compose.dev.yml logs -f",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && cd tests && npm test",
+    "test:integration": "cd tests && npm run test:integration",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "docker:up": "docker-compose -f docker-compose.dev.yml up -d",
+    "docker:down": "docker-compose -f docker-compose.dev.yml down",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up -d",
+    "docker:logs": "docker-compose -f docker-compose.dev.yml logs -f",
+    "docker:build": "docker-compose -f docker-compose.dev.yml build",
+    "clean": "rm -rf node_modules/.cache && npm run clean --workspaces --if-present && find . -name 'dist' -type d -prune -exec rm -rf {} + && find . -name '__pycache__' -type d -prune -exec rm -rf {} +",
+    "clean:all": "npm run clean && rm -rf node_modules packages/*/node_modules tests/node_modules",
+    "postinstall": "npm run build --workspaces --if-present || true"
+  },
   "dependencies": {
     "express": "^5.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
