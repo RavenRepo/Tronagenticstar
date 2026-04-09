@@ -60,16 +60,9 @@ export const LOG_FORMAT = process.env.LOG_FORMAT || "json";
 export function getAPIKeys(): Record<string, any> {
   const apiKeysEnv = process.env.API_KEYS;
   if (!apiKeysEnv) {
-    // Default development API keys
-    return {
-      "dev-key-12345": {
-        id: "dev-key-1",
-        name: "Development Key",
-        permissions: ["*"],
-        rateLimit: 1000,
-        active: true,
-      },
-    };
+    console.error("Missing required environment variable: API_KEYS");
+    console.error("API_KEYS must be set with valid JSON configuration");
+    process.exit(1);
   }
 
   try {
@@ -78,7 +71,7 @@ export function getAPIKeys(): Record<string, any> {
     console.error("Invalid API_KEYS JSON configuration", {
       error: error instanceof Error ? error.message : error,
     });
-    return {};
+    process.exit(1);
   }
 }
 
@@ -88,18 +81,12 @@ export const config: Config = {
   version: process.env.npm_package_version || "1.0.0",
   environment: process.env.NODE_ENV || "development",
 
-  // JWT Secret is MANDATORY - no default in production
-  jwtSecret:
-    process.env.NODE_ENV === "production"
-      ? validateRequiredEnvVar("JWT_SECRET")
-      : process.env.JWT_SECRET || "dev-fallback-secret",
+  // JWT Secret is MANDATORY - no fallback in any environment
+  jwtSecret: validateRequiredEnvVar("JWT_SECRET"),
 
   // Auth configuration
   auth: {
-    jwtSecret:
-      process.env.NODE_ENV === "production"
-        ? validateRequiredEnvVar("JWT_SECRET")
-        : process.env.JWT_SECRET || "dev-fallback-secret",
+    jwtSecret: validateRequiredEnvVar("JWT_SECRET"),
   },
 
   // Redis configuration
