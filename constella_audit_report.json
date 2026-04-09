@@ -5,7 +5,7 @@
     "auditor": "Independent External Software Architect",
     "context": {
       "branch": "from-mint",
-      "repoRoot": "/media/blackknight/Dev/My-Projects/Tronagenticstar-master",
+      "repoRoot": "[REDACTED_LOCAL_PATH]",
       "environment": "development",
       "observedServices": [
         "api-gateway (TypeScript/Express)",
