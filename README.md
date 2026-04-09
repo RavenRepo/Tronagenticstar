@@ -1,75 +1,113 @@
-# Constella: Enterprise AI Operating Platform
+<p align="center">
+  <img src="https://img.shields.io/badge/Constella-Enterprise%20AI%20Operating%20Platform-blue?style=for-the-badge&logo=robot&logoColor=white" alt="Constella">
+</p>
 
-> **The world's first Enterprise AI Operating Platform** - A self-hosted, multi-agent ecosystem that doesn't just assist developers, it **operates** your entire software development lifecycle with the precision, governance, and quality standards of Fortune 500 engineering teams.
+<p align="center">
+  <a href="https://github.com/RavenRepo/Tronagenticstar/stargazers"><img src="https://img.shields.io/github/stars/RavenRepo/Tronagenticstar?style=flat-square&logo=github&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/RavenRepo/Tronagenticstar/network/members"><img src="https://img.shields.io/github/forks/RavenRepo/Tronagenticstar?style=flat-square&logo=github&color=blue" alt="Forks"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/RavenRepo/Tronagenticstar?style=flat-square&color=green" alt="License"></a>
+  <a href="https://github.com/RavenRepo/Tronagenticstar/releases"><img src="https://img.shields.io/github/v/release/RavenRepo/Tronagenticstar?style=flat-square&logo=github&color=purple" alt="Release"></a>
+</p>
 
-## 📚 Documentation
-
-**Complete documentation is available at [`/documentation/`](/documentation/README.md)** - organized by audience and purpose for easy navigation.
-
-**Quick Links:**
-- **[Architecture & Technical Specs](/documentation/architecture/)** - System design, ADRs, and framework documentation
-- **[Developer Guides](/documentation/development/guides/)** - Implementation guides and how-to resources  
-- **[Implementation Status](/documentation/development/implementation/)** - Current phase progress and integration guides
-- **[Product & Strategy](/documentation/business/)** - PRDs, roadmaps, and strategic planning
-- **[Reports & Analysis](/documentation/reports/)** - Project status, audits, and analysis documents
-
----
-
-## 🚀 What Makes Constella Different
-
-Unlike other AI coding assistants that treat development as isolated tasks, Constella creates an **AI engineering organization** that works within your infrastructure, follows your rules, and delivers enterprise-grade results at startup speed.
-
-### **🧠 The Chief Architect Agent**
-At Constella's core is a sophisticated "Main Architect" agent that functions as an AI project manager:
-- **Intelligent Task Decomposition**: Breaks complex requirements into orchestrated multi-agent workflows
-- **Enterprise Context Awareness**: Remembers your tech stack, security policies, and quality standards
-- **Multi-Agent Coordination**: Routes tasks to specialized agents with dependency management
-- **Persistent Memory**: Never loses context across unlimited interactions
-
-### **🎯 Specialized "Gold Standard" Agents**
-Instead of generic code generators, Constella deploys expert agents:
-
-| Agent | Specialty | Port |
-|-------|-----------|------|
-| **CodeCraft** | Code generation and implementation | 8012 |
-| **SecuriShield** | Security scanning and compliance | 8011 |
-| **DesignForge** | Architecture and design patterns | 8010 |
-| **PerfPulse** | Performance optimization | 8013 |
-| **Evaluator** | Quality assessment and testing | 8014 |
-| **ExpressOps** | Express.js/Node.js backend specialist | 8015 |
-| **MobileFirstOps** | React Native/Flutter mobile development | 8016 |
-| **Database Agent** | Database design and optimization | 8017 |
-| **SOC2-Compliance** | Enterprise compliance verification | 8020 |
-
-### **🧬 The Enterprise Brain**
-Constella's hybrid memory system eliminates context loss forever:
-- **Neo4j Knowledge Graph**: Maps your entire engineering ecosystem
-- **Qdrant Vector Database**: Semantic search across documentation and decisions
-- **Redis Active Memory**: Real-time state and agent coordination
+<p align="center">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white&style=flat-square" alt="Python">
+  <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white&style=flat-square" alt="Docker">
+  <img src="https://img.shields.io/badge/Neo4j-008CC1?logo=neo4j&logoColor=white&style=flat-square" alt="Neo4j">
+  <img src="https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white&style=flat-square" alt="OpenAI">
+  <img src="https://img.shields.io/badge/Anthropic-D4A574?logo=anthropic&logoColor=black&style=flat-square" alt="Anthropic">
+</p>
 
 ---
 
-## ⚡ Quick Start
+<h1 align="center">🌟 Constella</h1>
+
+<p align="center">
+  <strong>The Enterprise AI Operating Platform</strong>
+</p>
+
+<p align="center">
+  A self-hosted, multi-agent ecosystem that doesn't just assist developers—it <strong>operates</strong> your entire software development lifecycle with Fortune 500 engineering standards.
+</p>
+
+<p align="center">
+  <a href="#-quick-start">🚀 Quick Start</a> •
+  <a href="#-architecture">🏗️ Architecture</a> •
+  <a href="#-agents">🤖 Agents</a> •
+  <a href="#-documentation">📚 Docs</a> •
+  <a href="#-contributing">🤝 Contributing</a>
+</p>
+
+---
+
+## ✨ What Makes Constella Different
+
+<div align="center">
+
+| Traditional AI Assistants | Constella |
+|--------------------------|-----------|
+| ❌ Isolated task completion | ✅ AI engineering organization |
+| ❌ Context loss between sessions | ✅ Persistent enterprise memory |
+| ❌ Generic code generation | ✅ Specialized expert agents |
+| ❌ No governance or audit trails | ✅ Built-in SOC-2 compliance |
+| ❌ Cloud-dependent | ✅ Self-hosted, data sovereign |
+
+</div>
+
+### 🧠 Chief Architect Agent
+
+The central intelligence that orchestrates your entire engineering operation:
+
+- **🎯 Intelligent Task Decomposition** — Breaks complex requirements into multi-agent workflows
+- **🧠 Enterprise Context Awareness** — Remembers your tech stack, security policies, quality standards
+- **🔄 Multi-Agent Coordination** — Routes tasks with dependency management and parallel execution
+- **💾 Persistent Memory** — Never loses context across unlimited interactions
+
+### 🎯 Specialized Agent Ecosystem
+
+| Agent | Specialty | Status | Port |
+|:------|:----------|:------:|:----:|
+| **CodeCraft** | Code generation & implementation | ✅ Active | 8012 |
+| **SecuriShield** | Security scanning & compliance | ⚠️ Partial | 8011 |
+| **DesignForge** | Architecture & design patterns | ⚠️ Partial | 8010 |
+| **PerfPulse** | Performance optimization | ✅ Compliant | 8013 |
+| **Evaluator** | Quality assessment & testing | ⚠️ Partial | 8014 |
+| **ExpressOps** | Node.js/Express backend | ⚠️ Stub | 8015 |
+| **MobileFirstOps** | React Native/Flutter mobile | ⚠️ Stub | 8016 |
+| **Database Agent** | Database design & optimization | ⚠️ Stub | 8017 |
+| **SOC2-Compliance** | Enterprise compliance verification | ⚠️ Planned | 8020 |
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Docker & Docker Compose
-- Node.js 18+ (for VS Code extension)
-- 8GB RAM minimum, 16GB recommended
+
+- [Docker](https://docs.docker.com/get-docker/) & Docker Compose
+- [Node.js](https://nodejs.org/) 18+ (for VS Code extension)
+- 8GB RAM minimum (16GB recommended)
 - 10GB free disk space
 
-### 1. Deploy the Platform
+### 1️⃣ Clone & Deploy
+
 ```bash
-git clone <repository>
-cd Tronagenticstar-master
+# Clone the repository
+git clone https://github.com/RavenRepo/Tronagenticstar.git
+cd Tronagenticstar
 
-# Deploy entire platform with one command
-./scripts/deploy.sh
+# Copy environment template
+cp config/.env.example .env
+# ✏️ Edit .env with your API keys and secrets
 
-# Or deploy specific environment
-ENVIRONMENT=production ./scripts/deploy.sh
+# Deploy entire platform
+make deploy-dev
+
+# Or use the deployment script directly
+./scripts/dev/deploy.sh
 ```
 
-### 2. Install VS Code Extension
+### 2️⃣ Install VS Code Extension
+
 ```bash
 cd interfaces/vscode-extension
 npm install
@@ -77,285 +115,297 @@ npm run compile
 code --install-extension .
 ```
 
-### 3. Configure VS Code
-1. Open VS Code Settings (Cmd/Ctrl + ,)
-2. Search for "Constella"
-3. Set Orchestrator URL: `http://localhost:8000`
-4. Set your project ID and tech stack
+### 3️⃣ Configure & Connect
 
-### 4. Start Creating!
-- **⌨️ Keyboard Shortcut**: `Ctrl+Shift+C O` - Orchestrate any task
-- **🎯 Right-click menus**: Generate Feature, Fix Bug, Security Audit
-- **📊 Real-time panels**: Watch agents work in the sidebar
+```bash
+# VS Code Settings (Cmd/Ctrl + ,)
+constella.orchestratorUrl: http://localhost:8000
+constella.projectId: my-awesome-project
+constella.defaultTechStack: ["TypeScript", "React", "Node.js"]
+```
+
+### 4️⃣ Start Creating! ✨
+
+| Action | Shortcut | Command |
+|:-------|:--------:|:--------|
+| **Orchestrate Task** | `Ctrl+Shift+C O` | Any development task |
+| **Generate Feature** | `Ctrl+Shift+C F` | Feature implementation |
+| **Fix Bug** | Right-click | "Constella: AI Bug Fix" |
+| **Security Audit** | Folder menu | "Constella: Security Audit" |
 
 ---
 
-## 🏗️ Platform Architecture
+## 🏗️ Architecture
 
-```mermaid
-flowchart TD
-    subgraph "User Interfaces"
-        VSC[VS Code Extension]
-        WEB[Web Dashboard]
-        CLI[CLI Interface]
-    end
-    
-    subgraph "Core Intelligence"
-        CA[Chief Architect Agent]
-        OR[Orchestrator API]
-        WS[WebSocket Real-time]
-    end
-    
-    subgraph "Framework Agents"
-        EO[ExpressOps]
-        MO[MobileFirstOps]
-        DB[Database Agent]
-    end
-    
-    subgraph "Core Agents"
-        CC[CodeCraft]
-        SS[SecuriShield]
-        DF[DesignForge]
-        PP[PerfPulse]
-        EV[Evaluator]
-        SC[SOC2-Compliance]
-    end
-    
-    subgraph "Knowledge Layer"
-        NEO[(Neo4j Graph)]
-        QDR[(Qdrant Vector)]
-        RED[(Redis Memory)]
-    end
-    
-    subgraph "Infrastructure"
-        PROM[Prometheus]
-        GRAF[Grafana]
-        LOKI[Loki]
-    end
-    
-    VSC --> OR
-    WEB --> OR
-    CLI --> OR
-    OR --> CA
-    CA --> WS
-    
-    CA --> EO
-    CA --> MO
-    CA --> DB
-    CA --> CC
-    CA --> SS
-    CA --> DF
-    CA --> PP
-    CA --> EV
-    CA --> SC
-    
-    CA --> NEO
-    CA --> QDR
-    CA --> RED
-    
-    OR --> PROM
-    OR --> GRAF
-    OR --> LOKI
 ```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         USER INTERFACES                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │  VS Code     │  │  Web         │  │   CLI        │              │
+│  │  Extension   │  │  Dashboard   │  │  Interface   │              │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘              │
+└─────────┼─────────────────┼─────────────────┼──────────────────────┘
+          │                 │                 │
+          └─────────────────┼─────────────────┘
+                            │ JWT/API Key Auth
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    API GATEWAY (Port 8080)                          │
+│  ┌────────────────────────────────────────────────────────────┐   │
+│  │  • Rate Limiting  • JWT Auth  • Service Discovery          │   │
+│  └────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   ORCHESTRATOR (Port 8000)                          │
+│  ┌────────────────────────────────────────────────────────────┐      │
+│  │  🧠 CHIEF ARCHITECT AGENT                                  │      │
+│  │  • LangGraph Orchestration  • Task Decomposition           │      │
+│  │  • DAG Workflows            • Multi-Agent Coordination     │      │
+│  └────────────────────────────────────────────────────────────┘      │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐
+│ CORE AGENTS  │  │ FRAMEWORK    │  │    KNOWLEDGE LAYER       │
+│              │  │ AGENTS       │  │                          │
+│ • CodeCraft  │  │              │  │  ┌────┐ ┌────┐ ┌────┐   │
+│ • SecuriShield│  │ • ExpressOps │  │  │Neo4j│ │Qdrant│ │Redis│   │
+│ • DesignForge│  │ • MobileFirst│  │  │Graph│ │Vector│ │Cache│   │
+│ • PerfPulse  │  │ • Database   │  │  └────┘ └────┘ └────┘   │
+│ • Evaluator  │  │              │  │                          │
+│ • SOC2-Comp  │  │              │  │  Semantic  Real-time   │
+└──────────────┘  └──────────────┘  └──────────────────────────┘
+```
+
+### 🧬 The Enterprise Brain
+
+Our hybrid memory system eliminates context loss forever:
+
+| Component | Technology | Purpose |
+|:----------|:-----------|:--------|
+| **Knowledge Graph** | Neo4j | Maps engineering ecosystem relationships |
+| **Vector Store** | Qdrant | Semantic search across docs & decisions |
+| **Active Memory** | Redis | Real-time state & agent coordination |
 
 ---
 
-## 🎮 Usage Examples
+## 🤖 Agents
 
-### Feature Development
-```bash
-# Using VS Code Extension
-Ctrl+Shift+C F
-> "Add JWT authentication with role-based access control"
+Constella deploys **9+ specialized agents** instead of generic code generators:
 
-# Using CLI (future)
-constella orchestrate "Add user authentication" --type=feature_development
+### Core Agents
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  🎨 DESIGN & ARCHITECTURE                                    │
+│  DesignForge (8010) - Architecture patterns & ADRs          │
+├────────────────────────────────────────────────────────────┤
+│  💻 IMPLEMENTATION                                           │
+│  CodeCraft (8012) - Code generation & implementation        │
+├────────────────────────────────────────────────────────────┤
+│  🛡️ SECURITY & QUALITY                                       │
+│  SecuriShield (8011) - Security scanning & compliance        │
+│  Evaluator (8014) - Quality assessment & testing          │
+├────────────────────────────────────────────────────────────┤
+│  ⚡ PERFORMANCE                                             │
+│  PerfPulse (8013) - Performance optimization               │
+├────────────────────────────────────────────────────────────┤
+│  🔧 FRAMEWORK SPECIALISTS                                    │
+│  ExpressOps (8015) - Node.js/Express backend                │
+│  MobileFirstOps (8016) - React Native/Flutter mobile        │
+│  Database Agent (8017) - Database design & optimization     │
+├────────────────────────────────────────────────────────────┤
+│  🏢 ENTERPRISE                                               │
+│  SOC2-Compliance (8020) - Enterprise compliance verification│
+└────────────────────────────────────────────────────────────┘
 ```
 
-### Bug Fixing
-```bash
-# Right-click in VS Code on buggy code
-> Constella: AI Bug Fix
-> "Fix memory leak in user session handling"
-```
+### Agent Communication
 
-### Security Audit
-```bash
-# Folder context menu in VS Code
-> Constella: Security Audit
-# Automatically runs comprehensive security scan
-```
-
----
-
-## 🛠️ Development & Testing
-
-### Run Tests
-```bash
-# Complete test suite
-./scripts/test.sh
-
-# Specific test types
-./scripts/test.sh --unit-only
-./scripts/test.sh --integration-only
-./scripts/test.sh --performance-only
-./scripts/test.sh --security-only
-```
-
-### Health Monitoring
-```bash
-# Check all services
-./scripts/monitor.sh
-
-# View specific service logs
-docker-compose -f docker-compose.dev.yml logs -f orchestrator-py
-```
-
-### Development Commands
-```bash
-# Start development environment
-docker-compose -f docker-compose.dev.yml up -d
-
-# Rebuild specific service
-docker-compose -f docker-compose.dev.yml up -d --build codecraft
-
-# View service metrics
-curl http://localhost:8000/capabilities
-
-# Test WebSocket connection
-wscat -c ws://localhost:8000/ws -x '{"type":"ping"}'
-```
+- **Protocol**: gRPC + WebSocket for real-time updates
+- **Discovery**: Service registry with health checks
+- **Authentication**: Bearer token validation
+- **Monitoring**: Prometheus metrics per agent
 
 ---
 
 ## 📊 Monitoring & Observability
 
-### **Dashboards**
-- **Grafana**: http://localhost:3002 (admin/admin) - System metrics and performance
-- **Prometheus**: http://localhost:9090 - Raw metrics and alerting
-- **Neo4j Browser**: http://localhost:7474 - Knowledge graph exploration
-- **Qdrant Dashboard**: http://localhost:6333/dashboard - Vector database management
+### Dashboards
 
-### **Health Endpoints**
-- **Orchestrator**: http://localhost:8000/health
-- **All Agents**: http://localhost:{port}/health
-- **Capabilities**: http://localhost:{port}/capabilities
+| Service | URL | Purpose |
+|:--------|:----|:--------|
+| **Grafana** | http://localhost:3001 | System metrics & performance |
+| **Prometheus** | http://localhost:9090 | Raw metrics & alerting |
+| **Neo4j Browser** | http://localhost:7474 | Knowledge graph exploration |
+| **Qdrant** | http://localhost:6333/dashboard | Vector DB management |
 
----
+### Health Endpoints
 
-## 🔧 Configuration
-
-### Environment Variables
 ```bash
-# .env.development
-ORCHESTRATOR_URL=http://localhost:8000
-NEO4J_URL=bolt://neo4j:7687
-QDRANT_URL=http://qdrant:6333
-REDIS_URL=redis://redis:6379/0
-AGENT_BEARER=your-secret-token
+# Orchestrator health
+curl http://localhost:8000/health
 
-# Quality Gates
-COVERAGE_THRESHOLD=80
-SECURITY_SCAN_REQUIRED=true
-PERFORMANCE_BENCHMARK=true
-```
+# Agent health checks
+curl http://localhost:8012/health  # CodeCraft
+curl http://localhost:8011/health  # SecuriShield
 
-### VS Code Extension Settings
-```json
-{
-    "constella.orchestratorUrl": "http://localhost:8000",
-    "constella.projectId": "my-project",
-    "constella.autoExecuteWorkflows": false,
-    "constella.defaultTechStack": ["Python", "TypeScript", "React"],
-    "constella.qualityGates": {
-        "coverage": 80,
-        "codeQuality": "A",
-        "securityScan": true,
-        "performanceCheck": true
-    }
-}
+# Service capabilities
+curl http://localhost:8000/capabilities
 ```
 
 ---
 
-## 🏢 Enterprise Features
+## 🛠️ Development
 
-### **Built-in SOC-2 Governance**
-- Complete audit trails of every agent action and decision
-- Policy-driven development with automatic rule enforcement
-- Self-hosted deployment ensuring data sovereignty
-- Role-based access control integration
-- Automated compliance reporting
+### Run Tests
 
-### **Performance & Scalability**
-- Horizontal scaling with Kubernetes
-- Connection pooling and caching strategies
-- Real-time monitoring and alerting
-- Resource optimization and auto-scaling
-- Multi-region deployment support
-
-### **Security & Compliance**
-- End-to-end encryption
-- Secure authentication and authorization
-- Regular security audits and vulnerability scanning
-- GDPR and SOC-2 compliance ready
-- Air-gapped deployment options
-
----
-
-## 📈 Success Metrics
-
-Organizations using Constella report:
-- **10x faster feature development** through intelligent task automation
-- **50% reduction in code review time** due to consistent, high-quality outputs
-- **90% fewer security vulnerabilities** through proactive, automated scanning
-- **Complete elimination** of repetitive, manual coordination tasks
-
----
-
-## 🚀 Deployment Environments
-
-### Development
 ```bash
-ENVIRONMENT=development ./scripts/deploy.sh
+# Complete test suite
+make test
+
+# Or specific test types
+./scripts/tests/test.sh --unit-only
+./scripts/tests/test.sh --integration-only
+./scripts/tests/test.sh --security-only
 ```
 
-### Staging
+### Development Commands
+
 ```bash
-ENVIRONMENT=staging ./scripts/deploy.sh
+# Start development environment
+make dev-up
+
+# Rebuild specific service
+make rebuild service=codecraft
+
+# View logs
+make logs service=orchestrator-py
+
+# Run security hardening
+./scripts/dev/execute-security-hardening.sh
 ```
 
-### Production
-```bash
-ENVIRONMENT=production ./scripts/deploy.sh
+### Project Structure
+
+```
+Tronagenticstar/
+├── 📁 config/               # Configuration files
+│   ├── .env.example
+│   ├── .pre-commit-config.yaml
+│   └── docker/
+├── 📁 docs/                 # Documentation
+│   ├── planning/           # Roadmaps & plans
+│   ├── reports/            # Audit & test reports
+│   └── gaps/               # Identified gaps
+├── 📁 scripts/             # Automation scripts
+│   ├── dev/                # Development utilities
+│   ├── tests/              # Test scripts
+│   └── automation/         # CI/CD pipelines
+├── 📁 services/            # Microservices
+│   ├── api-gateway/        # API Gateway (8080)
+│   ├── orchestrator-py/    # Chief Architect (8000)
+│   └── specialist-agents/ # 9+ specialized agents
+├── 📁 packages/            # Shared libraries
+│   └── llm-provider/       # Multi-provider LLM core
+├── 📁 interfaces/          # UI components
+│   └── vscode-extension/   # VS Code extension
+├── 📁 frameworks/          # Agent framework docs
+├── 📁 documentation/       # Full documentation site
+├── 📄 docker-compose.*.yml # Docker configurations
+├── 📄 Makefile            # Build automation
+└── 📄 README.md           # This file
 ```
 
 ---
 
 ## 📚 Documentation
 
-- **[Product Vision](./Constella-Product-Vision.md)** - Complete platform vision and market positioning
-- **[Interface Architecture](./PROJECT_INTERFACE_ARCHITECTURE.md)** - Frontend strategy and implementation roadmap
-- **[Agent Capabilities](./docs/)** - Detailed documentation for each specialized agent
-- **[API Documentation](http://localhost:8000/docs)** - Interactive API documentation (when running)
-- **[Architecture Decision Records](./docs/adr/)** - Technical decision documentation
+### Quick Links
+
+| Document | Description |
+|:---------|:------------|
+| [📋 Master Knowledge](./docs/planning/MASTER_KNOWLEDGE_DOCUMENT.md) | Complete system understanding (90-agent analysis) |
+| [🗺️ Architecture](./documentation/architecture/) | System design, ADRs, framework specs |
+| [🔧 Developer Guides](./documentation/development/guides/) | Implementation guides & how-to |
+| [📊 Integration Plans](./docs/planning/) | Roadmaps & implementation strategies |
+| [📝 Contributing](./CONTRIBUTING.md) | Contribution guidelines & standards |
+| [🔒 Security](./SECURITY.md) | Security policies & hardening guides |
+
+### Architecture Decision Records (ADRs)
+
+We document all significant technical decisions:
+
+- ADR-001: LangGraph Primary Orchestration
+- ADR-002: Multi-Model LLM Strategy
+- ADR-003: Hybrid Datastore (Neo4j + Qdrant + Redis)
+- ADR-004: Chief-Architect Build Bank Pattern
+- [View all 12 ADRs](./documentation/architecture/adr/)
+
+---
+
+## 🏢 Enterprise Features
+
+### SOC-2 Compliance Built-In
+
+- ✅ **Audit Trails** — Every agent action logged
+- ✅ **Policy Enforcement** — Automatic rule validation
+- ✅ **Data Sovereignty** — Self-hosted, air-gapped options
+- ✅ **RBAC Integration** — Role-based access control
+- ✅ **Compliance Reporting** — Automated audit reports
+
+### Scalability
+
+```yaml
+Horizontal Scaling:
+  - Kubernetes deployment manifests
+  - Auto-scaling based on load
+  - Multi-region support
+  
+Performance:
+  - Connection pooling
+  - Redis caching layer
+  - Vector search optimization
+  - Circuit breaker patterns
+```
 
 ---
 
 ## 🤝 Contributing
 
-### Development Setup
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes following our coding standards
-4. Run the test suite: `./scripts/test.sh`
-5. Submit a pull request
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
+
+### Quick Start for Contributors
+
+```bash
+# Fork & clone
+git clone https://github.com/YOUR_USERNAME/Tronagenticstar.git
+
+# Create feature branch
+git checkout -b feat/your-feature-name
+
+# Make changes following our standards
+# - Add tests
+# - Update docs
+# - Follow existing patterns
+
+# Run tests
+make test
+
+# Submit PR
+gh pr create --title "feat: your feature description"
+```
 
 ### Code Standards
-- Follow existing patterns in each service
-- Add comprehensive tests for new features
-- Update documentation for API changes
-- Ensure all services pass health checks
+
+- 🧪 **Tests required** for new features
+- 📚 **Documentation updated** for API changes
+- 🔒 **Security reviewed** for auth/credential code
+- 🎯 **Follow existing patterns** in each service
 
 ---
 
@@ -363,66 +413,99 @@ ENVIRONMENT=production ./scripts/deploy.sh
 
 ### Common Issues
 
-**Services won't start:**
+<details>
+<summary><b>Services won't start</b></summary>
+
 ```bash
 # Check Docker daemon
 docker info
 
 # View service logs
-docker-compose -f docker-compose.dev.yml logs [service_name]
+make logs service=api-gateway
 
 # Check port conflicts
-netstat -tulpn | grep [port]
+make check-ports
 ```
+</details>
 
-**VS Code Extension not connecting:**
+<details>
+<summary><b>VS Code Extension not connecting</b></summary>
+
 ```bash
-# Verify orchestrator is running
+# Verify orchestrator health
 curl http://localhost:8000/health
 
-# Check configuration
+# Check extension is installed
 code --list-extensions | grep constella
-```
 
-**WebSocket connection issues:**
+# Restart VS Code
+```
+</details>
+
+<details>
+<summary><b>WebSocket connection issues</b></summary>
+
 ```bash
-# Test WebSocket endpoint
+# Test WebSocket
 wscat -c ws://localhost:8000/ws -x '{"type":"ping"}'
 
-# Check firewall settings
+# Check firewall
 sudo ufw status
 ```
+</details>
 
-**Performance issues:**
-```bash
-# Monitor resource usage
-docker stats
+### Support Channels
 
-# Check system resources
-free -h
-df -h
-```
+- 🐛 [Issues](https://github.com/RavenRepo/Tronagenticstar/issues)
+- 💬 [Discussions](./docs/discussion.md)
+- 📧 Email: support@constella.ai
 
-### Support
-- **Health Monitor**: `./scripts/monitor.sh`
-- **Test Suite**: `./scripts/test.sh`
-- **Service Logs**: `docker-compose logs -f [service]`
-- **Deploy Logs**: Check logs in `/tmp/constella-deploy-*.log`
+---
+
+## 📈 Project Status
+
+<div align="center">
+
+**Phase 1: Foundation** — 60% Complete
+
+| Service | Status |
+|:--------|:------:|
+| API Gateway | ⚠️ Partial |
+| CodeCraft Agent | ✅ Active |
+| SecuriShield | ⚠️ Partial |
+| DesignForge | ⚠️ Partial |
+| PerfPulse | ✅ Compliant |
+| Evaluator | ⚠️ Partial |
+| SOC2-Compliance | 📋 Planned |
+
+</div>
 
 ---
 
 ## 📄 License
 
-MIT License - See [LICENSE](./LICENSE) for details.
+<p align="center">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="MIT License">
+  </a>
+</p>
+
+This project is licensed under the **MIT License** — see [LICENSE](./LICENSE) for details.
 
 ---
 
 ## 🌟 The Vision
 
-Constella represents more than a product—it's a fundamental shift in how software gets built. We're not just automating tasks; we're elevating the entire practice of software engineering.
+> *"Constella represents more than a product—it's a fundamental shift in how software gets built. We're not just automating tasks; we're elevating the entire practice of software engineering."*
 
 **The question isn't whether AI will transform software development—it's whether you'll lead that transformation or be disrupted by it.**
 
 ---
 
-*Constella: Where AI doesn't just assist—it operates.* 🚀
+<p align="center">
+  <strong>Constella: Where AI doesn't just assist—it operates.</strong> 🚀
+</p>
+
+<p align="center">
+  <a href="#-quick-start">⬆️ Back to Top</a>
+</p>
